@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Farm RPG Quest & Material Tracker</title>
+  <meta name="description" content="Manage your Farm RPG quests, calculate total required materials, track bag inventory, and optimize your farm progression." />
+  
+  <!-- Favicon with corn/crop emoji -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌽</text></svg>" />
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="./styles/main.css" />
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <a href="#" class="brand" id="brand-home-link">
+        <div class="brand-icon">🌾</div>
+        <div>
+          <div class="brand-title">
+            Farm RPG Helper
+            <span class="brand-badge">Tracker</span>
+          </div>
+          <div class="brand-subtitle">Quests & Material Planner</div>
+        </div>
+      </a>
+
+      <div class="header-actions">
+        <!-- Live Quick Stats -->
+        <div class="header-stats" id="header-stats-bar">
+          <span class="stat-pill" id="stat-active-count">0 Active</span>
+          <span>•</span>
+          <span class="stat-pill ready-pill" id="stat-ready-count">0 Ready ✨</span>
+        </div>
+
+        <!-- Theme Toggle Button -->
+        <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Light / Dark Mode" aria-label="Toggle theme">
+          🌓
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Bar -->
+  <nav class="app-nav">
+    <div class="nav-container">
+      <button class="nav-tab active" data-tab="quests" id="tab-btn-quests">
+        <span>📜</span>
+        <span>Quests</span>
+        <span class="tab-count" id="badge-quest-count">0</span>
+      </button>
+      <button class="nav-tab" data-tab="planner" id="tab-btn-planner">
+        <span>🧺</span>
+        <span>Material Planner</span>
+        <span class="tab-count" id="badge-planner-count">0</span>
+      </button>
+      <button class="nav-tab" data-tab="inventory" id="tab-btn-inventory">
+        <span>🎒</span>
+        <span>Farm Bag</span>
+      </button>
+      <button class="nav-tab" data-tab="settings" id="tab-btn-settings">
+        <span>⚙️</span>
+        <span>Backup & Deploy</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main View Container -->
+  <main class="main-content" id="main-content">
+    <!-- Active view content will be dynamically rendered here by app.js -->
+  </main>
+
+  <!-- Modal: Add / Edit Quest -->
+  <div class="modal-backdrop" id="quest-modal" role="dialog" aria-modal="true" aria-labelledby="modal-quest-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-quest-title">Add New Quest</h3>
+        <button type="button" class="modal-close-btn" id="modal-close-x" aria-label="Close dialog">&times;</button>
+      </div>
+      <form id="quest-form">
+        <div class="modal-body">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="quest-name-input">Quest Title *</label>
+              <input type="text" id="quest-name-input" class="input-field" placeholder="e.g. Corn Quandary II" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="quest-npc-input">Quest Giver (NPC) *</label>
+              <select id="quest-npc-input" class="input-field" required>
+                <!-- Filled dynamically with NPC list -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="quest-level-input">Level / Prerequisite</label>
+              <input type="text" id="quest-level-input" class="input-field" placeholder="e.g. Farming 15" />
+            </div>
+            <div class="form-group" style="justify-content: flex-end; padding-bottom: 0.5rem;">
+              <label class="checkbox-label">
+                <input type="checkbox" id="quest-pinned-input" />
+                <span>Pin to Favorites / Planner</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="quest-desc-input">Description / Story</label>
+            <textarea id="quest-desc-input" class="input-field" placeholder="Brief notes or NPC dialogue..."></textarea>
+          </div>
+
+          <!-- Requirements Section -->
+          <div class="modal-section-header">
+            <label class="form-label">Required Materials</label>
+            <button type="button" class="btn btn-outline btn-xs" id="modal-add-req-btn">+ Add Item</button>
+          </div>
+          <div id="modal-requirements-list" class="modal-dynamic-rows">
+            <!-- Dynamic rows inserted here -->
+          </div>
+
+          <!-- Rewards Section -->
+          <div class="modal-section-header">
+            <label class="form-label">Rewards</label>
+            <button type="button" class="btn btn-outline btn-xs" id="modal-add-rew-btn">+ Add Reward</button>
+          </div>
+          <div id="modal-rewards-list" class="modal-dynamic-rows">
+            <!-- Dynamic rows inserted here -->
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="modal-submit-btn">Save Quest</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-content">
+      <div>Farm RPG Quest & Material Tracker • Built for the Farm RPG community</div>
+      <div>Designed for simple, zero-build deployment on <strong>GitHub Pages</strong>.</div>
+    </div>
+  </footer>
+
+  <!-- Application Logic -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
