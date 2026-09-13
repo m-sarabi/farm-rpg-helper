@@ -1,5 +1,4 @@
 import { ALL_FARM_RPG_ITEMS, getItemImageFilename } from "./items-data.js";
-import { state } from "./state.js";
 
 /**
  * Attaches a dedicated, high-performance item search dropdown to any text input.
@@ -8,7 +7,6 @@ import { state } from "./state.js";
  * Features:
  * - Smart search (prefix > word boundary > substring, case-insensitive)
  * - Renders authentic pixel-art item thumbnails from assets/
- * - Displays in-bag quantity indicator
  * - Full keyboard navigation (ArrowUp, ArrowDown, Enter, Tab, Escape)
  * - Auto-repositions and adjusts to modal or page scrolling
  * - Top 25 items cap for silky 60fps performance
@@ -35,26 +33,13 @@ export function attachItemAutocomplete(inputEl, options = {}) {
   let currentResults = [];
   let isOpen = false;
 
-  // Smart search filter across all 1,558 items + any custom inventory keys
+  // Smart search filter across all 1,558 items
   function getMatchingItems(query) {
     const q = (query || "").trim().toLowerCase();
-    const allItems = ALL_FARM_RPG_ITEMS;
-
-    // Collect extra custom inventory items if any aren't in ALL_FARM_RPG_ITEMS
-    const customItems = Object.keys(state.inventory || {}).filter(name => {
-      return !allItems.some(it => it.name.toLowerCase() === name.toLowerCase());
-    }).map(name => ({
-      name,
-      filename: `${name}.png`
-    }));
-
-    const pool = [...allItems, ...customItems];
+    const pool = ALL_FARM_RPG_ITEMS;
 
     if (!q) {
-      // If query is empty, show items currently in inventory first, then top popular items
-      const inBag = pool.filter(it => (state.inventory[it.name] || 0) > 0);
-      const remaining = pool.filter(it => !((state.inventory[it.name] || 0) > 0));
-      return [...inBag, ...remaining].slice(0, 25);
+      return pool.slice(0, 25);
     }
 
     const exactMatches = [];
@@ -152,10 +137,6 @@ export function attachItemAutocomplete(inputEl, options = {}) {
     dropdown.innerHTML = items.map((item, idx) => {
       const filename = item.filename || getItemImageFilename(item.name);
       const encodedSrc = `assets/${encodeURIComponent(filename)}`;
-      const inBag = state.inventory[item.name] || 0;
-      const bagBadge = inBag > 0
-        ? `<span class="autocomplete-bag-badge" title="${inBag.toLocaleString()} in Farm Bag">In Bag: ${inBag.toLocaleString()}</span>`
-        : "";
 
       return `
         <div class="item-autocomplete-option" data-index="${idx}" role="option">
@@ -164,7 +145,6 @@ export function attachItemAutocomplete(inputEl, options = {}) {
             <span class="autocomplete-thumb-fallback" style="display: none;">📦</span>
           </span>
           <span class="autocomplete-item-name">${highlightMatch(item.name, query)}</span>
-          ${bagBadge}
         </div>
       `;
     }).join("");

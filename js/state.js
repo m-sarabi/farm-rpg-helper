@@ -2,7 +2,7 @@ import { DEFAULT_QUESTS } from "./quests-data.js";
 
 const STORAGE_KEYS = {
   QUESTS: "farmrpg_helper_quests_v1",
-  INVENTORY: "farmrpg_helper_inventory_v1",
+  INVENTORY_CAP: "farmrpg_helper_inventory_cap_v1",
   THEME: "farmrpg_helper_theme_v1",
   PLANNER_MODE: "farmrpg_helper_planner_mode_v1"
 };
@@ -10,11 +10,11 @@ const STORAGE_KEYS = {
 class StateManager {
   constructor() {
     this.quests = [];
-    this.inventory = {};
+    this.inventoryCap = 1000;
     this.activeTab = "quests";
     this.plannerFilter = "pinned"; // "pinned" | "active"
     this.filters = {
-      status: "active", // "all" | "active" | "completed" | "ready"
+      status: "active", // "all" | "active" | "completed"
       npc: "all",
       search: "",
       skillSort: "default"
@@ -48,17 +48,18 @@ class StateManager {
       this.quests = [];
     }
 
-    // Load inventory (defaults to empty)
+    // Load inventory cap (defaults to 1000)
     try {
-      const savedInv = localStorage.getItem(STORAGE_KEYS.INVENTORY);
-      if (savedInv) {
-        this.inventory = JSON.parse(savedInv);
+      const savedCap = localStorage.getItem(STORAGE_KEYS.INVENTORY_CAP);
+      if (savedCap !== null) {
+        const parsedCap = parseInt(savedCap, 10);
+        this.inventoryCap = !isNaN(parsedCap) && parsedCap > 0 ? parsedCap : 1000;
       } else {
-        this.inventory = {};
-        this.saveInventory();
+        this.inventoryCap = 1000;
+        this.saveInventoryCap();
       }
     } catch (e) {
-      this.inventory = {};
+      this.inventoryCap = 1000;
     }
 
     // Load planner mode
@@ -74,8 +75,15 @@ class StateManager {
     localStorage.setItem(STORAGE_KEYS.QUESTS, JSON.stringify(this.quests));
   }
 
-  saveInventory() {
-    localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(this.inventory));
+  saveInventoryCap() {
+    localStorage.setItem(STORAGE_KEYS.INVENTORY_CAP, String(this.inventoryCap));
+  }
+
+  setInventoryCap(cap) {
+    const parsed = parseInt(cap, 10);
+    this.inventoryCap = !isNaN(parsed) && parsed > 0 ? parsed : 1000;
+    this.saveInventoryCap();
+    this.notify();
   }
 
   savePlannerMode() {
@@ -178,37 +186,12 @@ class StateManager {
     return false;
   }
 
-  setInventoryItem(itemName, count) {
-    const cleanItem = itemName.trim();
-    const qty = Math.max(0, parseInt(count, 10) || 0);
-    if (qty === 0) {
-      delete this.inventory[cleanItem];
-    } else {
-      this.inventory[cleanItem] = qty;
-    }
-    this.saveInventory();
-    this.notify();
-  }
-
-  adjustInventoryItem(itemName, delta) {
-    const cleanItem = itemName.trim();
-    const current = this.inventory[cleanItem] || 0;
-    const updated = Math.max(0, current + delta);
-    if (updated === 0) {
-      delete this.inventory[cleanItem];
-    } else {
-      this.inventory[cleanItem] = updated;
-    }
-    this.saveInventory();
-    this.notify();
-  }
-
   exportData() {
     const data = {
-      version: 2,
+      version: 3,
       exportedAt: new Date().toISOString(),
       quests: this.quests,
-      inventory: this.inventory
+      inventoryCap: this.inventoryCap
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -226,9 +209,11 @@ class StateManager {
         throw new Error("Invalid backup file format: missing quests array.");
       }
       this.quests = data.quests;
-      this.inventory = data.inventory || {};
+      if (data.inventoryCap && parseInt(data.inventoryCap, 10) > 0) {
+        this.inventoryCap = parseInt(data.inventoryCap, 10);
+        this.saveInventoryCap();
+      }
       this.saveQuests();
-      this.saveInventory();
       this.notify();
       return { success: true, count: this.quests.length };
     } catch (err) {
@@ -238,9 +223,9 @@ class StateManager {
 
   resetToDefaults() {
     this.quests = [];
-    this.inventory = {};
+    this.inventoryCap = 1000;
     this.saveQuests();
-    this.saveInventory();
+    this.saveInventoryCap();
     this.notify();
   }
 }

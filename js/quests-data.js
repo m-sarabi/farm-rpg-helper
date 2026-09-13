@@ -13,21 +13,30 @@ export const SKILLS_LIST = [
 
 // Suggested NPC list for quest giver dropdowns
 export const NPC_LIST = [
-  "Buddy",
+  "Baba Gec",
   "Beatrix",
-  "Vincent",
-  "Rosalie",
-  "Jill",
-  "Cecil",
-  "Holger",
   "Borgen",
-  "Thomas",
-  "Ric",
+  "Buddy",
+  "Captain Thomas",
+  "Cecil",
+  "Charles Horsington III",
+  "Cid",
+  "frank",
+  "Gary Bearson V",
+  "Geist",
+  "George",
+  "Goostav",
+  "Holger",
+  "Jill",
   "Lorn",
-  "Starla",
-  "Marten",
-  "Captain Bruce",
-  "Unknown"
+  "Mariya",
+  "Mummy",
+  "Ric Ryph",
+  "ROOMBA",
+  "Rosalie",
+  "Star Meerif",
+  "Thomas",
+  "Vincent"
 ];
 
 // Common items in Farm RPG with standard icons / emojis for friendly UI

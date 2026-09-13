@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Farm RPG Quest & Material Tracker</title>
-  <meta name="description" content="Manage your Farm RPG quests, calculate total required materials, track bag inventory, and optimize your farm progression." />
+  <meta name="description" content="Manage your Farm RPG quests, calculate aggregate material requirements, check against your inventory cap, and optimize your farm progression." />
   
   <!-- Favicon with authentic Corn PNG -->
   <link rel="icon" href="./assets/Corn.png" type="image/png" />
@@ -35,7 +35,7 @@
         <div class="header-stats" id="header-stats-bar">
           <span class="stat-pill" id="stat-active-count">0 Active</span>
           <span>•</span>
-          <span class="stat-pill ready-pill" id="stat-ready-count">0 Ready ✨</span>
+          <span class="stat-pill completed-pill" id="stat-completed-count">0 Completed</span>
         </div>
 
         <!-- Theme Toggle Button -->
@@ -59,13 +59,9 @@
         <span>Material Planner</span>
         <span class="tab-count" id="badge-planner-count">0</span>
       </button>
-      <button class="nav-tab" data-tab="inventory" id="tab-btn-inventory">
-        <span>🎒</span>
-        <span>Farm Bag</span>
-      </button>
       <button class="nav-tab" data-tab="settings" id="tab-btn-settings">
         <span>⚙️</span>
-        <span>Backup & Deploy</span>
+        <span>Settings</span>
       </button>
     </div>
   </nav>
@@ -185,7 +181,6 @@
   <footer class="app-footer">
     <div class="footer-content">
       <div>Farm RPG Quest & Material Tracker • Built for the Farm RPG community</div>
-      <div>Designed for simple, zero-build deployment on <strong>GitHub Pages</strong>.</div>
     </div>
   </footer>
 

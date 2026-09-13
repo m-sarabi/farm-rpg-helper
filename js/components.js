@@ -1,5 +1,5 @@
 import { getItemIcon, renderItemIconHtml, NPC_LIST, KNOWN_ITEM_NAMES } from "./quests-data.js";
-import { isQuestReady, getQuestRequirementsStatus, aggregateMaterials, aggregateRewards, formatMaterialsAsText } from "./calculator.js";
+import { getQuestRequirementsStatus, aggregateMaterials, aggregateRewards, formatMaterialsAsText } from "./calculator.js";
 import { attachItemAutocomplete } from "./autocomplete.js";
 
 /**
@@ -37,31 +37,25 @@ export function showToast(message, type = "info") {
  * Render single quest card HTML
  */
 export function renderQuestCard(quest, state) {
-  const isReady = quest.status === "active" && isQuestReady(quest, state.inventory);
-  const reqStatus = getQuestRequirementsStatus(quest, state.inventory);
+  const reqStatus = getQuestRequirementsStatus(quest);
+  const isCompleted = quest.status === "completed";
 
   const card = document.createElement("div");
-  card.className = `quest-card ${quest.status === "completed" ? "is-completed" : ""} ${isReady ? "is-ready" : ""} ${quest.pinned ? "is-pinned" : ""}`;
+  card.className = `quest-card ${isCompleted ? "is-completed" : ""} ${quest.pinned ? "is-pinned" : ""}`;
   card.dataset.questId = quest.id;
 
   // Requirements HTML
   const reqsHtml = reqStatus.map(req => {
-    const isDone = req.fulfilled;
     return `
-      <div class="req-item ${isDone ? 'req-done' : ''}">
+      <div class="req-item">
         <div class="req-header">
           <span class="req-name">
             <span class="item-icon-slot">${renderItemIconHtml(req.item)}</span>
             <strong>${req.item}</strong>
           </span>
           <span class="req-counts">
-            <span class="have-count ${isDone ? 'have-good' : 'have-short'}">${req.have.toLocaleString()}</span>
-            <span class="req-sep">/</span>
             <span class="need-count">${req.amount.toLocaleString()}</span>
           </span>
-        </div>
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" style="width: ${req.percent}%;"></div>
         </div>
       </div>
     `;
@@ -125,8 +119,7 @@ export function renderQuestCard(quest, state) {
         <div class="quest-badges">
           <span class="npc-badge" title="Quest Giver">${quest.npc === "Unknown" ? "❓" : "👤"} ${quest.npc}</span>
           ${skillBadges.join("")}
-          ${isReady ? `<span class="ready-badge">✨ Ready to Turn In!</span>` : ''}
-          ${quest.status === "completed" ? `<span class="completed-badge">✅ Completed</span>` : ''}
+          ${isCompleted ? `<span class="completed-badge">✅ Completed</span>` : ''}
         </div>
         <h3 class="quest-title">${quest.title}</h3>
       </div>
@@ -159,8 +152,8 @@ export function renderQuestCard(quest, state) {
         </button>
       </div>
       <div class="quest-actions-right">
-        <button class="btn btn-sm ${quest.status === 'completed' ? 'btn-secondary' : isReady ? 'btn-primary pulse-ready' : 'btn-primary'} toggle-status-btn" data-id="${quest.id}">
-          ${quest.status === 'completed' ? '↺ Reopen' : '✓ Complete'}
+        <button class="btn btn-sm ${isCompleted ? 'btn-secondary' : 'btn-primary'} toggle-status-btn" data-id="${quest.id}">
+          ${isCompleted ? '↺ Reopen' : '✓ Complete'}
         </button>
       </div>
     </div>
@@ -185,12 +178,11 @@ export function renderPlannerView(state) {
     filteredQuests = state.quests.filter(q => q.pinned && q.status === "active");
   }
 
-  const materials = aggregateMaterials(filteredQuests, state.inventory);
+  const materials = aggregateMaterials(filteredQuests, state.inventoryCap);
   const rewards = aggregateRewards(filteredQuests);
 
   const totalItemsCount = materials.reduce((acc, m) => acc + m.totalRequired, 0);
-  const totalShortageCount = materials.reduce((acc, m) => acc + m.shortage, 0);
-  const fulfilledItemsCount = materials.filter(m => m.isFulfilled).length;
+  const overCapMaterials = materials.filter(m => m.exceedsCap);
 
   const pinnedActiveCount = state.quests.filter(q => q.pinned && q.status === "active").length;
   const allActiveCount = state.quests.filter(q => q.status === "active").length;
@@ -203,7 +195,11 @@ export function renderPlannerView(state) {
           <p class="view-subheading">Aggregate materials needed across your pinned Farm RPG quests</p>
         </div>
         <div class="planner-header-actions">
-          <button class="btn btn-secondary btn-sm" id="copy-materials-btn" title="Copy to clipboard">
+          <div class="planner-cap-box">
+            <label class="planner-cap-label" for="planner-cap-input">🎒 Inventory Cap:</label>
+            <input type="number" id="planner-cap-input" class="planner-cap-input" min="1" value="${state.inventoryCap}" title="Your maximum inventory capacity" />
+          </div>
+          <button class="btn btn-secondary btn-sm" id="copy-materials-btn" title="Copy shopping list to clipboard">
             📋 Copy Shopping List
           </button>
         </div>
@@ -238,17 +234,17 @@ export function renderPlannerView(state) {
           </div>
         </div>
         <div class="stat-card">
-          <span class="stat-icon">⏳</span>
+          <span class="stat-icon">🔢</span>
           <div class="stat-info">
-            <div class="stat-value ${totalShortageCount > 0 ? 'color-warning' : 'color-success'}">${totalShortageCount.toLocaleString()}</div>
-            <div class="stat-label">Items Still Needed</div>
+            <div class="stat-value">${totalItemsCount.toLocaleString()}</div>
+            <div class="stat-label">Total Items Needed</div>
           </div>
         </div>
-        <div class="stat-card">
-          <span class="stat-icon">✅</span>
+        <div class="stat-card ${overCapMaterials.length > 0 ? 'stat-card-warning' : ''}">
+          <span class="stat-icon">${overCapMaterials.length > 0 ? '⚠️' : '✅'}</span>
           <div class="stat-info">
-            <div class="stat-value color-success">${fulfilledItemsCount} / ${materials.length}</div>
-            <div class="stat-label">Materials Ready</div>
+            <div class="stat-value ${overCapMaterials.length > 0 ? 'color-warning' : 'color-success'}">${overCapMaterials.length}</div>
+            <div class="stat-label">${overCapMaterials.length === 1 ? 'Item' : 'Items'} Over Cap</div>
           </div>
         </div>
       </div>
@@ -278,7 +274,7 @@ export function renderPlannerView(state) {
         </div>
       ` : `
         <div class="materials-grid">
-          ${materials.map(mat => renderMaterialCardHtml(mat)).join("")}
+          ${materials.map(mat => renderMaterialCardHtml(mat, state.inventoryCap)).join("")}
         </div>
       `}
     </div>
@@ -287,10 +283,10 @@ export function renderPlannerView(state) {
   return { element: container, materials, filteredQuests };
 }
 
-function renderMaterialCardHtml(mat) {
-  const isDone = mat.isFulfilled;
+function renderMaterialCardHtml(mat, inventoryCap) {
+  const isOverCap = mat.exceedsCap;
   return `
-    <div class="material-card ${isDone ? 'mat-fulfilled' : 'mat-shortage'}" data-item-name="${mat.item}">
+    <div class="material-card ${isOverCap ? 'mat-over-cap' : ''}" data-item-name="${mat.item}">
       <div class="mat-card-header">
         <div class="mat-title-box">
           <span class="mat-icon-slot">${renderItemIconHtml(mat.item, "icon-md")}</span>
@@ -301,33 +297,28 @@ function renderMaterialCardHtml(mat) {
             </div>
           </div>
         </div>
-        <div class="mat-status-tag ${isDone ? 'tag-ready' : 'tag-needed'}">
-          ${isDone ? '✓ Ready' : `Need ${mat.shortage.toLocaleString()}`}
-        </div>
+        ${isOverCap ? `
+          <span class="cap-warning-badge" title="Requirement of ${mat.totalRequired.toLocaleString()} exceeds your inventory cap of ${inventoryCap.toLocaleString()}">
+            ⚠️ Exceeds Cap (+${mat.overBy.toLocaleString()})
+          </span>
+        ` : `
+          <span class="mat-status-tag tag-within-cap">
+            ✓ Within Cap
+          </span>
+        `}
       </div>
 
-      <!-- Progress bar -->
-      <div class="mat-progress-box">
-        <div class="mat-progress-header">
-          <span class="mat-progress-fraction">In Bag: <strong>${mat.inBag.toLocaleString()}</strong> / ${mat.totalRequired.toLocaleString()}</span>
-          <span class="mat-progress-percent">${mat.percent}%</span>
+      <!-- Quantity Display -->
+      <div class="mat-qty-display">
+        <div class="mat-qty-main">
+          <span class="mat-qty-num">${mat.totalRequired.toLocaleString()}</span>
+          <span class="mat-qty-unit">needed</span>
         </div>
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill ${isDone ? 'fill-done' : ''}" style="width: ${mat.percent}%;"></div>
-        </div>
-      </div>
-
-      <!-- Quick inventory adjuster -->
-      <div class="mat-quick-adjust">
-        <span class="quick-adjust-label">Quick Bag Update:</span>
-        <div class="qty-control">
-          <button class="qty-btn btn-mat-dec" data-item="${mat.item}" data-delta="-5" title="Minus 5">-5</button>
-          <button class="qty-btn btn-mat-dec" data-item="${mat.item}" data-delta="-1" title="Minus 1">-1</button>
-          <input type="number" class="qty-input mat-inv-input" data-item="${mat.item}" value="${mat.inBag}" min="0" />
-          <button class="qty-btn btn-mat-inc" data-item="${mat.item}" data-delta="1" title="Plus 1">+1</button>
-          <button class="qty-btn btn-mat-inc" data-item="${mat.item}" data-delta="5" title="Plus 5">+5</button>
-          <button class="qty-btn btn-mat-fill" data-item="${mat.item}" data-target="${mat.totalRequired}" title="Set to required count (${mat.totalRequired})">Set Full</button>
-        </div>
+        ${isOverCap ? `
+          <div class="mat-cap-warning-msg">
+            <span>⚠️ Exceeds your inventory cap of <strong>${inventoryCap.toLocaleString()}</strong> by <strong>${mat.overBy.toLocaleString()}</strong>. Plan multiple trips or upgrade bag space.</span>
+          </div>
+        ` : ''}
       </div>
 
       <!-- Expandable Quests Breakdown -->
@@ -347,107 +338,6 @@ function renderMaterialCardHtml(mat) {
 }
 
 /**
- * Render single inventory cards grid HTML
- */
-export function renderInventoryCardsHtml(items, state) {
-  if (items.length === 0) {
-    return `
-      <div class="empty-state-card" style="grid-column: 1 / -1;">
-        <div class="empty-icon">
-          <img src="assets/Corn.png" alt="Empty" class="empty-state-img" />
-        </div>
-        <h3>No Items Found</h3>
-        <p>No items in your bag match your search or filter. Add items above or clear your search!</p>
-      </div>
-    `;
-  }
-
-  return items.map(item => {
-    const count = state.inventory[item] || 0;
-    return `
-      <div class="inv-item-card" data-item="${item}">
-        <div class="inv-item-info">
-          <span class="inv-item-icon-slot">${renderItemIconHtml(item, "icon-md")}</span>
-          <div>
-            <div class="inv-item-name">${item}</div>
-            <div class="inv-item-count-label">In Bag: <strong>${count.toLocaleString()}</strong></div>
-          </div>
-        </div>
-        <div class="inv-item-controls">
-          <button class="qty-btn btn-inv-dec" data-item="${item}" data-delta="-10" title="Minus 10">-10</button>
-          <button class="qty-btn btn-inv-dec" data-item="${item}" data-delta="-1" title="Minus 1">-1</button>
-          <input type="number" class="qty-input inv-direct-input" data-item="${item}" value="${count}" min="0" />
-          <button class="qty-btn btn-inv-inc" data-item="${item}" data-delta="1" title="Plus 1">+1</button>
-          <button class="qty-btn btn-inv-inc" data-item="${item}" data-delta="10" title="Plus 10">+10</button>
-          <button class="btn-delete-inv" data-item="${item}" title="Delete ${item} from bag">🗑️</button>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-/**
- * Render Inventory / Bag management view
- */
-export function renderInventoryView(state) {
-  const container = document.createElement("div");
-  container.className = "inventory-view";
-
-  // Collect all unique item names from all quests + existing inventory
-  const allItemNames = new Set(Object.keys(state.inventory));
-  for (const q of state.quests) {
-    for (const r of q.requirements || []) {
-      if (r.item) allItemNames.add(r.item.trim());
-    }
-  }
-  const sortedItems = Array.from(allItemNames).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-
-  container.innerHTML = `
-    <div class="inventory-header-card">
-      <div class="inventory-header-top">
-        <div>
-          <h2 class="view-heading">🎒 Your Farm Bag (Inventory)</h2>
-          <p class="view-subheading">Track your item counts. Any updates reflect instantly in quest turn-ins and material planning.</p>
-        </div>
-        <div class="inventory-header-actions">
-          <button class="btn btn-secondary btn-sm" id="clear-all-inventory-btn">
-            Clear All Inventory
-          </button>
-        </div>
-      </div>
-
-      <!-- Quick Add Item Form with Dedicated Custom Dropdown -->
-      <div class="add-inventory-inline">
-        <div class="inline-form-group">
-          <label>Add / Update Item in Bag:</label>
-          <div class="inline-inputs">
-            <input type="text" id="quick-inv-name" placeholder="Search Farm RPG item (e.g. Wood, Corn)..." style="min-width: 260px;" />
-            <input type="number" id="quick-inv-qty" placeholder="Qty" min="0" style="max-width: 110px;" />
-            <button class="btn btn-primary btn-sm" id="quick-inv-submit">Save Item</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Inventory Filter Toolbar -->
-    <div class="inventory-toolbar">
-      <div class="inv-search-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="inv-search-input" class="inv-search-input" placeholder="Search items in your farm bag..." />
-      </div>
-      <div class="stat-pill" id="inv-count-pill">${sortedItems.length} Total Items</div>
-    </div>
-
-    <!-- Inventory Items Table / Grid -->
-    <div class="inventory-grid" id="inventory-grid-container">
-      ${renderInventoryCardsHtml(sortedItems, state)}
-    </div>
-  `;
-
-  return container;
-}
-
-/**
  * Render Settings & Backup View
  */
 export function renderSettingsView(state) {
@@ -456,12 +346,21 @@ export function renderSettingsView(state) {
 
   container.innerHTML = `
     <div class="settings-card">
-      <h2 class="view-heading">⚙️ Data & GitHub Pages Settings</h2>
-      <p class="view-subheading">Your quest progress and inventory are saved in your browser's local storage.</p>
+      <h2 class="view-heading">⚙️ App Settings & Backup</h2>
+      <p class="view-subheading">Your quest progress and settings are saved in your browser's local storage.</p>
+
+      <div class="settings-section">
+        <h3>🎒 Inventory Cap</h3>
+        <p>Set your maximum inventory capacity in Farm RPG. The Material Planner will display a subtle warning for any items that exceed this limit.</p>
+        <div class="settings-cap-form">
+          <input type="number" id="settings-cap-input" class="input-field" min="1" value="${state.inventoryCap}" style="max-width: 160px;" />
+          <button class="btn btn-primary" id="settings-save-cap-btn">Save Cap</button>
+        </div>
+      </div>
 
       <div class="settings-section">
         <h3>💾 Backup & Portability</h3>
-        <p>Save a copy of all your custom quests and inventory counts to a JSON file, or restore on another device.</p>
+        <p>Save a copy of all your custom quests and settings to a JSON file, or restore on another device.</p>
         <div class="settings-buttons-row">
           <button class="btn btn-primary" id="export-data-btn">
             📥 Export Backup (JSON)
@@ -475,23 +374,10 @@ export function renderSettingsView(state) {
 
       <div class="settings-section">
         <h3>🔄 Reset Data</h3>
-        <p>Want to clear all quests and reset your farm bag inventory?</p>
+        <p>Want to clear all quests and reset settings to defaults?</p>
         <button class="btn btn-danger" id="reset-defaults-btn">
           ⚠️ Reset & Clear All Data
         </button>
-      </div>
-
-      <div class="settings-section">
-        <h3>🚀 GitHub Pages Deployment Guide</h3>
-        <p>Deploy this site to your free GitHub Pages account with zero build steps:</p>
-        <ol class="setup-steps-list">
-          <li>Create a new repository on GitHub (e.g., <code>farm-rpg-helper</code>).</li>
-          <li>Push these files directly to the <code>main</code> branch.</li>
-          <li>Go to your repository <strong>Settings</strong> &rarr; <strong>Pages</strong>.</li>
-          <li>Under <em>Build and deployment</em> &gt; <em>Source</em>, select <strong>Deploy from a branch</strong>.</li>
-          <li>Select Branch: <strong>main</strong> and folder: <strong>/ (root)</strong>, then click <strong>Save</strong>.</li>
-          <li>In 1-2 minutes, your website will be live at <code>https://&lt;your-username&gt;.github.io/farm-rpg-helper/</code>!</li>
-        </ol>
       </div>
     </div>
   `;

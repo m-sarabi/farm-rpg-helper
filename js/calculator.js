@@ -1,40 +1,24 @@
 import { getItemIcon } from "./quests-data.js";
 
 /**
- * Checks if all requirements of a single quest are fulfilled by current inventory.
+ * Returns clean list of requirements for a quest.
  */
-export function isQuestReady(quest, inventory = {}) {
-  if (!quest.requirements || quest.requirements.length === 0) return true;
-  return quest.requirements.every(req => {
-    const have = inventory[req.item] || 0;
-    return have >= req.amount;
-  });
-}
-
-/**
- * Calculate completion status of each requirement for a quest
- */
-export function getQuestRequirementsStatus(quest, inventory = {}) {
+export function getQuestRequirementsStatus(quest) {
   return (quest.requirements || []).map(req => {
-    const have = inventory[req.item] || 0;
-    const needed = req.amount;
-    const fulfilled = have >= needed;
-    const percent = Math.min(100, Math.round((have / needed) * 100));
+    const amount = parseInt(req.amount, 10) || 0;
     return {
       item: req.item,
-      amount: needed,
-      have,
-      fulfilled,
-      percent,
+      amount,
       icon: getItemIcon(req.item)
     };
   });
 }
 
 /**
- * Aggregates all material requirements across the given list of quests.
+ * Aggregates all material requirements across the given list of quests,
+ * evaluating against the player's inventory cap.
  */
-export function aggregateMaterials(quests, inventory = {}) {
+export function aggregateMaterials(quests, inventoryCap = 1000) {
   const itemMap = new Map();
 
   for (const quest of quests) {
@@ -50,7 +34,6 @@ export function aggregateMaterials(quests, inventory = {}) {
           item: itemName,
           icon: getItemIcon(itemName),
           totalRequired: 0,
-          inBag: inventory[itemName] || 0,
           questSources: []
         });
       }
@@ -66,30 +49,27 @@ export function aggregateMaterials(quests, inventory = {}) {
     }
   }
 
-  // Calculate shortages and completion percentages
+  const cap = parseInt(inventoryCap, 10) || 0;
+
+  // Calculate over-cap status
   const results = Array.from(itemMap.values()).map(entry => {
-    const inBag = inventory[entry.item] || 0;
-    const shortage = Math.max(0, entry.totalRequired - inBag);
-    const percent = entry.totalRequired > 0 
-      ? Math.min(100, Math.round((inBag / entry.totalRequired) * 100))
-      : 100;
+    const exceedsCap = cap > 0 && entry.totalRequired > cap;
+    const overBy = exceedsCap ? entry.totalRequired - cap : 0;
 
     return {
       ...entry,
-      inBag,
-      shortage,
-      percent,
-      isFulfilled: shortage === 0
+      exceedsCap,
+      overBy
     };
   });
 
-  // Sort: unfulfilled items first (lowest completion % first), then alphabetical
+  // Sort: items exceeding cap first, then highest quantity required, then alphabetical
   results.sort((a, b) => {
-    if (a.isFulfilled !== b.isFulfilled) {
-      return a.isFulfilled ? 1 : -1;
+    if (a.exceedsCap !== b.exceedsCap) {
+      return a.exceedsCap ? -1 : 1;
     }
-    if (a.percent !== b.percent) {
-      return a.percent - b.percent;
+    if (b.totalRequired !== a.totalRequired) {
+      return b.totalRequired - a.totalRequired;
     }
     return a.item.localeCompare(b.item);
   });
@@ -132,26 +112,22 @@ export function aggregateRewards(quests) {
 /**
  * Formats material list into a clean text for copying to clipboard.
  */
-export function formatMaterialsAsText(materials, title = "Farm RPG Material Checklist") {
+export function formatMaterialsAsText(materials, title = "Farm RPG Material Checklist", inventoryCap = 1000) {
   const dateStr = new Date().toLocaleDateString();
+  const cap = parseInt(inventoryCap, 10) || 0;
+
   let text = `📋 ${title} (${dateStr})\n`;
   text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-
-  const unfulfilled = materials.filter(m => !m.isFulfilled);
-  const fulfilled = materials.filter(m => m.isFulfilled);
-
-  if (unfulfilled.length > 0) {
-    text += `⏳ Still Needed:\n`;
-    for (const m of unfulfilled) {
-      text += ` [ ] ${m.item}: need ${m.shortage.toLocaleString()} more (${m.inBag.toLocaleString()}/${m.totalRequired.toLocaleString()})\n`;
-    }
+  if (cap > 0) {
+    text += `🎒 Inventory Cap: ${cap.toLocaleString()}\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
   }
 
-  if (fulfilled.length > 0) {
-    text += `\n✅ Ready in Bag:\n`;
-    for (const m of fulfilled) {
-      text += ` [x] ${m.item}: ${m.inBag.toLocaleString()}/${m.totalRequired.toLocaleString()}\n`;
-    }
+  for (const m of materials) {
+    const capWarn = m.exceedsCap
+      ? ` (⚠️ Exceeds cap of ${cap.toLocaleString()} by ${m.overBy.toLocaleString()})`
+      : "";
+    text += ` [ ] ${m.item}: ${m.totalRequired.toLocaleString()} required${capWarn}\n`;
   }
 
   text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;

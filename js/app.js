@@ -1,12 +1,10 @@
 import { state } from "./state.js";
 import { NPC_LIST, KNOWN_ITEM_NAMES } from "./quests-data.js";
-import { isQuestReady, formatMaterialsAsText, aggregateMaterials } from "./calculator.js";
+import { formatMaterialsAsText, aggregateMaterials } from "./calculator.js";
 import { attachItemAutocomplete } from "./autocomplete.js";
 import {
   renderQuestCard,
   renderPlannerView,
-  renderInventoryView,
-  renderInventoryCardsHtml,
   renderSettingsView,
   openQuestModal,
   closeModal,
@@ -17,7 +15,7 @@ import {
 const mainContent = document.getElementById("main-content");
 const navTabs = document.querySelectorAll(".nav-tab");
 const statActiveCount = document.getElementById("stat-active-count");
-const statReadyCount = document.getElementById("stat-ready-count");
+const statCompletedCount = document.getElementById("stat-completed-count");
 const badgeQuestCount = document.getElementById("badge-quest-count");
 const badgePlannerCount = document.getElementById("badge-planner-count");
 const themeToggleBtn = document.getElementById("theme-toggle-btn");
@@ -90,14 +88,14 @@ function switchTab(tabName) {
 
 function updateHeaderStats() {
   const activeQuests = state.quests.filter(q => q.status === "active");
-  const readyQuests = activeQuests.filter(q => isQuestReady(q, state.inventory));
+  const completedQuests = state.quests.filter(q => q.status === "completed");
   const pinnedActiveQuests = activeQuests.filter(q => q.pinned);
 
-  statActiveCount.textContent = `${activeQuests.length} Active`;
-  statReadyCount.textContent = `${readyQuests.length} Ready ✨`;
+  if (statActiveCount) statActiveCount.textContent = `${activeQuests.length} Active`;
+  if (statCompletedCount) statCompletedCount.textContent = `${completedQuests.length} Completed`;
 
-  badgeQuestCount.textContent = activeQuests.length;
-  badgePlannerCount.textContent = pinnedActiveQuests.length;
+  if (badgeQuestCount) badgeQuestCount.textContent = activeQuests.length;
+  if (badgePlannerCount) badgePlannerCount.textContent = pinnedActiveQuests.length;
 }
 
 /**
@@ -112,9 +110,6 @@ function renderCurrentTab() {
       break;
     case "planner":
       renderPlannerTab();
-      break;
-    case "inventory":
-      renderInventoryTab();
       break;
     case "settings":
       renderSettingsTab();
@@ -237,16 +232,12 @@ function updateQuestsGridAndFilters(container) {
   const pillsContainer = container.querySelector("#filter-pills-container");
   if (pillsContainer) {
     const activeCount = state.quests.filter(q => q.status === 'active').length;
-    const readyCount = state.quests.filter(q => q.status === 'active' && isQuestReady(q, state.inventory)).length;
     const completedCount = state.quests.filter(q => q.status === 'completed').length;
     const allCount = state.quests.length;
 
     pillsContainer.innerHTML = `
       <button class="filter-pill ${state.filters.status === 'active' ? 'active' : ''}" data-status="active">
         Active (${activeCount})
-      </button>
-      <button class="filter-pill ${state.filters.status === 'ready' ? 'active' : ''}" data-status="ready">
-        Ready to Turn In ✨ (${readyCount})
       </button>
       <button class="filter-pill ${state.filters.status === 'completed' ? 'active' : ''}" data-status="completed">
         Completed (${completedCount})
@@ -276,7 +267,7 @@ function updateQuestsGridAndFilters(container) {
   // Update Grid cards
   const grid = container.querySelector("#quests-grid-container");
   if (grid) {
-    const filteredQuests = filterQuests(state.quests, state.filters, state.inventory);
+    const filteredQuests = filterQuests(state.quests, state.filters);
     grid.innerHTML = "";
 
     if (filteredQuests.length === 0) {
@@ -316,14 +307,11 @@ function getQuestSkillLevel(quest, skillKey) {
 /**
  * Filter and sort logic
  */
-function filterQuests(quests, filters, inventory) {
+function filterQuests(quests, filters) {
   const filtered = quests.filter(q => {
     // Status Filter
     if (filters.status === "active" && q.status !== "active") return false;
     if (filters.status === "completed" && q.status !== "completed") return false;
-    if (filters.status === "ready") {
-      if (q.status !== "active" || !isQuestReady(q, inventory)) return false;
-    }
 
     // NPC Filter
     if (filters.npc !== "all" && q.npc.toLowerCase() !== filters.npc.toLowerCase()) {
@@ -434,7 +422,7 @@ function renderPlannerTab() {
   const copyBtn = plannerEl.querySelector("#copy-materials-btn");
   if (copyBtn) {
     copyBtn.addEventListener("click", async () => {
-      const text = formatMaterialsAsText(materials, `Farm RPG Checklist (${filteredQuests.length} Quests)`);
+      const text = formatMaterialsAsText(materials, `Farm RPG Checklist (${filteredQuests.length} Quests)`, state.inventoryCap);
       try {
         await navigator.clipboard.writeText(text);
         showToast("📋 Shopping checklist copied to clipboard!", "success");
@@ -445,160 +433,21 @@ function renderPlannerTab() {
     });
   }
 
-  // Bind inline inventory adjustments on material cards
-  plannerEl.querySelectorAll(".qty-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const item = btn.dataset.item;
-      if (btn.dataset.target !== undefined) {
-        // Set Full target
-        state.setInventoryItem(item, parseInt(btn.dataset.target, 10) || 0);
-        showToast(`Set ${item} to required amount!`, "success");
-      } else if (btn.dataset.delta !== undefined) {
-        const delta = parseInt(btn.dataset.delta, 10);
-        state.adjustInventoryItem(item, delta);
+  // Bind inline Inventory Cap adjuster in Planner Header
+  const capInput = plannerEl.querySelector("#planner-cap-input");
+  if (capInput) {
+    capInput.addEventListener("change", () => {
+      const val = parseInt(capInput.value, 10);
+      if (!isNaN(val) && val > 0) {
+        state.setInventoryCap(val);
+        showToast(`Inventory cap set to ${val.toLocaleString()}`, "info");
+      } else {
+        capInput.value = state.inventoryCap;
       }
     });
-  });
-
-  plannerEl.querySelectorAll(".mat-inv-input").forEach(input => {
-    input.addEventListener("change", () => {
-      const item = input.dataset.item;
-      const val = parseInt(input.value, 10) || 0;
-      state.setInventoryItem(item, val);
-    });
-  });
+  }
 
   mainContent.appendChild(plannerEl);
-}
-
-let currentInventorySearchQuery = "";
-
-/**
- * Inventory / Bag Tab
- */
-function renderInventoryTab() {
-  const invEl = renderInventoryView(state);
-
-  // Quick Add / Update form
-  const nameInput = invEl.querySelector("#quick-inv-name");
-  const qtyInput = invEl.querySelector("#quick-inv-qty");
-  const submitBtn = invEl.querySelector("#quick-inv-submit");
-  const searchInput = invEl.querySelector("#inv-search-input");
-  const gridContainer = invEl.querySelector("#inventory-grid-container");
-  const countPill = invEl.querySelector("#inv-count-pill");
-
-  // Attach dedicated item autocomplete dropdown
-  if (nameInput) {
-    attachItemAutocomplete(nameInput, {
-      onSelect: () => {
-        if (qtyInput) qtyInput.focus();
-      }
-    });
-  }
-
-  const handleQuickAdd = () => {
-    const name = nameInput.value.trim();
-    const qty = parseInt(qtyInput.value, 10);
-    if (!name) {
-      showToast("Please enter an item name.", "warning");
-      return;
-    }
-    state.setInventoryItem(name, isNaN(qty) ? 1 : qty);
-    showToast(`Updated bag: ${name} = ${state.inventory[name] || 0}`, "success");
-    nameInput.value = "";
-    qtyInput.value = "";
-    nameInput.focus();
-  };
-
-  if (submitBtn) submitBtn.addEventListener("click", handleQuickAdd);
-  if (qtyInput) {
-    qtyInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") handleQuickAdd();
-    });
-  }
-
-  // Bind inventory card controls (adjusters + delete buttons)
-  function bindInventoryCardControls(container) {
-    container.querySelectorAll(".qty-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const item = btn.dataset.item;
-        const delta = parseInt(btn.dataset.delta, 10) || 0;
-        state.adjustInventoryItem(item, delta);
-      });
-    });
-
-    container.querySelectorAll(".inv-direct-input").forEach(input => {
-      input.addEventListener("change", () => {
-        const item = input.dataset.item;
-        const val = parseInt(input.value, 10) || 0;
-        state.setInventoryItem(item, val);
-      });
-    });
-
-    container.querySelectorAll(".btn-delete-inv").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const item = btn.dataset.item;
-        if (confirm(`Remove "${item}" from your Farm Bag?`)) {
-          state.setInventoryItem(item, 0);
-          showToast(`Removed "${item}" from Farm Bag`, "info");
-        }
-      });
-    });
-  }
-
-  // Live filter inventory items by search query
-  function filterAndRenderInventoryGrid() {
-    const query = (searchInput ? searchInput.value : currentInventorySearchQuery).trim().toLowerCase();
-    currentInventorySearchQuery = searchInput ? searchInput.value : "";
-
-    const allItemNames = new Set(Object.keys(state.inventory));
-    for (const q of state.quests) {
-      for (const r of q.requirements || []) {
-        if (r.item) allItemNames.add(r.item.trim());
-      }
-    }
-    let items = Array.from(allItemNames).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-    if (query) {
-      items = items.filter(name => name.toLowerCase().includes(query));
-    }
-
-    if (gridContainer) {
-      gridContainer.innerHTML = renderInventoryCardsHtml(items, state);
-      bindInventoryCardControls(gridContainer);
-    }
-    if (countPill) {
-      countPill.textContent = `${items.length} ${items.length === 1 ? 'Item' : 'Items'}`;
-    }
-  }
-
-  if (searchInput) {
-    searchInput.value = currentInventorySearchQuery;
-    searchInput.addEventListener("input", filterAndRenderInventoryGrid);
-  }
-
-  // Initial binding of card controls
-  if (gridContainer) {
-    if (currentInventorySearchQuery) {
-      filterAndRenderInventoryGrid();
-    } else {
-      bindInventoryCardControls(gridContainer);
-    }
-  }
-
-  // Clear All
-  const clearBtn = invEl.querySelector("#clear-all-inventory-btn");
-  if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      if (confirm("Are you sure you want to reset all item counts in your bag to 0?")) {
-        state.inventory = {};
-        state.saveInventory();
-        state.notify();
-        showToast("Bag inventory cleared.", "info");
-      }
-    });
-  }
-
-  mainContent.appendChild(invEl);
 }
 
 /**
@@ -606,6 +455,27 @@ function renderInventoryTab() {
  */
 function renderSettingsTab() {
   const settingsEl = renderSettingsView(state);
+
+  // Bind Inventory Cap Save
+  const capInput = settingsEl.querySelector("#settings-cap-input");
+  const saveCapBtn = settingsEl.querySelector("#settings-save-cap-btn");
+  const handleCapSave = () => {
+    if (!capInput) return;
+    const val = parseInt(capInput.value, 10);
+    if (!isNaN(val) && val > 0) {
+      state.setInventoryCap(val);
+      showToast(`Inventory cap updated to ${val.toLocaleString()}!`, "success");
+    } else {
+      showToast("Please enter a valid positive number for inventory cap.", "warning");
+      capInput.value = state.inventoryCap;
+    }
+  };
+  if (saveCapBtn) saveCapBtn.addEventListener("click", handleCapSave);
+  if (capInput) {
+    capInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleCapSave();
+    });
+  }
 
   // Export JSON
   const exportBtn = settingsEl.querySelector("#export-data-btn");
@@ -640,9 +510,9 @@ function renderSettingsTab() {
   const resetBtn = settingsEl.querySelector("#reset-defaults-btn");
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
-      if (confirm("Reset and clear all quests and farm bag inventory? Your current changes will be overwritten unless exported.")) {
+      if (confirm("Reset and clear all quests and restore default settings? Your current changes will be overwritten unless exported.")) {
         state.resetToDefaults();
-        showToast("Cleared all quests and inventory!", "info");
+        showToast("Cleared all quests and reset settings!", "info");
       }
     });
   }
