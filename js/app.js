@@ -1,10 +1,12 @@
 import { state } from "./state.js";
 import { NPC_LIST, KNOWN_ITEM_NAMES } from "./quests-data.js";
 import { isQuestReady, formatMaterialsAsText, aggregateMaterials } from "./calculator.js";
+import { attachItemAutocomplete } from "./autocomplete.js";
 import {
   renderQuestCard,
   renderPlannerView,
   renderInventoryView,
+  renderInventoryCardsHtml,
   renderSettingsView,
   openQuestModal,
   closeModal,
@@ -59,34 +61,15 @@ function initApp() {
     }
   });
 
-  // Populate global item autocomplete datalist
-  populateGlobalItemDatalist();
-
   // Subscribe to state changes to update header stats and re-render current view
   state.subscribe(() => {
     updateHeaderStats();
-    populateGlobalItemDatalist();
     renderCurrentTab();
   });
 
   // Initial render
   updateHeaderStats();
   renderCurrentTab();
-}
-
-function populateGlobalItemDatalist() {
-  const datalist = document.getElementById("known-items-list");
-  if (!datalist) return;
-
-  const allNames = new Set(KNOWN_ITEM_NAMES || []);
-  Object.keys(state.inventory || {}).forEach(k => allNames.add(k));
-  (state.quests || []).forEach(q => {
-    (q.requirements || []).forEach(r => r.item && allNames.add(r.item.trim()));
-    (q.rewards || []).forEach(rew => rew.label && rew.type === "item" && allNames.add(rew.label.trim()));
-  });
-
-  const sorted = Array.from(allNames).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-  datalist.innerHTML = sorted.map(name => `<option value="${name}"></option>`).join("");
 }
 
 function updateThemeIcon() {
@@ -108,12 +91,13 @@ function switchTab(tabName) {
 function updateHeaderStats() {
   const activeQuests = state.quests.filter(q => q.status === "active");
   const readyQuests = activeQuests.filter(q => isQuestReady(q, state.inventory));
+  const pinnedActiveQuests = activeQuests.filter(q => q.pinned);
 
   statActiveCount.textContent = `${activeQuests.length} Active`;
   statReadyCount.textContent = `${readyQuests.length} Ready ✨`;
 
   badgeQuestCount.textContent = activeQuests.length;
-  badgePlannerCount.textContent = state.selectedQuestIds.size;
+  badgePlannerCount.textContent = pinnedActiveQuests.length;
 }
 
 /**
@@ -181,20 +165,29 @@ function renderQuestsView() {
         <!-- Rendered dynamically -->
       </div>
 
-      <div class="filter-dropdown-group" style="display: flex; align-items: center; gap: 0.5rem;">
-        <select class="filter-select" id="npc-filter-select">
+      <div class="filter-dropdown-group" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+        <select class="filter-select" id="npc-filter-select" title="Filter by NPC">
           <option value="all" ${state.filters.npc === 'all' ? 'selected' : ''}>All NPCs</option>
           ${activeNpcs.map(npc => `
-            <option value="${npc}" ${state.filters.npc === npc ? 'selected' : ''}>👤 ${npc}</option>
+            <option value="${npc}" ${state.filters.npc === npc ? 'selected' : ''}>${npc === 'Unknown' ? '❓' : '👤'} ${npc}</option>
           `).join('')}
         </select>
 
-        <button class="btn btn-ghost btn-xs" id="quick-select-all-btn" title="Select all active quests for Planner">
-          Select All
-        </button>
-        <button class="btn btn-ghost btn-xs" id="quick-deselect-all-btn" title="Deselect all">
-          Clear
-        </button>
+        <select class="filter-select" id="skill-sort-select" title="Sort quests by skill level">
+          <option value="default" ${state.filters.skillSort === 'default' ? 'selected' : ''}>Sort: Default</option>
+          <option value="farming_asc" ${state.filters.skillSort === 'farming_asc' ? 'selected' : ''}>Farming (Low to High)</option>
+          <option value="farming_desc" ${state.filters.skillSort === 'farming_desc' ? 'selected' : ''}>Farming (High to Low)</option>
+          <option value="fishing_asc" ${state.filters.skillSort === 'fishing_asc' ? 'selected' : ''}>🎣 Fishing (Low to High)</option>
+          <option value="fishing_desc" ${state.filters.skillSort === 'fishing_desc' ? 'selected' : ''}>🎣 Fishing (High to Low)</option>
+          <option value="crafting_asc" ${state.filters.skillSort === 'crafting_asc' ? 'selected' : ''}>🔨 Crafting (Low to High)</option>
+          <option value="crafting_desc" ${state.filters.skillSort === 'crafting_desc' ? 'selected' : ''}>🔨 Crafting (High to Low)</option>
+          <option value="exploring_asc" ${state.filters.skillSort === 'exploring_asc' ? 'selected' : ''}>🧭 Exploring (Low to High)</option>
+          <option value="exploring_desc" ${state.filters.skillSort === 'exploring_desc' ? 'selected' : ''}>🧭 Exploring (High to Low)</option>
+          <option value="cooking_asc" ${state.filters.skillSort === 'cooking_asc' ? 'selected' : ''}>🍳 Cooking (Low to High)</option>
+          <option value="cooking_desc" ${state.filters.skillSort === 'cooking_desc' ? 'selected' : ''}>🍳 Cooking (High to Low)</option>
+          <option value="mining_asc" ${state.filters.skillSort === 'mining_asc' ? 'selected' : ''}>⛏️ Mining (Low to High)</option>
+          <option value="mining_desc" ${state.filters.skillSort === 'mining_desc' ? 'selected' : ''}>⛏️ Mining (High to Low)</option>
+        </select>
       </div>
     </div>
   `;
@@ -214,22 +207,17 @@ function renderQuestsView() {
     state.setFilters({ npc: e.target.value });
   });
 
+  const skillSortSelect = toolbar.querySelector("#skill-sort-select");
+  skillSortSelect.addEventListener("change", (e) => {
+    state.setFilters({ skillSort: e.target.value });
+  });
+
   const btnAddQuest = toolbar.querySelector("#btn-add-quest");
   btnAddQuest.addEventListener("click", () => {
     openQuestModal(null, (questData) => {
       const created = state.addQuest(questData);
       showToast(`Quest "${created.title}" added successfully!`, "success");
     });
-  });
-
-  toolbar.querySelector("#quick-select-all-btn").addEventListener("click", () => {
-    state.selectAllActive();
-    showToast("All active quests selected for planner!", "info");
-  });
-
-  toolbar.querySelector("#quick-deselect-all-btn").addEventListener("click", () => {
-    state.deselectAll();
-    showToast("Cleared quest selection.", "info");
   });
 
   container.appendChild(toolbar);
@@ -275,6 +263,16 @@ function updateQuestsGridAndFilters(container) {
     });
   }
 
+  // Sync dropdown values if changed
+  const npcSelect = container.querySelector("#npc-filter-select");
+  if (npcSelect && npcSelect.value !== state.filters.npc) {
+    npcSelect.value = state.filters.npc;
+  }
+  const skillSortSelect = container.querySelector("#skill-sort-select");
+  if (skillSortSelect && skillSortSelect.value !== state.filters.skillSort) {
+    skillSortSelect.value = state.filters.skillSort;
+  }
+
   // Update Grid cards
   const grid = container.querySelector("#quests-grid-container");
   if (grid) {
@@ -284,7 +282,9 @@ function updateQuestsGridAndFilters(container) {
     if (filteredQuests.length === 0) {
       grid.innerHTML = `
         <div class="empty-state-card">
-          <div class="empty-icon">🌾</div>
+          <div class="empty-icon">
+            <img src="assets/Corn.png" alt="Empty" class="empty-state-img" />
+          </div>
           <h3>No Quests Found</h3>
           <p>No quests match your current filter or search criteria. Try adjusting filters or create a new quest!</p>
         </div>
@@ -300,10 +300,24 @@ function updateQuestsGridAndFilters(container) {
 }
 
 /**
- * Filter logic
+ * Helper to get a quest's required skill level for a given skill
+ */
+function getQuestSkillLevel(quest, skillKey) {
+  if (quest.skills && quest.skills[skillKey] !== undefined) {
+    return parseInt(quest.skills[skillKey], 10) || 0;
+  }
+  if (quest.levelReq) {
+    const match = quest.levelReq.match(new RegExp(`${skillKey}\\s*(\\d+)`, "i"));
+    if (match) return parseInt(match[1], 10) || 0;
+  }
+  return 0;
+}
+
+/**
+ * Filter and sort logic
  */
 function filterQuests(quests, filters, inventory) {
-  return quests.filter(q => {
+  const filtered = quests.filter(q => {
     // Status Filter
     if (filters.status === "active" && q.status !== "active") return false;
     if (filters.status === "completed" && q.status !== "completed") return false;
@@ -330,20 +344,34 @@ function filterQuests(quests, filters, inventory) {
 
     return true;
   });
+
+  // Skill-based sorting
+  if (filters.skillSort && filters.skillSort !== "default") {
+    const [skillKey, direction] = filters.skillSort.split("_");
+    filtered.sort((a, b) => {
+      const lvlA = getQuestSkillLevel(a, skillKey);
+      const lvlB = getQuestSkillLevel(b, skillKey);
+
+      // Quests requiring this skill come first; 0 (not requiring) goes to the bottom
+      if (lvlA === 0 && lvlB > 0) return 1;
+      if (lvlB === 0 && lvlA > 0) return -1;
+      if (lvlA === 0 && lvlB === 0) return 0;
+
+      if (direction === "asc") {
+        return lvlA - lvlB;
+      } else {
+        return lvlB - lvlA;
+      }
+    });
+  }
+
+  return filtered;
 }
 
 /**
  * Bind card interactions
  */
 function bindQuestCardEvents(card, quest) {
-  // Checkbox toggle
-  const selectCheckbox = card.querySelector(".quest-select-checkbox");
-  if (selectCheckbox) {
-    selectCheckbox.addEventListener("change", () => {
-      state.toggleQuestSelection(quest.id);
-    });
-  }
-
   // Pin toggle
   const pinBtn = card.querySelector(".pin-btn");
   if (pinBtn) {
@@ -402,23 +430,6 @@ function renderPlannerTab() {
     });
   });
 
-  // Select all / Deselect all
-  const selectAllBtn = plannerEl.querySelector("#planner-select-all");
-  if (selectAllBtn) {
-    selectAllBtn.addEventListener("click", () => {
-      state.selectAllActive();
-      showToast("Selected all active quests for planner.", "info");
-    });
-  }
-
-  const deselectAllBtn = plannerEl.querySelector("#planner-deselect-all");
-  if (deselectAllBtn) {
-    deselectAllBtn.addEventListener("click", () => {
-      state.deselectAll();
-      showToast("Cleared quest selection.", "info");
-    });
-  }
-
   // Copy Shopping List
   const copyBtn = plannerEl.querySelector("#copy-materials-btn");
   if (copyBtn) {
@@ -460,6 +471,8 @@ function renderPlannerTab() {
   mainContent.appendChild(plannerEl);
 }
 
+let currentInventorySearchQuery = "";
+
 /**
  * Inventory / Bag Tab
  */
@@ -470,6 +483,18 @@ function renderInventoryTab() {
   const nameInput = invEl.querySelector("#quick-inv-name");
   const qtyInput = invEl.querySelector("#quick-inv-qty");
   const submitBtn = invEl.querySelector("#quick-inv-submit");
+  const searchInput = invEl.querySelector("#inv-search-input");
+  const gridContainer = invEl.querySelector("#inventory-grid-container");
+  const countPill = invEl.querySelector("#inv-count-pill");
+
+  // Attach dedicated item autocomplete dropdown
+  if (nameInput) {
+    attachItemAutocomplete(nameInput, {
+      onSelect: () => {
+        if (qtyInput) qtyInput.focus();
+      }
+    });
+  }
 
   const handleQuickAdd = () => {
     const name = nameInput.value.trim();
@@ -485,28 +510,80 @@ function renderInventoryTab() {
     nameInput.focus();
   };
 
-  submitBtn.addEventListener("click", handleQuickAdd);
-  qtyInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") handleQuickAdd();
-  });
-
-  // Direct buttons (+/-) on cards
-  invEl.querySelectorAll(".qty-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const item = btn.dataset.item;
-      const delta = parseInt(btn.dataset.delta, 10) || 0;
-      state.adjustInventoryItem(item, delta);
+  if (submitBtn) submitBtn.addEventListener("click", handleQuickAdd);
+  if (qtyInput) {
+    qtyInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleQuickAdd();
     });
-  });
+  }
 
-  // Direct number input on cards
-  invEl.querySelectorAll(".inv-direct-input").forEach(input => {
-    input.addEventListener("change", () => {
-      const item = input.dataset.item;
-      const val = parseInt(input.value, 10) || 0;
-      state.setInventoryItem(item, val);
+  // Bind inventory card controls (adjusters + delete buttons)
+  function bindInventoryCardControls(container) {
+    container.querySelectorAll(".qty-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const item = btn.dataset.item;
+        const delta = parseInt(btn.dataset.delta, 10) || 0;
+        state.adjustInventoryItem(item, delta);
+      });
     });
-  });
+
+    container.querySelectorAll(".inv-direct-input").forEach(input => {
+      input.addEventListener("change", () => {
+        const item = input.dataset.item;
+        const val = parseInt(input.value, 10) || 0;
+        state.setInventoryItem(item, val);
+      });
+    });
+
+    container.querySelectorAll(".btn-delete-inv").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const item = btn.dataset.item;
+        if (confirm(`Remove "${item}" from your Farm Bag?`)) {
+          state.setInventoryItem(item, 0);
+          showToast(`Removed "${item}" from Farm Bag`, "info");
+        }
+      });
+    });
+  }
+
+  // Live filter inventory items by search query
+  function filterAndRenderInventoryGrid() {
+    const query = (searchInput ? searchInput.value : currentInventorySearchQuery).trim().toLowerCase();
+    currentInventorySearchQuery = searchInput ? searchInput.value : "";
+
+    const allItemNames = new Set(Object.keys(state.inventory));
+    for (const q of state.quests) {
+      for (const r of q.requirements || []) {
+        if (r.item) allItemNames.add(r.item.trim());
+      }
+    }
+    let items = Array.from(allItemNames).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    if (query) {
+      items = items.filter(name => name.toLowerCase().includes(query));
+    }
+
+    if (gridContainer) {
+      gridContainer.innerHTML = renderInventoryCardsHtml(items, state);
+      bindInventoryCardControls(gridContainer);
+    }
+    if (countPill) {
+      countPill.textContent = `${items.length} ${items.length === 1 ? 'Item' : 'Items'}`;
+    }
+  }
+
+  if (searchInput) {
+    searchInput.value = currentInventorySearchQuery;
+    searchInput.addEventListener("input", filterAndRenderInventoryGrid);
+  }
+
+  // Initial binding of card controls
+  if (gridContainer) {
+    if (currentInventorySearchQuery) {
+      filterAndRenderInventoryGrid();
+    } else {
+      bindInventoryCardControls(gridContainer);
+    }
+  }
 
   // Clear All
   const clearBtn = invEl.querySelector("#clear-all-inventory-btn");
@@ -563,9 +640,9 @@ function renderSettingsTab() {
   const resetBtn = settingsEl.querySelector("#reset-defaults-btn");
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
-      if (confirm("Reset all quests and inventory back to default starter quests? Your current changes will be overwritten unless exported.")) {
+      if (confirm("Reset and clear all quests and farm bag inventory? Your current changes will be overwritten unless exported.")) {
         state.resetToDefaults();
-        showToast("Reset to default starter quests!", "info");
+        showToast("Cleared all quests and inventory!", "info");
       }
     });
   }

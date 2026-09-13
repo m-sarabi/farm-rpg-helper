@@ -3,7 +3,6 @@ import { DEFAULT_QUESTS } from "./quests-data.js";
 const STORAGE_KEYS = {
   QUESTS: "farmrpg_helper_quests_v1",
   INVENTORY: "farmrpg_helper_inventory_v1",
-  SELECTED: "farmrpg_helper_selected_v1",
   THEME: "farmrpg_helper_theme_v1",
   PLANNER_MODE: "farmrpg_helper_planner_mode_v1"
 };
@@ -12,13 +11,13 @@ class StateManager {
   constructor() {
     this.quests = [];
     this.inventory = {};
-    this.selectedQuestIds = new Set();
     this.activeTab = "quests";
-    this.plannerFilter = "active"; // "active" | "selected" | "pinned"
+    this.plannerFilter = "pinned"; // "pinned" | "active"
     this.filters = {
       status: "active", // "all" | "active" | "completed" | "ready"
       npc: "all",
-      search: ""
+      search: "",
+      skillSort: "default"
     };
     this.theme = "light";
     this.subscribers = [];
@@ -46,44 +45,28 @@ class StateManager {
       }
     } catch (e) {
       console.error("Failed to load quests from localStorage:", e);
-      this.quests = JSON.parse(JSON.stringify(DEFAULT_QUESTS));
+      this.quests = [];
     }
 
-    // Load inventory
+    // Load inventory (defaults to empty)
     try {
       const savedInv = localStorage.getItem(STORAGE_KEYS.INVENTORY);
       if (savedInv) {
         this.inventory = JSON.parse(savedInv);
       } else {
-        // Seed default starter inventory with a few items to show how it works
-        this.inventory = {
-          "Wood": 15,
-          "Stone": 5,
-          "Corn": 20
-        };
+        this.inventory = {};
         this.saveInventory();
       }
     } catch (e) {
       this.inventory = {};
     }
 
-    // Load selected quests
-    try {
-      const savedSelected = localStorage.getItem(STORAGE_KEYS.SELECTED);
-      if (savedSelected) {
-        this.selectedQuestIds = new Set(JSON.parse(savedSelected));
-      } else {
-        // By default, select pinned active quests
-        this.quests.filter(q => q.status === "active" && q.pinned).forEach(q => this.selectedQuestIds.add(q.id));
-      }
-    } catch (e) {
-      this.selectedQuestIds = new Set();
-    }
-
     // Load planner mode
     const savedPlanner = localStorage.getItem(STORAGE_KEYS.PLANNER_MODE);
-    if (savedPlanner) {
+    if (savedPlanner && (savedPlanner === "pinned" || savedPlanner === "active")) {
       this.plannerFilter = savedPlanner;
+    } else {
+      this.plannerFilter = "pinned";
     }
   }
 
@@ -93,10 +76,6 @@ class StateManager {
 
   saveInventory() {
     localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(this.inventory));
-  }
-
-  saveSelected() {
-    localStorage.setItem(STORAGE_KEYS.SELECTED, JSON.stringify(Array.from(this.selectedQuestIds)));
   }
 
   savePlannerMode() {
@@ -148,6 +127,7 @@ class StateManager {
       npc: quest.npc.trim() || "Buddy",
       description: quest.description?.trim() || "",
       levelReq: quest.levelReq?.trim() || "",
+      skills: quest.skills || {},
       status: quest.status || "active",
       pinned: !!quest.pinned,
       requirements: Array.isArray(quest.requirements) ? quest.requirements : [],
@@ -155,10 +135,6 @@ class StateManager {
       createdAt: new Date().toISOString()
     };
     this.quests.unshift(newQuest);
-    if (newQuest.pinned) {
-      this.selectedQuestIds.add(newQuest.id);
-      this.saveSelected();
-    }
     this.saveQuests();
     this.notify();
     return newQuest;
@@ -175,9 +151,7 @@ class StateManager {
 
   deleteQuest(id) {
     this.quests = this.quests.filter(q => q.id !== id);
-    this.selectedQuestIds.delete(id);
     this.saveQuests();
-    this.saveSelected();
     this.notify();
   }
 
@@ -186,10 +160,6 @@ class StateManager {
     if (quest) {
       const newStatus = quest.status === "completed" ? "active" : "completed";
       quest.status = newStatus;
-      if (newStatus === "completed") {
-        this.selectedQuestIds.delete(id);
-        this.saveSelected();
-      }
       this.saveQuests();
       this.notify();
       return newStatus;
@@ -206,28 +176,6 @@ class StateManager {
       return quest.pinned;
     }
     return false;
-  }
-
-  toggleQuestSelection(id) {
-    if (this.selectedQuestIds.has(id)) {
-      this.selectedQuestIds.delete(id);
-    } else {
-      this.selectedQuestIds.add(id);
-    }
-    this.saveSelected();
-    this.notify();
-  }
-
-  selectAllActive() {
-    this.quests.filter(q => q.status === "active").forEach(q => this.selectedQuestIds.add(q.id));
-    this.saveSelected();
-    this.notify();
-  }
-
-  deselectAll() {
-    this.selectedQuestIds.clear();
-    this.saveSelected();
-    this.notify();
   }
 
   setInventoryItem(itemName, count) {
@@ -257,11 +205,10 @@ class StateManager {
 
   exportData() {
     const data = {
-      version: 1,
+      version: 2,
       exportedAt: new Date().toISOString(),
       quests: this.quests,
-      inventory: this.inventory,
-      selectedQuestIds: Array.from(this.selectedQuestIds)
+      inventory: this.inventory
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -280,10 +227,8 @@ class StateManager {
       }
       this.quests = data.quests;
       this.inventory = data.inventory || {};
-      this.selectedQuestIds = new Set(data.selectedQuestIds || []);
       this.saveQuests();
       this.saveInventory();
-      this.saveSelected();
       this.notify();
       return { success: true, count: this.quests.length };
     } catch (err) {
@@ -292,13 +237,10 @@ class StateManager {
   }
 
   resetToDefaults() {
-    this.quests = JSON.parse(JSON.stringify(DEFAULT_QUESTS));
-    this.inventory = { "Wood": 15, "Stone": 5, "Corn": 20 };
-    this.selectedQuestIds = new Set();
-    this.quests.filter(q => q.status === "active" && q.pinned).forEach(q => this.selectedQuestIds.add(q.id));
+    this.quests = [];
+    this.inventory = {};
     this.saveQuests();
     this.saveInventory();
-    this.saveSelected();
     this.notify();
   }
 }

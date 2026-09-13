@@ -104,8 +104,7 @@ export function aggregateRewards(quests) {
   const summary = {
     silver: 0,
     gold: 0,
-    items: {},
-    xp: {}
+    items: {}
   };
 
   for (const quest of quests) {
@@ -113,16 +112,16 @@ export function aggregateRewards(quests) {
     for (const rew of quest.rewards) {
       const type = (rew.type || "").toLowerCase();
       const amount = parseInt(rew.amount, 10) || 0;
-      const label = (rew.label || "").trim();
+      const itemName = (rew.item || rew.label || "").trim();
 
-      if (type === "silver" || label.toLowerCase().includes("silver")) {
+      if (type === "silver" || itemName.toLowerCase() === "silver") {
         summary.silver += amount;
-      } else if (type === "gold" || label.toLowerCase().includes("gold")) {
+      } else if (type === "gold" || itemName.toLowerCase() === "gold") {
         summary.gold += amount;
-      } else if (type === "xp" || label.toLowerCase().includes("xp")) {
-        summary.xp[label] = (summary.xp[label] || 0) + amount;
-      } else {
-        summary.items[label] = (summary.items[label] || 0) + amount;
+      } else if (type === "item" || (type !== "xp" && itemName)) {
+        if (itemName) {
+          summary.items[itemName] = (summary.items[itemName] || 0) + amount;
+        }
       }
     }
   }

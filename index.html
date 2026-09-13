@@ -6,8 +6,8 @@
   <title>Farm RPG Quest & Material Tracker</title>
   <meta name="description" content="Manage your Farm RPG quests, calculate total required materials, track bag inventory, and optimize your farm progression." />
   
-  <!-- Favicon with corn/crop emoji -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌽</text></svg>" />
+  <!-- Favicon with authentic Corn PNG -->
+  <link rel="icon" href="./assets/Corn.png" type="image/png" />
   
   <!-- Stylesheet -->
   <link rel="stylesheet" href="./styles/main.css" />
@@ -18,7 +18,9 @@
   <header class="app-header">
     <div class="header-container">
       <a href="#" class="brand" id="brand-home-link">
-        <div class="brand-icon">🌾</div>
+        <div class="brand-icon">
+          <img src="./assets/Corn.png" alt="Corn" class="brand-icon-img" />
+        </div>
         <div>
           <div class="brand-title">
             Farm RPG Helper
@@ -95,17 +97,53 @@
             </div>
           </div>
 
-          <div class="form-row-2">
-            <div class="form-group">
-              <label class="form-label" for="quest-level-input">Level / Prerequisite</label>
-              <input type="text" id="quest-level-input" class="input-field" placeholder="e.g. Farming 15" />
-            </div>
-            <div class="form-group" style="justify-content: flex-end; padding-bottom: 0.5rem;">
-              <label class="checkbox-label">
-                <input type="checkbox" id="quest-pinned-input" />
-                <span>Pin to Favorites / Planner</span>
-              </label>
-            </div>
+          <!-- Level Prerequisites Accordion -->
+          <div class="form-group">
+            <details class="skills-accordion" id="modal-skills-accordion">
+              <summary class="skills-accordion-summary">
+                <span class="skills-summary-left">
+                  <span class="skills-accordion-icon">🎯</span>
+                  <strong>Level Prerequisites</strong>
+                </span>
+                <span class="skills-summary-badge" id="skills-summary-badge">Not set (all 0)</span>
+              </summary>
+              <div class="skills-accordion-body">
+                <div class="skills-accordion-desc">Set required level for any of the 6 skills (0 = not required):</div>
+                <div class="skills-grid">
+                  <div class="skill-input-row">
+                    <label class="skill-label" for="skill-req-farming"><img src="./assets/Corn.png" alt="Farming" class="skill-icon-inline" /> Farming</label>
+                    <input type="number" id="skill-req-farming" class="input-field skill-level-input" data-skill="farming" min="0" max="99" value="0" placeholder="0" />
+                  </div>
+                  <div class="skill-input-row">
+                    <label class="skill-label" for="skill-req-fishing">🎣 Fishing</label>
+                    <input type="number" id="skill-req-fishing" class="input-field skill-level-input" data-skill="fishing" min="0" max="99" value="0" placeholder="0" />
+                  </div>
+                  <div class="skill-input-row">
+                    <label class="skill-label" for="skill-req-crafting">🔨 Crafting</label>
+                    <input type="number" id="skill-req-crafting" class="input-field skill-level-input" data-skill="crafting" min="0" max="99" value="0" placeholder="0" />
+                  </div>
+                  <div class="skill-input-row">
+                    <label class="skill-label" for="skill-req-exploring">🧭 Exploring</label>
+                    <input type="number" id="skill-req-exploring" class="input-field skill-level-input" data-skill="exploring" min="0" max="99" value="0" placeholder="0" />
+                  </div>
+                  <div class="skill-input-row">
+                    <label class="skill-label" for="skill-req-cooking">🍳 Cooking</label>
+                    <input type="number" id="skill-req-cooking" class="input-field skill-level-input" data-skill="cooking" min="0" max="99" value="0" placeholder="0" />
+                  </div>
+                  <div class="skill-input-row">
+                    <label class="skill-label" for="skill-req-mining">⛏️ Mining</label>
+                    <input type="number" id="skill-req-mining" class="input-field skill-level-input" data-skill="mining" min="0" max="99" value="0" placeholder="0" />
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <div class="form-group" style="margin-top: -0.25rem;">
+            <label class="checkbox-label">
+              <input type="checkbox" id="quest-pinned-input" />
+              <span>⭐ Pin to Favorites / Planner</span>
+            </label>
           </div>
 
           <div class="form-group">
@@ -139,9 +177,6 @@
       </form>
     </div>
   </div>
-
-  <!-- Global Autocomplete Datalist for Farm RPG Items -->
-  <datalist id="known-items-list"></datalist>
 
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>

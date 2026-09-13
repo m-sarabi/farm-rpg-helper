@@ -1,5 +1,6 @@
 import { getItemIcon, renderItemIconHtml, NPC_LIST, KNOWN_ITEM_NAMES } from "./quests-data.js";
 import { isQuestReady, getQuestRequirementsStatus, aggregateMaterials, aggregateRewards, formatMaterialsAsText } from "./calculator.js";
+import { attachItemAutocomplete } from "./autocomplete.js";
 
 /**
  * Creates and displays a floating toast notification.
@@ -37,7 +38,6 @@ export function showToast(message, type = "info") {
  */
 export function renderQuestCard(quest, state) {
   const isReady = quest.status === "active" && isQuestReady(quest, state.inventory);
-  const isSelected = state.selectedQuestIds.has(quest.id);
   const reqStatus = getQuestRequirementsStatus(quest, state.inventory);
 
   const card = document.createElement("div");
@@ -67,41 +67,64 @@ export function renderQuestCard(quest, state) {
     `;
   }).join("");
 
+  // Skills Level Badges
+  const skillBadges = [];
+  const skillIcons = {
+    farming: `<img src="assets/Corn.png" class="skill-badge-img" alt="Farming" />`,
+    fishing: "🎣",
+    crafting: "🔨",
+    exploring: "🧭",
+    cooking: "🍳",
+    mining: "⛏️"
+  };
+  const skillNames = { farming: "Farming", fishing: "Fishing", crafting: "Crafting", exploring: "Exploring", cooking: "Cooking", mining: "Mining" };
+  if (quest.skills && typeof quest.skills === "object") {
+    for (const [sKey, sVal] of Object.entries(quest.skills)) {
+      const lvl = parseInt(sVal, 10) || 0;
+      if (lvl > 0) {
+        skillBadges.push(`<span class="level-badge" title="${skillNames[sKey] || sKey} requirement">${skillIcons[sKey] || '🎯'} ${skillNames[sKey] || sKey} ${lvl}</span>`);
+      }
+    }
+  }
+  if (skillBadges.length === 0 && quest.levelReq) {
+    skillBadges.push(`<span class="level-badge" title="Requirement">🎯 ${quest.levelReq}</span>`);
+  }
+
   // Rewards HTML
   const rewardsHtml = (quest.rewards || []).map(rew => {
     const type = (rew.type || "").toLowerCase();
-    let badgeClass = "badge-reward-item";
-    let icon = "🎁";
+    const itemName = (rew.item || rew.label || "").trim();
+    const amountStr = rew.amount ? Number(rew.amount).toLocaleString() : "";
 
-    if (type === "silver" || rew.label?.toLowerCase().includes("silver")) {
-      badgeClass = "badge-reward-silver";
-      icon = renderItemIconHtml("Silver", "icon-sm");
-    } else if (type === "gold" || rew.label?.toLowerCase().includes("gold")) {
-      badgeClass = "badge-reward-gold";
-      icon = renderItemIconHtml("Gold", "icon-sm");
-    } else if (type === "xp" || rew.label?.toLowerCase().includes("xp")) {
-      badgeClass = "badge-reward-xp";
-      icon = `<span class="reward-emoji">⭐</span>`;
+    if (type === "silver" || itemName.toLowerCase() === "silver") {
+      return `
+        <span class="reward-pill badge-reward-silver">
+          ${renderItemIconHtml("Silver", "icon-sm")} ${amountStr} Silver
+        </span>
+      `;
+    } else if (type === "gold" || itemName.toLowerCase() === "gold") {
+      return `
+        <span class="reward-pill badge-reward-gold">
+          ${renderItemIconHtml("Gold", "icon-sm")} ${amountStr} Gold
+        </span>
+      `;
+    } else if (type === "xp") {
+      return ""; // XP removed as reward
     } else {
-      icon = renderItemIconHtml(rew.label, "icon-sm");
+      return `
+        <span class="reward-pill badge-reward-item">
+          ${renderItemIconHtml(itemName, "icon-sm")} ${amountStr ? amountStr + ' ' : ''}${itemName}
+        </span>
+      `;
     }
-
-    return `
-      <span class="reward-pill ${badgeClass}">
-        ${icon} ${rew.amount ? rew.amount.toLocaleString() + ' ' : ''}${rew.label}
-      </span>
-    `;
-  }).join("");
+  }).filter(Boolean).join("");
 
   card.innerHTML = `
     <div class="quest-card-top">
-      <div class="quest-select-wrapper" title="Select for Material Planner">
-        <input type="checkbox" class="quest-select-checkbox" ${isSelected ? 'checked' : ''} data-id="${quest.id}" aria-label="Select quest ${quest.title}">
-      </div>
       <div class="quest-title-area">
         <div class="quest-badges">
-          <span class="npc-badge" title="Quest Giver">👤 ${quest.npc}</span>
-          ${quest.levelReq ? `<span class="level-badge" title="Requirement">🎯 ${quest.levelReq}</span>` : ''}
+          <span class="npc-badge" title="Quest Giver">${quest.npc === "Unknown" ? "❓" : "👤"} ${quest.npc}</span>
+          ${skillBadges.join("")}
           ${isReady ? `<span class="ready-badge">✨ Ready to Turn In!</span>` : ''}
           ${quest.status === "completed" ? `<span class="completed-badge">✅ Completed</span>` : ''}
         </div>
@@ -119,7 +142,7 @@ export function renderQuestCard(quest, state) {
       ${reqsHtml || '<p class="empty-text">No requirements specified.</p>'}
     </div>
 
-    ${(quest.rewards && quest.rewards.length > 0) ? `
+    ${rewardsHtml ? `
       <div class="quest-section-title rewards-title">Rewards</div>
       <div class="quest-rewards-list">
         ${rewardsHtml}
@@ -153,15 +176,13 @@ export function renderPlannerView(state) {
   const container = document.createElement("div");
   container.className = "planner-view";
 
-  // Filter quests based on plannerFilter mode
+  // Filter quests based on plannerFilter mode (default: pinned)
   let filteredQuests = [];
-  if (state.plannerFilter === "selected") {
-    filteredQuests = state.quests.filter(q => state.selectedQuestIds.has(q.id));
-  } else if (state.plannerFilter === "pinned") {
-    filteredQuests = state.quests.filter(q => q.pinned && q.status === "active");
-  } else {
-    // "active" mode
+  if (state.plannerFilter === "active") {
     filteredQuests = state.quests.filter(q => q.status === "active");
+  } else {
+    // "pinned" mode
+    filteredQuests = state.quests.filter(q => q.pinned && q.status === "active");
   }
 
   const materials = aggregateMaterials(filteredQuests, state.inventory);
@@ -171,12 +192,15 @@ export function renderPlannerView(state) {
   const totalShortageCount = materials.reduce((acc, m) => acc + m.shortage, 0);
   const fulfilledItemsCount = materials.filter(m => m.isFulfilled).length;
 
+  const pinnedActiveCount = state.quests.filter(q => q.pinned && q.status === "active").length;
+  const allActiveCount = state.quests.filter(q => q.status === "active").length;
+
   container.innerHTML = `
     <div class="planner-header-card">
       <div class="planner-header-top">
         <div>
           <h2 class="view-heading">🧺 Total Material Planner</h2>
-          <p class="view-subheading">Aggregate materials needed across your selected Farm RPG quests</p>
+          <p class="view-subheading">Aggregate materials needed across your pinned Farm RPG quests</p>
         </div>
         <div class="planner-header-actions">
           <button class="btn btn-secondary btn-sm" id="copy-materials-btn" title="Copy to clipboard">
@@ -188,21 +212,12 @@ export function renderPlannerView(state) {
       <!-- Planner Scope Switcher -->
       <div class="planner-scope-bar">
         <div class="segmented-control">
-          <button class="segment-btn ${state.plannerFilter === 'active' ? 'active' : ''}" data-planner-mode="active">
-            All Active (${state.quests.filter(q => q.status === 'active').length})
-          </button>
-          <button class="segment-btn ${state.plannerFilter === 'selected' ? 'active' : ''}" data-planner-mode="selected">
-            Selected Only (${state.selectedQuestIds.size})
-          </button>
           <button class="segment-btn ${state.plannerFilter === 'pinned' ? 'active' : ''}" data-planner-mode="pinned">
-            Pinned Only (${state.quests.filter(q => q.pinned && q.status === 'active').length})
+            ⭐ Pinned Only (${pinnedActiveCount})
           </button>
-        </div>
-
-        <div class="quick-select-buttons">
-          <button class="btn btn-ghost btn-xs" id="planner-select-all">Select All Active</button>
-          <span class="button-sep">•</span>
-          <button class="btn btn-ghost btn-xs" id="planner-deselect-all">Deselect All</button>
+          <button class="segment-btn ${state.plannerFilter === 'active' ? 'active' : ''}" data-planner-mode="active">
+            All Active (${allActiveCount})
+          </button>
         </div>
       </div>
 
@@ -255,7 +270,9 @@ export function renderPlannerView(state) {
     <div class="materials-list-container">
       ${materials.length === 0 ? `
         <div class="empty-state-card">
-          <div class="empty-icon">🌾</div>
+          <div class="empty-icon">
+            <img src="assets/Corn.png" alt="Empty" class="empty-state-img" />
+          </div>
           <h3>No Quests in this Scope</h3>
           <p>Select some quests or switch to "All Active" to see aggregate material requirements.</p>
         </div>
@@ -330,6 +347,46 @@ function renderMaterialCardHtml(mat) {
 }
 
 /**
+ * Render single inventory cards grid HTML
+ */
+export function renderInventoryCardsHtml(items, state) {
+  if (items.length === 0) {
+    return `
+      <div class="empty-state-card" style="grid-column: 1 / -1;">
+        <div class="empty-icon">
+          <img src="assets/Corn.png" alt="Empty" class="empty-state-img" />
+        </div>
+        <h3>No Items Found</h3>
+        <p>No items in your bag match your search or filter. Add items above or clear your search!</p>
+      </div>
+    `;
+  }
+
+  return items.map(item => {
+    const count = state.inventory[item] || 0;
+    return `
+      <div class="inv-item-card" data-item="${item}">
+        <div class="inv-item-info">
+          <span class="inv-item-icon-slot">${renderItemIconHtml(item, "icon-md")}</span>
+          <div>
+            <div class="inv-item-name">${item}</div>
+            <div class="inv-item-count-label">In Bag: <strong>${count.toLocaleString()}</strong></div>
+          </div>
+        </div>
+        <div class="inv-item-controls">
+          <button class="qty-btn btn-inv-dec" data-item="${item}" data-delta="-10" title="Minus 10">-10</button>
+          <button class="qty-btn btn-inv-dec" data-item="${item}" data-delta="-1" title="Minus 1">-1</button>
+          <input type="number" class="qty-input inv-direct-input" data-item="${item}" value="${count}" min="0" />
+          <button class="qty-btn btn-inv-inc" data-item="${item}" data-delta="1" title="Plus 1">+1</button>
+          <button class="qty-btn btn-inv-inc" data-item="${item}" data-delta="10" title="Plus 10">+10</button>
+          <button class="btn-delete-inv" data-item="${item}" title="Delete ${item} from bag">🗑️</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/**
  * Render Inventory / Bag management view
  */
 export function renderInventoryView(state) {
@@ -343,7 +400,7 @@ export function renderInventoryView(state) {
       if (r.item) allItemNames.add(r.item.trim());
     }
   }
-  const sortedItems = Array.from(allItemNames).sort();
+  const sortedItems = Array.from(allItemNames).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 
   container.innerHTML = `
     <div class="inventory-header-card">
@@ -359,51 +416,31 @@ export function renderInventoryView(state) {
         </div>
       </div>
 
-      <!-- Quick Add Item Form -->
+      <!-- Quick Add Item Form with Dedicated Custom Dropdown -->
       <div class="add-inventory-inline">
         <div class="inline-form-group">
-          <label>Add / Update Item:</label>
+          <label>Add / Update Item in Bag:</label>
           <div class="inline-inputs">
-            <input type="text" id="quick-inv-name" placeholder="Item name (e.g. Wood, Corn)" list="known-items-list" />
+            <input type="text" id="quick-inv-name" placeholder="Search Farm RPG item (e.g. Wood, Corn)..." style="min-width: 260px;" />
             <input type="number" id="quick-inv-qty" placeholder="Qty" min="0" style="max-width: 110px;" />
             <button class="btn btn-primary btn-sm" id="quick-inv-submit">Save Item</button>
           </div>
-          <datalist id="known-items-list">
-            ${sortedItems.map(item => `<option value="${item}"></option>`).join('')}
-          </datalist>
         </div>
       </div>
     </div>
 
+    <!-- Inventory Filter Toolbar -->
+    <div class="inventory-toolbar">
+      <div class="inv-search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="inv-search-input" class="inv-search-input" placeholder="Search items in your farm bag..." />
+      </div>
+      <div class="stat-pill" id="inv-count-pill">${sortedItems.length} Total Items</div>
+    </div>
+
     <!-- Inventory Items Table / Grid -->
-    <div class="inventory-grid">
-      ${sortedItems.length === 0 ? `
-        <div class="empty-state-card">
-          <div class="empty-icon">🎒</div>
-          <h3>Inventory is Empty</h3>
-          <p>Add some items above or let them populate automatically from your quests!</p>
-        </div>
-      ` : sortedItems.map(item => {
-        const count = state.inventory[item] || 0;
-        return `
-          <div class="inv-item-card" data-item="${item}">
-            <div class="inv-item-info">
-              <span class="inv-item-icon-slot">${renderItemIconHtml(item, "icon-md")}</span>
-              <div>
-                <div class="inv-item-name">${item}</div>
-                <div class="inv-item-count-label">In Bag: <strong>${count.toLocaleString()}</strong></div>
-              </div>
-            </div>
-            <div class="inv-item-controls">
-              <button class="qty-btn btn-inv-dec" data-item="${item}" data-delta="-10">-10</button>
-              <button class="qty-btn btn-inv-dec" data-item="${item}" data-delta="-1">-1</button>
-              <input type="number" class="qty-input inv-direct-input" data-item="${item}" value="${count}" min="0" />
-              <button class="qty-btn btn-inv-inc" data-item="${item}" data-delta="1">+1</button>
-              <button class="qty-btn btn-inv-inc" data-item="${item}" data-delta="10">+10</button>
-            </div>
-          </div>
-        `;
-      }).join('')}
+    <div class="inventory-grid" id="inventory-grid-container">
+      ${renderInventoryCardsHtml(sortedItems, state)}
     </div>
   `;
 
@@ -438,9 +475,9 @@ export function renderSettingsView(state) {
 
       <div class="settings-section">
         <h3>🔄 Reset Data</h3>
-        <p>Want to start over with default Farm RPG starter quests?</p>
+        <p>Want to clear all quests and reset your farm bag inventory?</p>
         <button class="btn btn-danger" id="reset-defaults-btn">
-          ⚠️ Reset to Default Quests
+          ⚠️ Reset & Clear All Data
         </button>
       </div>
 
@@ -462,12 +499,17 @@ export function renderSettingsView(state) {
   return container;
 }
 
+let activeModalAutocompletes = [];
+
 /**
  * Setup and populate the Add/Edit Quest Modal
  */
 export function openQuestModal(questToEdit = null, onSave) {
   let modal = document.getElementById("quest-modal");
   if (!modal) return;
+
+  activeModalAutocompletes.forEach(ac => ac.destroy());
+  activeModalAutocompletes = [];
 
   const titleEl = document.getElementById("modal-quest-title");
   const form = document.getElementById("quest-form");
@@ -487,63 +529,142 @@ export function openQuestModal(questToEdit = null, onSave) {
   const isEdit = !!questToEdit;
   titleEl.textContent = isEdit ? "Edit Quest" : "Add New Quest";
 
+  const SKILL_KEYS = ["farming", "fishing", "crafting", "exploring", "cooking", "mining"];
+  const SKILL_NAMES = { farming: "Farming", fishing: "Fishing", crafting: "Crafting", exploring: "Exploring", cooking: "Cooking", mining: "Mining" };
+
   // Fill form fields
   document.getElementById("quest-name-input").value = questToEdit?.title || "";
   document.getElementById("quest-npc-input").value = questToEdit?.npc || "Buddy";
-  document.getElementById("quest-level-input").value = questToEdit?.levelReq || "";
   document.getElementById("quest-desc-input").value = questToEdit?.description || "";
   document.getElementById("quest-pinned-input").checked = !!questToEdit?.pinned;
+
+  // Level Prerequisites Accordion setup
+  const skillsSummaryBadge = document.getElementById("skills-summary-badge");
+  const accordion = document.getElementById("modal-skills-accordion");
+  if (accordion) accordion.open = false;
+
+  function updateSkillsSummary() {
+    const activeSkills = [];
+    SKILL_KEYS.forEach(k => {
+      const input = document.getElementById(`skill-req-${k}`);
+      const val = parseInt(input?.value, 10) || 0;
+      if (val > 0) {
+        activeSkills.push(`${SKILL_NAMES[k]} ${val}`);
+      }
+    });
+
+    if (skillsSummaryBadge) {
+      if (activeSkills.length === 0) {
+        skillsSummaryBadge.textContent = "Not set (all 0)";
+        skillsSummaryBadge.classList.remove("is-active");
+      } else {
+        skillsSummaryBadge.textContent = activeSkills.join(" • ");
+        skillsSummaryBadge.classList.add("is-active");
+      }
+    }
+  }
+
+  SKILL_KEYS.forEach(k => {
+    const input = document.getElementById(`skill-req-${k}`);
+    if (input) {
+      let val = 0;
+      if (questToEdit?.skills && questToEdit.skills[k] !== undefined) {
+        val = parseInt(questToEdit.skills[k], 10) || 0;
+      } else if (questToEdit?.levelReq) {
+        const match = questToEdit.levelReq.match(new RegExp(`${k}\\s*(\\d+)`, "i"));
+        if (match) val = parseInt(match[1], 10) || 0;
+      }
+      input.value = val;
+      input.oninput = updateSkillsSummary;
+    }
+  });
+  updateSkillsSummary();
 
   // Add requirement row helper
   function addRequirementRow(item = "", amount = "") {
     const row = document.createElement("div");
     row.className = "modal-dynamic-row";
     row.innerHTML = `
-      <input type="text" class="modal-req-item input-field" placeholder="Item (e.g. Wood)" value="${item}" list="known-items-list" required />
+      <input type="text" class="modal-req-item input-field" placeholder="Search item (e.g. Wood, Corn)" value="${item}" required />
       <input type="number" class="modal-req-amount input-field" placeholder="Qty" value="${amount}" min="1" required />
       <button type="button" class="btn btn-ghost btn-sm remove-row-btn" title="Remove requirement">✕</button>
     `;
-    row.querySelector(".remove-row-btn").addEventListener("click", () => row.remove());
+    const itemInput = row.querySelector(".modal-req-item");
+    const amountInput = row.querySelector(".modal-req-amount");
+    const ac = attachItemAutocomplete(itemInput, {
+      onSelect: () => amountInput.focus()
+    });
+    if (ac) activeModalAutocompletes.push(ac);
+
+    row.querySelector(".remove-row-btn").addEventListener("click", () => {
+      if (ac) ac.destroy();
+      activeModalAutocompletes = activeModalAutocompletes.filter(x => x !== ac);
+      row.remove();
+    });
     reqContainer.appendChild(row);
   }
 
-  // Add reward row helper
-  function addRewardRow(type = "silver", label = "Silver", amount = "") {
+  // Add reward row helper (Silver & Gold have no labels; Item has item name input; XP removed)
+  function addRewardRow(type = "silver", item = "", amount = "") {
     const row = document.createElement("div");
     row.className = "modal-dynamic-row";
+    const isItem = type === "item";
     row.innerHTML = `
       <select class="modal-rew-type input-field">
         <option value="silver" ${type === 'silver' ? 'selected' : ''}>Silver</option>
         <option value="gold" ${type === 'gold' ? 'selected' : ''}>Gold</option>
         <option value="item" ${type === 'item' ? 'selected' : ''}>Item</option>
-        <option value="xp" ${type === 'xp' ? 'selected' : ''}>XP</option>
       </select>
-      <input type="text" class="modal-rew-label input-field" placeholder="Label (e.g. Silver or Orange Juice)" value="${label}" list="known-items-list" required />
+      <input type="text" class="modal-rew-item input-field ${isItem ? '' : 'is-hidden'}" placeholder="Search item (e.g. Orange Juice)" value="${isItem ? item : ''}" ${isItem ? 'required' : ''} />
       <input type="number" class="modal-rew-amount input-field" placeholder="Amount" value="${amount}" min="1" required />
       <button type="button" class="btn btn-ghost btn-sm remove-row-btn" title="Remove reward">✕</button>
     `;
     const typeSelect = row.querySelector(".modal-rew-type");
-    const labelInput = row.querySelector(".modal-rew-label");
-    typeSelect.addEventListener("change", () => {
-      if (typeSelect.value === "silver" && (!labelInput.value || labelInput.value === "Gold")) labelInput.value = "Silver";
-      if (typeSelect.value === "gold" && (!labelInput.value || labelInput.value === "Silver")) labelInput.value = "Gold";
-      if (typeSelect.value === "xp" && !labelInput.value.includes("XP")) labelInput.value = "Farming XP";
+    const itemInput = row.querySelector(".modal-rew-item");
+    const amountInput = row.querySelector(".modal-rew-amount");
+    const ac = attachItemAutocomplete(itemInput, {
+      onSelect: () => amountInput.focus()
     });
-    row.querySelector(".remove-row-btn").addEventListener("click", () => row.remove());
+    if (ac) activeModalAutocompletes.push(ac);
+
+    typeSelect.addEventListener("change", () => {
+      if (typeSelect.value === "item") {
+        itemInput.classList.remove("is-hidden");
+        itemInput.required = true;
+        itemInput.focus();
+      } else {
+        itemInput.classList.add("is-hidden");
+        itemInput.required = false;
+        itemInput.value = "";
+        if (ac) ac.close();
+      }
+    });
+    row.querySelector(".remove-row-btn").addEventListener("click", () => {
+      if (ac) ac.destroy();
+      activeModalAutocompletes = activeModalAutocompletes.filter(x => x !== ac);
+      row.remove();
+    });
     rewContainer.appendChild(row);
   }
 
-  // Populate existing requirements & rewards or defaults
+  // Populate existing requirements & rewards or clean defaults
   if (isEdit && questToEdit.requirements?.length > 0) {
     questToEdit.requirements.forEach(r => addRequirementRow(r.item, r.amount));
   } else {
-    addRequirementRow("Wood", 25);
+    addRequirementRow("", "");
   }
 
   if (isEdit && questToEdit.rewards?.length > 0) {
-    questToEdit.rewards.forEach(r => addRewardRow(r.type, r.label, r.amount));
+    questToEdit.rewards.forEach(r => {
+      const rewType = (r.type || "").toLowerCase();
+      const isItem = rewType === "item" || (!["silver", "gold", "xp"].includes(rewType));
+      const normalizedType = isItem ? "item" : rewType;
+      if (normalizedType !== "xp") {
+        addRewardRow(normalizedType, r.item || r.label || "", r.amount);
+      }
+    });
   } else {
-    addRewardRow("silver", "Silver", 1000);
+    addRewardRow("silver", "", "");
   }
 
   // Bind add row buttons
@@ -556,9 +677,21 @@ export function openQuestModal(questToEdit = null, onSave) {
 
     const title = document.getElementById("quest-name-input").value.trim();
     const npc = document.getElementById("quest-npc-input").value.trim();
-    const levelReq = document.getElementById("quest-level-input").value.trim();
     const description = document.getElementById("quest-desc-input").value.trim();
     const pinned = document.getElementById("quest-pinned-input").checked;
+
+    // Extract skills
+    const skills = {};
+    const skillLevelsText = [];
+    SKILL_KEYS.forEach(k => {
+      const input = document.getElementById(`skill-req-${k}`);
+      const val = parseInt(input?.value, 10) || 0;
+      skills[k] = val;
+      if (val > 0) {
+        skillLevelsText.push(`${SKILL_NAMES[k]} ${val}`);
+      }
+    });
+    const levelReq = skillLevelsText.join(", ");
 
     // Extract requirements
     const reqRows = reqContainer.querySelectorAll(".modal-dynamic-row");
@@ -576,10 +709,18 @@ export function openQuestModal(questToEdit = null, onSave) {
     const rewards = [];
     rewRows.forEach(row => {
       const type = row.querySelector(".modal-rew-type").value;
-      const label = row.querySelector(".modal-rew-label").value.trim();
       const amount = parseInt(row.querySelector(".modal-rew-amount").value, 10) || 0;
-      if (label && amount > 0) {
-        rewards.push({ type, label, amount });
+      if (amount > 0) {
+        if (type === "silver") {
+          rewards.push({ type: "silver", amount, label: "Silver" });
+        } else if (type === "gold") {
+          rewards.push({ type: "gold", amount, label: "Gold" });
+        } else if (type === "item") {
+          const item = row.querySelector(".modal-rew-item").value.trim();
+          if (item) {
+            rewards.push({ type: "item", item, label: item, amount });
+          }
+        }
       }
     });
 
@@ -587,6 +728,7 @@ export function openQuestModal(questToEdit = null, onSave) {
       title,
       npc,
       levelReq,
+      skills,
       description,
       pinned,
       requirements,
@@ -608,4 +750,6 @@ export function closeModal() {
     modal.classList.remove("is-active");
     document.body.style.overflow = "";
   }
+  activeModalAutocompletes.forEach(ac => ac.destroy());
+  activeModalAutocompletes = [];
 }
