@@ -64,8 +64,8 @@ export const DEFAULT_QUESTS = [
     pinned: false,
     requirements: [
       { item: "Flour", amount: 30 },
-      { item: "Egg", amount: 20 },
-      { item: "Strawberry", amount: 40 }
+      { item: "Eggs", amount: 20 },
+      { item: "Apple", amount: 40 }
     ],
     rewards: [
       { type: "silver", label: "Silver", amount: 5000 },
@@ -136,8 +136,8 @@ export const DEFAULT_QUESTS = [
     status: "active",
     pinned: false,
     requirements: [
-      { item: "Large Clam", amount: 10 },
-      { item: "Sea Glass", amount: 5 }
+      { item: "Large Clam Shell", amount: 10 },
+      { item: "Glass Bottle", amount: 5 }
     ],
     rewards: [
       { type: "silver", label: "Silver", amount: 12000 },
@@ -203,8 +203,34 @@ export const ITEM_ICONS = {
   "default": "📦"
 };
 
+import { getItemImageFilename, KNOWN_ITEM_NAMES, ALL_FARM_RPG_ITEMS } from "./items-data.js";
+
+export { KNOWN_ITEM_NAMES, ALL_FARM_RPG_ITEMS, getItemImageFilename };
+
 export function getItemIcon(itemName) {
   if (!itemName) return "📦";
   const trimmed = itemName.trim();
   return ITEM_ICONS[trimmed] || ITEM_ICONS.default;
+}
+
+/**
+ * Renders an authentic game icon HTML element for an item.
+ * Loads assets/<Filename>.png with crisp pixel art styling.
+ * If the image is not found or fails to load, gracefully falls back to the item emoji.
+ */
+export function renderItemIconHtml(itemName, extraClass = "") {
+  if (!itemName) {
+    return `<span class="item-icon-wrapper ${extraClass}"><span class="item-icon-fallback">📦</span></span>`;
+  }
+  const trimmed = itemName.trim();
+  const filename = getItemImageFilename(trimmed);
+  const fallbackEmoji = getItemIcon(trimmed);
+  const encodedSrc = `assets/${encodeURIComponent(filename)}`;
+
+  return `
+    <span class="item-icon-wrapper ${extraClass}" data-item="${trimmed}" title="${trimmed}">
+      <img class="item-icon-img" src="${encodedSrc}" alt="${trimmed}" loading="lazy" onerror="this.classList.add('is-hidden');" />
+      <span class="item-icon-fallback">${fallbackEmoji}</span>
+    </span>
+  `.trim();
 }

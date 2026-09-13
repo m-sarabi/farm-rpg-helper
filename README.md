@@ -89,20 +89,54 @@ Right-click `index.html` and select **"Open with Live Server"**.
 npx serve .
 ```
 
+```
+
+---
+
+## 🎨 Authentic Farm RPG Item Icons & Automation
+
+Farm RPG Helper includes real item icons and item names scraped directly from authentic Farm RPG endpoints.
+
+### Automatic Asset & Catalog Downloader
+
+To download the full catalog of ~1,550+ Farm RPG items and icons:
+
+#### With Python 3 (zero dependencies):
+```bash
+python scripts/download_farmrpg_items.py
+```
+- **Filter items**: `python scripts/download_farmrpg_items.py --search "Carrot"`
+- **Test batch**: `python scripts/download_farmrpg_items.py --limit 20`
+- **Catalog data only**: `python scripts/download_farmrpg_items.py --data-only`
+
+#### With Node.js:
+```bash
+node scripts/download_farmrpg_items.js
+```
+
+All images are saved to `assets/<Item Name>.png`. Already downloaded images are automatically detected and skipped.
+
 ---
 
 ## 📁 Project Structure
 
 ```
 Farm RPG Helper/
-├── index.html              # Core app shell and modal dialogs
+├── index.html              # Core app shell, autocomplete datalists, and modal dialogs
+├── assets/                 # Authentic Farm RPG game item icons (<Item Name>.png)
+├── data/
+│   └── items.json          # Complete Farm RPG item catalog (IDs, names, images)
+├── scripts/
+│   ├── download_farmrpg_items.py # Pure Python concurrent item & icon scraper
+│   └── download_farmrpg_items.js # Node.js equivalent item & icon scraper
 ├── styles/
-│   └── main.css            # Farm RPG theme variables, cards, responsive layout
+│   └── main.css            # Farm RPG theme variables, pixel-art icons, cards, responsive layout
 ├── js/
-│   ├── app.js              # Main coordinator, navigation, and event handlers
+│   ├── app.js              # Main coordinator, navigation, and datalist sync
 │   ├── calculator.js       # Material aggregation, shortage math & reward summaries
 │   ├── components.js       # UI rendering for quest cards, planner, bag, and modals
-│   ├── quests-data.js      # Authentic starter Farm RPG quests & item icon database
+│   ├── items-data.js       # Full 1,550+ Farm RPG items database & name lookup map
+│   ├── quests-data.js      # Starter quests and dynamic item icon HTML generator
 │   └── state.js            # State store, localStorage sync, and JSON backup import/export
 └── README.md               # Documentation and GitHub Pages deployment guide
 ```
@@ -113,3 +147,4 @@ Farm RPG Helper/
 
 Feel free to customize the default quests in `js/quests-data.js` or tweak colors in `styles/main.css`.
 Happy farming! 🌾
+

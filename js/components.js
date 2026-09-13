@@ -1,4 +1,4 @@
-import { getItemIcon, NPC_LIST } from "./quests-data.js";
+import { getItemIcon, renderItemIconHtml, NPC_LIST, KNOWN_ITEM_NAMES } from "./quests-data.js";
 import { isQuestReady, getQuestRequirementsStatus, aggregateMaterials, aggregateRewards, formatMaterialsAsText } from "./calculator.js";
 
 /**
@@ -51,7 +51,7 @@ export function renderQuestCard(quest, state) {
       <div class="req-item ${isDone ? 'req-done' : ''}">
         <div class="req-header">
           <span class="req-name">
-            <span class="item-icon">${req.icon}</span>
+            <span class="item-icon-slot">${renderItemIconHtml(req.item)}</span>
             <strong>${req.item}</strong>
           </span>
           <span class="req-counts">
@@ -75,13 +75,15 @@ export function renderQuestCard(quest, state) {
 
     if (type === "silver" || rew.label?.toLowerCase().includes("silver")) {
       badgeClass = "badge-reward-silver";
-      icon = "🪙";
+      icon = renderItemIconHtml("Silver", "icon-sm");
     } else if (type === "gold" || rew.label?.toLowerCase().includes("gold")) {
       badgeClass = "badge-reward-gold";
-      icon = "✨";
+      icon = renderItemIconHtml("Gold", "icon-sm");
     } else if (type === "xp" || rew.label?.toLowerCase().includes("xp")) {
       badgeClass = "badge-reward-xp";
-      icon = "⭐";
+      icon = `<span class="reward-emoji">⭐</span>`;
+    } else {
+      icon = renderItemIconHtml(rew.label, "icon-sm");
     }
 
     return `
@@ -240,10 +242,10 @@ export function renderPlannerView(state) {
       ${(rewards.silver > 0 || rewards.gold > 0 || Object.keys(rewards.items).length > 0) ? `
         <div class="planner-rewards-banner">
           <span class="rewards-banner-title">Potential Rewards:</span>
-          ${rewards.silver > 0 ? `<span class="reward-pill badge-reward-silver">🪙 ${rewards.silver.toLocaleString()} Silver</span>` : ''}
-          ${rewards.gold > 0 ? `<span class="reward-pill badge-reward-gold">✨ ${rewards.gold.toLocaleString()} Gold</span>` : ''}
+          ${rewards.silver > 0 ? `<span class="reward-pill badge-reward-silver">${renderItemIconHtml("Silver", "icon-sm")} ${rewards.silver.toLocaleString()} Silver</span>` : ''}
+          ${rewards.gold > 0 ? `<span class="reward-pill badge-reward-gold">${renderItemIconHtml("Gold", "icon-sm")} ${rewards.gold.toLocaleString()} Gold</span>` : ''}
           ${Object.entries(rewards.items).map(([name, qty]) => `
-            <span class="reward-pill badge-reward-item">🎁 ${qty}x ${name}</span>
+            <span class="reward-pill badge-reward-item">${renderItemIconHtml(name, "icon-sm")} ${qty}x ${name}</span>
           `).join('')}
         </div>
       ` : ''}
@@ -274,7 +276,7 @@ function renderMaterialCardHtml(mat) {
     <div class="material-card ${isDone ? 'mat-fulfilled' : 'mat-shortage'}" data-item-name="${mat.item}">
       <div class="mat-card-header">
         <div class="mat-title-box">
-          <span class="mat-icon">${mat.icon}</span>
+          <span class="mat-icon-slot">${renderItemIconHtml(mat.item, "icon-md")}</span>
           <div>
             <h4 class="mat-name">${mat.item}</h4>
             <div class="mat-sources-count" title="Used in ${mat.questSources.length} quest(s)">
@@ -383,11 +385,10 @@ export function renderInventoryView(state) {
         </div>
       ` : sortedItems.map(item => {
         const count = state.inventory[item] || 0;
-        const icon = getItemIcon(item);
         return `
           <div class="inv-item-card" data-item="${item}">
             <div class="inv-item-info">
-              <span class="inv-item-icon">${icon}</span>
+              <span class="inv-item-icon-slot">${renderItemIconHtml(item, "icon-md")}</span>
               <div>
                 <div class="inv-item-name">${item}</div>
                 <div class="inv-item-count-label">In Bag: <strong>${count.toLocaleString()}</strong></div>
@@ -498,7 +499,7 @@ export function openQuestModal(questToEdit = null, onSave) {
     const row = document.createElement("div");
     row.className = "modal-dynamic-row";
     row.innerHTML = `
-      <input type="text" class="modal-req-item input-field" placeholder="Item (e.g. Wood)" value="${item}" required />
+      <input type="text" class="modal-req-item input-field" placeholder="Item (e.g. Wood)" value="${item}" list="known-items-list" required />
       <input type="number" class="modal-req-amount input-field" placeholder="Qty" value="${amount}" min="1" required />
       <button type="button" class="btn btn-ghost btn-sm remove-row-btn" title="Remove requirement">✕</button>
     `;
@@ -517,7 +518,7 @@ export function openQuestModal(questToEdit = null, onSave) {
         <option value="item" ${type === 'item' ? 'selected' : ''}>Item</option>
         <option value="xp" ${type === 'xp' ? 'selected' : ''}>XP</option>
       </select>
-      <input type="text" class="modal-rew-label input-field" placeholder="Label (e.g. Silver or Orange Juice)" value="${label}" required />
+      <input type="text" class="modal-rew-label input-field" placeholder="Label (e.g. Silver or Orange Juice)" value="${label}" list="known-items-list" required />
       <input type="number" class="modal-rew-amount input-field" placeholder="Amount" value="${amount}" min="1" required />
       <button type="button" class="btn btn-ghost btn-sm remove-row-btn" title="Remove reward">✕</button>
     `;

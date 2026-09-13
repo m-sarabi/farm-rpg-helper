@@ -1,5 +1,5 @@
 import { state } from "./state.js";
-import { NPC_LIST } from "./quests-data.js";
+import { NPC_LIST, KNOWN_ITEM_NAMES } from "./quests-data.js";
 import { isQuestReady, formatMaterialsAsText, aggregateMaterials } from "./calculator.js";
 import {
   renderQuestCard,
@@ -59,15 +59,34 @@ function initApp() {
     }
   });
 
+  // Populate global item autocomplete datalist
+  populateGlobalItemDatalist();
+
   // Subscribe to state changes to update header stats and re-render current view
   state.subscribe(() => {
     updateHeaderStats();
+    populateGlobalItemDatalist();
     renderCurrentTab();
   });
 
   // Initial render
   updateHeaderStats();
   renderCurrentTab();
+}
+
+function populateGlobalItemDatalist() {
+  const datalist = document.getElementById("known-items-list");
+  if (!datalist) return;
+
+  const allNames = new Set(KNOWN_ITEM_NAMES || []);
+  Object.keys(state.inventory || {}).forEach(k => allNames.add(k));
+  (state.quests || []).forEach(q => {
+    (q.requirements || []).forEach(r => r.item && allNames.add(r.item.trim()));
+    (q.rewards || []).forEach(rew => rew.label && rew.type === "item" && allNames.add(rew.label.trim()));
+  });
+
+  const sorted = Array.from(allNames).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  datalist.innerHTML = sorted.map(name => `<option value="${name}"></option>`).join("");
 }
 
 function updateThemeIcon() {
