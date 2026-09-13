@@ -100,6 +100,17 @@ export function attachItemAutocomplete(inputEl, options = {}) {
   function updatePosition() {
     if (!isOpen) return;
     const rect = inputEl.getBoundingClientRect();
+
+    // If inside a scrollable container (e.g. modal body), ensure input is currently in visible view
+    const scrollParent = inputEl.closest(".modal-body");
+    if (scrollParent) {
+      const pRect = scrollParent.getBoundingClientRect();
+      if (rect.bottom < pRect.top || rect.top > pRect.bottom) {
+        closeDropdown();
+        return;
+      }
+    }
+
     const scrollY = window.scrollY || window.pageYOffset;
     const scrollX = window.scrollX || window.pageXOffset;
 

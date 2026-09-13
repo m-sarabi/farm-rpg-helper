@@ -488,6 +488,11 @@ export function openQuestModal(questToEdit = null, onSave) {
       row.remove();
     });
     reqContainer.appendChild(row);
+
+    if (!item && !amount) {
+      itemInput.focus();
+      row.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }
 
   // Add reward row helper (Silver & Gold have no labels; Item has item name input; XP removed)
@@ -531,6 +536,11 @@ export function openQuestModal(questToEdit = null, onSave) {
       row.remove();
     });
     rewContainer.appendChild(row);
+
+    if (!item && !amount) {
+      amountInput.focus();
+      row.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }
 
   // Populate existing requirements & rewards or clean defaults
