@@ -10662,7 +10662,7 @@
   },
   {
     "id": 197,
-    "title": "Make Life Take<br/>The Lemons Back!",
+    "title": "Make Life Take The Lemons Back!",
     "npc": "Star Meerif",
     "description": "*poof*\r\n<br>\r\nIn a shower of feathers, Star appears in your home both unannounced and uninvited and tips his hat to you.  He looks as usual, just slightly more aggravated than you remember.\r\n<br>\r\n\"Lemons! Lemons! LEMONS! They're so tart and tart and... tart and... UNINTERESTING! I can't stand them! When life gives you lemons, make life take the lemons back!  We should get oranges instead!  Don't you agree? Well, no matter, because I do. Let me show you this spell I've been working on...\"\r\n<br>\r\nStar holds his hands out to you expectantly.",
     "image": "/img/items/npc_figure.png",
@@ -10681,10 +10681,31 @@
     "questline": null,
     "stepNumber": 1,
     "totalSteps": 1,
-    "prevQuestId": null,
-    "prevQuestTitle": null,
-    "requirements": [],
-    "rewards": [],
+    "prevQuestId": 193,
+    "prevQuestTitle": "Now You Don't",
+    "requirements": [
+      {
+        "item": "Lemon",
+        "amount": 200
+      },
+      {
+        "item": "Bucket",
+        "amount": 1
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 250000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Wizard Hat",
+        "label": "Wizard Hat",
+        "amount": 1
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -13253,7 +13274,7 @@
   },
   {
     "id": 249,
-    "title": "You Spin Me Right Round,<br/>Buddy, Right Round",
+    "title": "You Spin Me Right Round, Buddy, Right Round",
     "npc": "Buddy",
     "description": "Buddy has gotten Charles Horsington III to come see him at his cave.  You are absolutely stunned to see what Buddy has created.  There is a carousel, complete with horses, chariots with shields adorning them, all decorated with the colorful additions you have spent so long acquiring for Buddy.  Sitting on one of the horses, in what you can only assume must be mildly painful for his back, is Charles Horsington III.  He has the biggest grin you have ever seen on a horse (not that you’re sure you’ve ever seen a horse grin before), and he appears to be having the time of his life.  You ask Buddy how in the world the carousel is spinning, and he shows you the trench he dug with the tools you brought him.  Water is flowing down the trench, and making the carousel turn.  Buddy seems to be happy to have given Charles a fun ride to play on.  He offers you a pile of coins, if you can bring something to carry it all in.",
     "image": "/img/items/buddy.png",
@@ -13272,10 +13293,27 @@
     "questline": null,
     "stepNumber": 1,
     "totalSteps": 1,
-    "prevQuestId": null,
-    "prevQuestTitle": null,
-    "requirements": [],
-    "rewards": [],
+    "prevQuestId": 247,
+    "prevQuestTitle": "A Horse Of A Different Color VII",
+    "requirements": [
+      {
+        "item": "Treasure Chest",
+        "amount": 1
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 500000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Ancient Coin",
+        "label": "Ancient Coin",
+        "amount": 25
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -65629,7 +65667,7 @@
   },
   {
     "id": 1265669,
-    "title": "ribbetribbetribbetribbet ribbet ribbetcroakribbetribbet<br>ribbetcroakcroakribbet croakcroak ribbet ribbetribbet",
+    "title": "ribbetribbetribbetribbet ribbet ribbetcroakribbetribbet ribbetcroakcroakribbet croakcroak ribbet ribbetribbet",
     "npc": "Ribbit",
     "description": "ribbitcroakcroak ribbitribbitribbitribbit ribbitribbit croakribbitcroakribbit ribbitribbitribbitribbit ribbitcroakcroak ribbitribbit croak croakribbitcroakribbit ribbitribbitribbitribbit croakribbitribbitribbit ribbit croakribbitcroakribbit croakcroakcroak croakcroak ribbit ribbitribbitribbit ribbitcroak ribbitribbitcroakribbit ribbitcroakribbit croakcroakcroak croakcroakribbit <br><br>\r\n\r\nribbitribbit ribbitcroakcroakribbit ribbitcroakribbitribbit ribbitcroak croakribbit ribbitribbitcroakribbit croakcroakcroak ribbitcroakribbit ribbitcroakcroakribbit ribbitcroak ribbitcroakribbit croak ribbitribbit ribbit ribbitribbitribbit ribbitribbit croakribbit ribbitcroak croakribbit ribbitcroak ribbitcroakribbitribbit croakcroakcroak croakcroakribbit",
     "image": "/img/items/frog_t_01.png",
@@ -65671,7 +65709,7 @@
   },
   {
     "id": 1265694,
-    "title": "ribbetribbetribbetribbet ribbet ribbetcroakribbetribbet<br>ribbetcroakcroakribbet croakcroak ribbet<br>ribbetribbet ribbetribbet",
+    "title": "ribbetribbetribbetribbet ribbet ribbetcroakribbetribbet ribbetcroakcroakribbet croakcroak ribbet ribbetribbet ribbetribbet",
     "npc": "Ribbit",
     "description": "croak ribbitribbitribbitribbit ribbit croakribbitcroak ribbit croakribbitcroakcroak croakcroak croakribbitcroakcroak ribbitribbitcroakribbit ribbitcroakribbit ribbitribbit ribbit croakribbit croakribbitribbit ribbitribbitribbit ribbitribbit ribbitribbitribbit ribbitribbitribbit ribbitribbit croakcroak ribbitcroakcroakribbit ribbitcroakribbitribbit ribbit ribbitcroak croakribbit croakribbitribbit croakribbitcroakribbit ribbitcroakribbitribbit ribbit ribbitcroak ribbitcroakribbit <br><br>\r\n\r\nribbitribbitcroak ribbitribbitribbit ribbit croakcroak croakribbitcroakcroak croakribbit ribbitcroak croakcroak ribbit ribbitcroak croakribbit croakribbitribbit ribbitribbitribbitribbit ribbitcroak ribbitribbitribbitcroak ribbit croakribbit croakcroakcroak ribbitribbitcroakribbit ribbit ribbitcroak ribbitcroakribbit",
     "image": "/img/items/frog_t_01.png",
@@ -65691,7 +65729,7 @@
     "stepNumber": 1,
     "totalSteps": 1,
     "prevQuestId": 1265669,
-    "prevQuestTitle": "ribbetribbetribbetribbet ribbet ribbetcroakribbetribbet<br>ribbetcroakcroakribbet croakcroak ribbet ribbetribbet",
+    "prevQuestTitle": "ribbetribbetribbetribbet ribbet ribbetcroakribbetribbet ribbetcroakcroakribbet croakcroak ribbet ribbetribbet",
     "requirements": [
       {
         "item": "Peppers",
@@ -65713,7 +65751,7 @@
   },
   {
     "id": 1265710,
-    "title": "ribbetribbetribbetribbet ribbet ribbetcroakribbetribbet<br>ibbetcroakcroakribbet croakcroak ribbet<br>ribbetribbet ribbetribbet ribbetribbet",
+    "title": "ribbetribbetribbetribbet ribbet ribbetcroakribbetribbet ibbetcroakcroakribbet croakcroak ribbet ribbetribbet ribbetribbet ribbetribbet",
     "npc": "Ribbit",
     "description": "ribbitcroakcroakribbit ribbitcroak ribbitribbitribbit ribbitribbitribbit croak ribbitribbitribbitribbit ribbit ribbitcroakcroak croakcroakcroak ribbitcroakribbit croakribbitribbit ribbitribbitribbit ribbitcroak croak ribbitcroakribbitribbit ribbit ribbitcroak ribbitribbitribbit croak croakcroakcroak croakribbit ribbit croak ribbitribbit croakcroak ribbit <br><br>\r\n\r\ncroak ribbitribbitribbitribbit ribbit croakribbitcroakribbit croakcroakcroak ribbitribbitcroak croakribbit croak ribbit croakcroakribbitcroak ribbitribbitcroak ribbitcroak ribbitcroakribbitribbit ribbitribbitribbit croak ribbitribbitribbitribbit ribbit croakcroakribbit ribbit ribbitribbitcroak ribbitribbitribbit ribbit croakribbitcroakcroak ribbitcroakcroakribbit ribbitcroakribbit ribbitribbit croakcroak ribbit",
     "image": "/img/items/frog_t_01.png",
@@ -65733,7 +65771,7 @@
     "stepNumber": 1,
     "totalSteps": 1,
     "prevQuestId": 1265694,
-    "prevQuestTitle": "ribbetribbetribbetribbet ribbet ribbetcroakribbetribbet<br>ribbetcroakcroakribbet croakcroak ribbet<br>ribbetribbet ribbetribbet",
+    "prevQuestTitle": "ribbetribbetribbetribbet ribbet ribbetcroakribbetribbet ribbetcroakcroakribbet croakcroak ribbet ribbetribbet ribbetribbet",
     "requirements": [
       {
         "item": "R.O.A.S.",
@@ -90557,7 +90595,7 @@
   },
   {
     "id": 4133695,
-    "title": "Starting To Actually Realize <br/>Magic Ain't Pretty I",
+    "title": "Starting To Actually Realize Magic Ain't Pretty I",
     "npc": "Star Meerif",
     "description": "In a sound all too familiar, feathers shower your floor and Star Meerif appears, sitting on a fancy chair, face impassive and unreadable.<br><br>\r\n\r\n“Greetings {player}, it has been a while.  I’ve missed our interactions quite a lot, and despite appearances, I’m quite fond of both your help and your tenacity.  I’ve run into a problem and I’m looking to you for help.”<br><br>\r\n\r\nStar stands up and begins pacing while looking thoughtfully towards you every few moments.<br><br>  \r\n\r\n“Can I tell you a secret? You see, magic is funny.  My mentor used to tell me that magic was ten percent luck, twenty percent skill, fifteen percent concentrated power of will, five percent pleasure, and sixty percent unexplained.  Obviously it’s more complicated than that, but the reality is sometimes you need real effort to power magic.  It’s not just about specific coloration or gems, but their transmatrical energy is absolutely an important part of a spell's efficacy.  Modern magical theory really struggles to explain the antimatter resonances between aligning matrices and aligning the energy investiture that is passed from naturally occurring sources of cranial application.  In “T’rah: A History,” there have been several notable wizards who started the study of investiture of non-matter energy, mainly Dansernos in 223 and Byrer in 447…”<br><br>\r\n\r\nYou begin to nod off as Star continues in detail about T’rah and magical theory.  Deciding enough is enough, you step away to cook some breakfast as Star continues on, pacing the entire time.<br><br>\r\n\r\n“{player}, I’m stuck!  I need help!  I…we…won that treasure map in exciting fashion.  No one ever considered hiding so many flags on a planeshifted dimensional warp between light and dark, but even now I’ve no idea what the map <i>means</i>!”<br><br>\r\n\r\nStar produces an identical copy of your treasure map and guffaws as you produce the same map. <br><br>\r\n\r\n“Oh, I made a copy, sorry.  Anyways, let me sum up the problem.  There’s a magical energy hidden in this map but I need to match it’s transmatrical energy and I realized there is so much effort put into this map I can’t possibly do it alone.  I was hoping you could help me match the emanations of investment from the map and we could find the treasure together.  I’ve been working on this so long that I will do my best to reward you in excess of the time and energy you’ve spent here, afterall it’s been almost an entire branch I’ve spent on this problem!”<br><br>\r\n\r\nStar hands you a list of items and you quickly realize he was not kidding about the amount of work this was going to take.",
     "image": "/img/items/npc_figure.png",
@@ -90576,10 +90614,147 @@
     "questline": "Starting To Actually Realize <br/>Magic Ain't Pretty",
     "stepNumber": 1,
     "totalSteps": 12,
-    "prevQuestId": null,
-    "prevQuestTitle": null,
-    "requirements": [],
-    "rewards": [],
+    "prevQuestId": 1420198,
+    "prevQuestTitle": "Excuuuse me, Farmer V",
+    "requirements": [
+      {
+        "item": "Aquamarine Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Breakfast Boost",
+        "amount": 50
+      },
+      {
+        "item": "Crossbow",
+        "amount": 6000
+      },
+      {
+        "item": "Emerald Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Fancy Drum",
+        "amount": 3000
+      },
+      {
+        "item": "Fancy Table",
+        "amount": 2000
+      },
+      {
+        "item": "Flywheel",
+        "amount": 500
+      },
+      {
+        "item": "Frost Shield",
+        "amount": 2000
+      },
+      {
+        "item": "Garnet Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Squid",
+        "amount": 2000
+      },
+      {
+        "item": "Grape Juice",
+        "amount": 500
+      },
+      {
+        "item": "Mushroom Stew",
+        "amount": 25
+      },
+      {
+        "item": "Mystic Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Orange Gecko",
+        "amount": 750
+      },
+      {
+        "item": "Over The Moon",
+        "amount": 25
+      },
+      {
+        "item": "Pear Grease",
+        "amount": 3000
+      },
+      {
+        "item": "Pie Pan",
+        "amount": 6000
+      },
+      {
+        "item": "Potato Battery",
+        "amount": 1000
+      },
+      {
+        "item": "Purple Bag",
+        "amount": 6000
+      },
+      {
+        "item": "Red Trunk",
+        "amount": 1000
+      },
+      {
+        "item": "Rice",
+        "amount": 1000
+      },
+      {
+        "item": "Ruby Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Ship in a Bottle",
+        "amount": 50
+      },
+      {
+        "item": "Small Chest 01",
+        "amount": 500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 1000
+      },
+      {
+        "item": "Steel Vise",
+        "amount": 2000
+      },
+      {
+        "item": "Treasure Chest",
+        "amount": 3000
+      },
+      {
+        "item": "Wizard Hat",
+        "amount": 3000
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 175000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Ramjoram's Mask",
+        "label": "Ramjoram's Mask",
+        "amount": 1
+      },
+      {
+        "type": "item",
+        "item": "Cabbage Stew",
+        "label": "Cabbage Stew",
+        "amount": 10
+      },
+      {
+        "type": "item",
+        "item": "Large Net",
+        "label": "Large Net",
+        "amount": 4000
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -90587,7 +90762,7 @@
   },
   {
     "id": 4133735,
-    "title": "Starting To Actually Realize <br/>Magic Ain't Pretty II",
+    "title": "Starting To Actually Realize Magic Ain't Pretty II",
     "npc": "Star Meerif",
     "description": "Star takes all of the things you’ve brought him and moves them into unique piles.  He mutters some words and the space around the items begins to shimmer. You watch as one by one each pile contracts and warps the space around it.  Blinking your eyes, the sight makes you feel a little woozy and after a moment, only a handful of treasure chests remain on the ground.  “The old Chest of Holding trick, learned this one from a book, but the subpixel alignment was tricky…”  He pauses a moment before looking at you, “Well, guess we’ll have to take these back by hand.  Next time we’ll add feathers to the mix and speed up the lattice transference.  And I just love featherfall.”<br><br>\r\n\r\nStar’s tower is as majestic as it is plain and uniquely magical.  Surfaces glitter in the light, and there is a seam in the middle from the damage Geist inflicted to the tower in the past, but that only seems to add to the mystique and beauty of the building.  Crystal parapets reflect sunlight, glittering rooftops shimmer in extraordinary ways reacting to unseen inputs, a direct contrast to the staid concrete walls and windows.  You are directed towards the basement and with each step you descend, the walls widen until you reach a room that is clearly bigger than the entirety of the base of the tower, which your brain struggles to rationalize.<br><br>\r\n\r\nStar arranges the treasure chests in a circle and with a wave of his hand, they empty their contents, a rush of power and air sweeping by you as all the items expand back to their previous sizes.  Star stands in the middle of the room, the treasure map laid before him, a single ring from each of the rings you brought to him plucked from the pile, and a double inset ring in the middle.  <br><br>\r\n\r\nHe stretches his arms forth and you can sense a tingle in the back of your mind.  The magical energy in the basement is palpable, as invisible runes suddenly come to life, lining the walls in a dazzling display of color.  <br><br>\r\n\r\nAs quickly as it begins, the runes fade, and a single speck of light falls from between Star’s outstretched arms, and lands on the map, causing a flare of color.<br><br>\r\n\r\nStar laughs with glee at the sight.  “I knew it! The transference of rarity, effort and talent all combined to help power this spell of finding!  {player}, we need more! More! I think we need to adjust the expenditure slightly, so I’ve made some modifications to your list.  Hopefully we’ll get a clearer picture of what that map is hiding next time.  Oh, and, thanks {player}.”",
     "image": "/img/items/npc_figure.png",
@@ -90607,9 +90782,132 @@
     "stepNumber": 2,
     "totalSteps": 12,
     "prevQuestId": 4133695,
-    "prevQuestTitle": "Starting To Actually Realize <br/>Magic Ain't Pretty I",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Starting To Actually Realize Magic Ain't Pretty I",
+    "requirements": [
+      {
+        "item": "Aquamarine Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Blue Purse",
+        "amount": 6000
+      },
+      {
+        "item": "Breakfast Boost",
+        "amount": 50
+      },
+      {
+        "item": "Corn Oil",
+        "amount": 1000
+      },
+      {
+        "item": "Crab Claw",
+        "amount": 6000
+      },
+      {
+        "item": "Crossbow",
+        "amount": 6000
+      },
+      {
+        "item": "Emerald Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Fancy Chair",
+        "amount": 3000
+      },
+      {
+        "item": "Fancy Guitar",
+        "amount": 3000
+      },
+      {
+        "item": "Flywheel",
+        "amount": 500
+      },
+      {
+        "item": "Garnet Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Squid",
+        "amount": 2000
+      },
+      {
+        "item": "Grape Juice",
+        "amount": 500
+      },
+      {
+        "item": "Machine Press",
+        "amount": 2500
+      },
+      {
+        "item": "Mushroom Stew",
+        "amount": 25
+      },
+      {
+        "item": "Mystic Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Over The Moon",
+        "amount": 25
+      },
+      {
+        "item": "Pear Grease",
+        "amount": 3000
+      },
+      {
+        "item": "Pie Pan",
+        "amount": 6000
+      },
+      {
+        "item": "Red Shield",
+        "amount": 1000
+      },
+      {
+        "item": "Rice",
+        "amount": 1000
+      },
+      {
+        "item": "Ruby Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Small Chest 01",
+        "amount": 500
+      },
+      {
+        "item": "Steel Vise",
+        "amount": 2000
+      },
+      {
+        "item": "Treasure Chest",
+        "amount": 3000
+      },
+      {
+        "item": "Wizard Hat",
+        "amount": 3000
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 175000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Arnold Palmer",
+        "label": "Arnold Palmer",
+        "amount": 2000
+      },
+      {
+        "type": "item",
+        "item": "Joker",
+        "label": "Joker",
+        "amount": 1
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -90617,7 +90915,7 @@
   },
   {
     "id": 4133739,
-    "title": "Starting To Actually Realize <br/>Magic Ain't Pretty III",
+    "title": "Starting To Actually Realize Magic Ain't Pretty III",
     "npc": "Star Meerif",
     "description": "You return to your home, and Star greets you warmly.  As he gathers your materials in a similar fashion to before, he spreads the feathers around the outer bounds of the items. “A circle is a powerful tool in the hands of a skilled practitioner.”  He motions you to step into the circle and Star pulls a staff out of thin air and begins to speak. <br><br>\r\n\r\n“This is gonna be a little wild.  <i>TEL-”</i><br><br>\r\n\r\nThe world rushes around you and you feel as though you’re being pulled into a tiny string.  The world elongates around you as shapes and colors rush past you, distorted and wonderful and awful all at the same time.<br><br>\r\n\r\n<i>“EDORUS!”</i><br><br>\r\n\r\nAs suddenly as it begins, you find yourself in the basement of Star’s tower. <br><br>\r\n\r\n“What a rush!  I’ve never done a side-along with a non-magic user before, it worked out well!  Now you know why I love that spell so much!”<br><br>\r\n\r\nYou nod tentatively as you try to regain your senses and composure.<br><br>  \r\n\r\n“Anyways, let’s do a little more power transference with a hint of finding magic this time, shall we?”<br><br>\r\n\r\nStar arranges the myriad of items once again and casts his spell.  You see another flicker of light falling from Star’s hands to the map, this time revealing a small line.  <br><br>\r\n\r\nStar whoops with glee and immediately hands you another list. <br><br> \r\n\r\nHe smiles, “I’d say we’re about 50% of the way there, and I’m so very grateful for your help!  I promise to etch your name into the hall of findings once we’re done.”",
     "image": "/img/items/npc_figure.png",
@@ -90637,9 +90935,164 @@
     "stepNumber": 3,
     "totalSteps": 12,
     "prevQuestId": 4133735,
-    "prevQuestTitle": "Starting To Actually Realize <br/>Magic Ain't Pretty II",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Starting To Actually Realize Magic Ain't Pretty II",
+    "requirements": [
+      {
+        "item": "Aquamarine Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Breakfast Boost",
+        "amount": 50
+      },
+      {
+        "item": "Butter",
+        "amount": 3000
+      },
+      {
+        "item": "Concord Grape Pie",
+        "amount": 200
+      },
+      {
+        "item": "Crab Claw",
+        "amount": 6000
+      },
+      {
+        "item": "Crossbow",
+        "amount": 6000
+      },
+      {
+        "item": "Emerald Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Fancy Drum",
+        "amount": 3000
+      },
+      {
+        "item": "Fancy Table",
+        "amount": 2000
+      },
+      {
+        "item": "Flywheel",
+        "amount": 500
+      },
+      {
+        "item": "Garnet Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Squid",
+        "amount": 2000
+      },
+      {
+        "item": "Gold Leaf",
+        "amount": 6000
+      },
+      {
+        "item": "Grape Juice",
+        "amount": 500
+      },
+      {
+        "item": "Jade Charm",
+        "amount": 6000
+      },
+      {
+        "item": "Mushroom Stew",
+        "amount": 25
+      },
+      {
+        "item": "Mystic Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Orange Gecko",
+        "amount": 750
+      },
+      {
+        "item": "Over The Moon",
+        "amount": 25
+      },
+      {
+        "item": "Pear Grease",
+        "amount": 3000
+      },
+      {
+        "item": "Pie Pan",
+        "amount": 6000
+      },
+      {
+        "item": "Potato Battery",
+        "amount": 1000
+      },
+      {
+        "item": "Purple Bag",
+        "amount": 6000
+      },
+      {
+        "item": "Red Trunk",
+        "amount": 1000
+      },
+      {
+        "item": "Rice",
+        "amount": 1000
+      },
+      {
+        "item": "Ruby Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Ship in a Bottle",
+        "amount": 100
+      },
+      {
+        "item": "Small Chest 01",
+        "amount": 500
+      },
+      {
+        "item": "Steel Vise",
+        "amount": 2000
+      },
+      {
+        "item": "Treasure Chest",
+        "amount": 3000
+      },
+      {
+        "item": "Wizard Hat",
+        "amount": 3000
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 175000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Ramjoram's Mask",
+        "label": "Ramjoram's Mask",
+        "amount": 1
+      },
+      {
+        "type": "item",
+        "item": "Apple Cider",
+        "label": "Apple Cider",
+        "amount": 2000
+      },
+      {
+        "type": "item",
+        "item": "Orange Juice",
+        "label": "Orange Juice",
+        "amount": 5000
+      },
+      {
+        "type": "item",
+        "item": "Raptor Claw",
+        "label": "Raptor Claw",
+        "amount": 100
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -90647,7 +91100,7 @@
   },
   {
     "id": 4133740,
-    "title": "Starting To Actually Realize <br/>Magic Ain't Pretty IV",
+    "title": "Starting To Actually Realize Magic Ain't Pretty IV",
     "npc": "Star Meerif",
     "description": "You follow the same process as last time.  \r\n\r\nOn your second teleportation trip, you swear you see a reflection of yourself as you are stretched and smashed. \r\n\r\nThe treasure map gleams a little brighter after the spell and Star addresses you frankly.<br><br>\r\n\r\n“So, I’ve definitely underestimated the amount of effort and investitudiny this spell is going to take.  We’ll need to crank up some more rare items and have some lowered expectation for effort versus rewards for a bit. I, however, am grateful for your help and hope to reward you for your effort more cleanly than this spell is doing.  And who knows what we’ll find at the end of this map.”<br><br>\r\n\r\nYou get the odd feeling something isn’t quite right.  When have you ever seen a spell from Star ever take this much…work?",
     "image": "/img/items/npc_figure.png",
@@ -90667,9 +91120,146 @@
     "stepNumber": 4,
     "totalSteps": 12,
     "prevQuestId": 4133739,
-    "prevQuestTitle": "Starting To Actually Realize <br/>Magic Ain't Pretty III",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Starting To Actually Realize Magic Ain't Pretty III",
+    "requirements": [
+      {
+        "item": "Aquamarine Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Blue Purse",
+        "amount": 6000
+      },
+      {
+        "item": "Breakfast Boost",
+        "amount": 50
+      },
+      {
+        "item": "Butter",
+        "amount": 3000
+      },
+      {
+        "item": "Corn Oil",
+        "amount": 1000
+      },
+      {
+        "item": "Crossbow",
+        "amount": 6000
+      },
+      {
+        "item": "Emerald Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Fancy Chair",
+        "amount": 3000
+      },
+      {
+        "item": "Fancy Guitar",
+        "amount": 3000
+      },
+      {
+        "item": "Flywheel",
+        "amount": 500
+      },
+      {
+        "item": "Frost Shield",
+        "amount": 2000
+      },
+      {
+        "item": "Garnet Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Squid",
+        "amount": 2000
+      },
+      {
+        "item": "Grape Juice",
+        "amount": 500
+      },
+      {
+        "item": "Mushroom Stew",
+        "amount": 25
+      },
+      {
+        "item": "Mystic Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Over The Moon",
+        "amount": 25
+      },
+      {
+        "item": "Pear Grease",
+        "amount": 3000
+      },
+      {
+        "item": "Pie Pan",
+        "amount": 6000
+      },
+      {
+        "item": "Red Berry Pie",
+        "amount": 200
+      },
+      {
+        "item": "Red Shield",
+        "amount": 1000
+      },
+      {
+        "item": "Rice",
+        "amount": 1000
+      },
+      {
+        "item": "Ruby Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Small Chest 01",
+        "amount": 500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 1000
+      },
+      {
+        "item": "Steel Vise",
+        "amount": 2000
+      },
+      {
+        "item": "Treasure Chest",
+        "amount": 3000
+      },
+      {
+        "item": "Wizard Hat",
+        "amount": 3000
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 175000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Arnold Palmer",
+        "label": "Arnold Palmer",
+        "amount": 2000
+      },
+      {
+        "type": "item",
+        "item": "Lovely Cookies",
+        "label": "Lovely Cookies",
+        "amount": 2
+      },
+      {
+        "type": "item",
+        "item": "Lemon Cream Pie",
+        "label": "Lemon Cream Pie",
+        "amount": 3
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -90677,7 +91267,7 @@
   },
   {
     "id": 4133741,
-    "title": "Starting To Actually Realize <br/>Magic Ain't Pretty V",
+    "title": "Starting To Actually Realize Magic Ain't Pretty V",
     "npc": "Star Meerif",
     "description": "You continue to follow the process as Star has laid out.  He’s been surprisingly patient and calm throughout this process, but it definitely feels like slow and steady progress, as opposed to some of his other magical efforts, which have been more…immediate.  <br><br>Still, you press on, curious about the end of the map, and because Star seems ever the more grateful after every trip.",
     "image": "/img/items/npc_figure.png",
@@ -90697,9 +91287,160 @@
     "stepNumber": 5,
     "totalSteps": 12,
     "prevQuestId": 4133740,
-    "prevQuestTitle": "Starting To Actually Realize <br/>Magic Ain't Pretty IV",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Starting To Actually Realize Magic Ain't Pretty IV",
+    "requirements": [
+      {
+        "item": "Aquamarine Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Cabbage Stew",
+        "amount": 25
+      },
+      {
+        "item": "Crab Claw",
+        "amount": 6000
+      },
+      {
+        "item": "Crossbow",
+        "amount": 6000
+      },
+      {
+        "item": "Emerald Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Fancy Drum",
+        "amount": 3000
+      },
+      {
+        "item": "Fancy Table",
+        "amount": 2000
+      },
+      {
+        "item": "Flywheel",
+        "amount": 500
+      },
+      {
+        "item": "Frost Shield",
+        "amount": 2000
+      },
+      {
+        "item": "Garnet Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Squid",
+        "amount": 2000
+      },
+      {
+        "item": "Grape Juice",
+        "amount": 500
+      },
+      {
+        "item": "Jade Charm",
+        "amount": 6000
+      },
+      {
+        "item": "Mushroom Stew",
+        "amount": 25
+      },
+      {
+        "item": "Mystic Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Orange Gecko",
+        "amount": 750
+      },
+      {
+        "item": "Over The Moon",
+        "amount": 25
+      },
+      {
+        "item": "Pear Grease",
+        "amount": 3000
+      },
+      {
+        "item": "Pie Pan",
+        "amount": 6000
+      },
+      {
+        "item": "Potato Battery",
+        "amount": 1000
+      },
+      {
+        "item": "Purple Bag",
+        "amount": 6000
+      },
+      {
+        "item": "Red Trunk",
+        "amount": 1000
+      },
+      {
+        "item": "Rice",
+        "amount": 1000
+      },
+      {
+        "item": "Ruby Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Ship in a Bottle",
+        "amount": 50
+      },
+      {
+        "item": "Small Chest 01",
+        "amount": 500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 1000
+      },
+      {
+        "item": "Steel Vise",
+        "amount": 2000
+      },
+      {
+        "item": "Treasure Chest",
+        "amount": 3000
+      },
+      {
+        "item": "Wizard Hat",
+        "amount": 3000
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 175000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Ramjoram's Mask",
+        "label": "Ramjoram's Mask",
+        "amount": 1
+      },
+      {
+        "type": "item",
+        "item": "Apple Cider",
+        "label": "Apple Cider",
+        "amount": 2000
+      },
+      {
+        "type": "item",
+        "item": "Orange Juice",
+        "label": "Orange Juice",
+        "amount": 5000
+      },
+      {
+        "type": "item",
+        "item": "Raptor Claw",
+        "label": "Raptor Claw",
+        "amount": 100
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -90707,7 +91448,7 @@
   },
   {
     "id": 4133742,
-    "title": "Starting To Actually Realize <br/>Magic Ain't Pretty VI",
+    "title": "Starting To Actually Realize Magic Ain't Pretty VI",
     "npc": "Star Meerif",
     "description": "“I’ve been doing some research into another ancient wizard, from the 100’s - Adonihs - who studied the breakdown of magical effects more extensively.  He mentions that magic is somehow written as an image in the mind, as much as it is the items we use, or the words we project.  Adonihs was more than a wizard, he was a wordsmith.  Truly ahead of his time in so many areas…”<br><br>\r\n\r\nStar breaks off his reverie as you finish arranging your latest return of items.  <br><br>\r\n\r\n“Oh yes, {player}, I feel we are closer, ever closer.  I even feel a little bad about using those Langstaff Flags or whatever for our game, but I never dreamt we’d be on the precipice of discovering something so new in our lifetime.  So much knowledge has been lost, I can only piece together so much…if only I could dilate time and stuff myself in a pocket dimension for a few millenia.  Maybe that would work with a pinch of light and dark?”<br><br>\r\n\r\nAgain Star’s rambling has him looking past you with the distant glare of someone lost in thought.  You cough gently and Star is roused from his thoughts.  <br><br>\r\n\r\n“Well, let’s get this underway shall we?  No time like now!  That’s why it’s called the present, am I right?”  <br><br>\r\n\r\nHe chortles to himself, and after the spell, a clear line emerges on the map.  You recognize some of the landscape, it seems to be a depiction of a pre-Redbrook time, somewhere to the west.<br><br>\r\n\r\nStar hands over your reward, and you head out with another list.",
     "image": "/img/items/npc_figure.png",
@@ -90727,9 +91468,128 @@
     "stepNumber": 6,
     "totalSteps": 12,
     "prevQuestId": 4133741,
-    "prevQuestTitle": "Starting To Actually Realize <br/>Magic Ain't Pretty V",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Starting To Actually Realize Magic Ain't Pretty V",
+    "requirements": [
+      {
+        "item": "Aquamarine Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Cabbage Stew",
+        "amount": 25
+      },
+      {
+        "item": "Corn Oil",
+        "amount": 1000
+      },
+      {
+        "item": "Crossbow",
+        "amount": 6000
+      },
+      {
+        "item": "Emerald Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Fancy Chair",
+        "amount": 3000
+      },
+      {
+        "item": "Fancy Guitar",
+        "amount": 3000
+      },
+      {
+        "item": "Flywheel",
+        "amount": 500
+      },
+      {
+        "item": "Garnet Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Squid",
+        "amount": 2000
+      },
+      {
+        "item": "Gold Leaf",
+        "amount": 6000
+      },
+      {
+        "item": "Grape Juice",
+        "amount": 500
+      },
+      {
+        "item": "Mushroom Stew",
+        "amount": 25
+      },
+      {
+        "item": "Mystic Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Over The Moon",
+        "amount": 25
+      },
+      {
+        "item": "Pear Grease",
+        "amount": 3000
+      },
+      {
+        "item": "Pie Pan",
+        "amount": 6000
+      },
+      {
+        "item": "Purple Bag",
+        "amount": 6000
+      },
+      {
+        "item": "Red Shield",
+        "amount": 1000
+      },
+      {
+        "item": "Rice",
+        "amount": 1000
+      },
+      {
+        "item": "Ruby Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Ship in a Bottle",
+        "amount": 50
+      },
+      {
+        "item": "Steel Vise",
+        "amount": 2000
+      },
+      {
+        "item": "Treasure Chest",
+        "amount": 3000
+      },
+      {
+        "item": "Wizard Hat",
+        "amount": 3000
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 175000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Hickory Omelette",
+        "label": "Hickory Omelette",
+        "amount": 25
+      },
+      {
+        "type": "item",
+        "item": "Large Net",
+        "label": "Large Net",
+        "amount": 4000
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -90737,7 +91597,7 @@
   },
   {
     "id": 4133743,
-    "title": "Starting To Actually Realize <br/>Magic Ain't Pretty VII",
+    "title": "Starting To Actually Realize Magic Ain't Pretty VII",
     "npc": "Star Meerif",
     "description": "Returning to Star’s tower, you find the basement worse for wear.  Treasure chests and various trinkets in states of disrepair are strewn across the floor.  You see sparkles of jewels twinkling off of firelight in the walls.  Stepping closer, you realize these are rings in various states of destruction embedded in the walls.  <br><br>\r\n\r\nAs you survey the room more closely, you see a hooded figure laying in the middle - Star!  Dodging the debris, you rush towards him as he stiffly sits up.  Relieved, he looks up to you, “Well, that didn’t work…”<br><br>\r\n\r\nHe looks around the basement and looks to you with an apologetic smile, “I tried a shortcut, but now I’ve set us back to the beginning.  We’re going to have to start this whole process over again.  It turns out metaphysical creations metastasize inverted energetic positrons to deconstruct invection properties quite poorly.”<br><br>\r\n\r\nHe waves his hand and a list generates for you.  You feel bad for him and wonder what shortcut he was envisioning and how it could have such disastrous consequences for the both of you.",
     "image": "/img/items/npc_figure.png",
@@ -90757,9 +91617,158 @@
     "stepNumber": 7,
     "totalSteps": 12,
     "prevQuestId": 4133742,
-    "prevQuestTitle": "Starting To Actually Realize <br/>Magic Ain't Pretty VI",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Starting To Actually Realize Magic Ain't Pretty VI",
+    "requirements": [
+      {
+        "item": "Aquamarine Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Breakfast Boost",
+        "amount": 50
+      },
+      {
+        "item": "Butter",
+        "amount": 3000
+      },
+      {
+        "item": "Crab Claw",
+        "amount": 6000
+      },
+      {
+        "item": "Crossbow",
+        "amount": 6000
+      },
+      {
+        "item": "Emerald Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Fancy Drum",
+        "amount": 3000
+      },
+      {
+        "item": "Fancy Table",
+        "amount": 2000
+      },
+      {
+        "item": "Flywheel",
+        "amount": 500
+      },
+      {
+        "item": "Frost Shield",
+        "amount": 2000
+      },
+      {
+        "item": "Garnet Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Squid",
+        "amount": 2000
+      },
+      {
+        "item": "Grape Juice",
+        "amount": 500
+      },
+      {
+        "item": "Jade Charm",
+        "amount": 6000
+      },
+      {
+        "item": "Machine Press",
+        "amount": 2500
+      },
+      {
+        "item": "Medium Chest 02",
+        "amount": 500
+      },
+      {
+        "item": "Mushroom Stew",
+        "amount": 25
+      },
+      {
+        "item": "Mystic Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Orange Gecko",
+        "amount": 750
+      },
+      {
+        "item": "Over The Moon",
+        "amount": 25
+      },
+      {
+        "item": "Pear Grease",
+        "amount": 3000
+      },
+      {
+        "item": "Pie Pan",
+        "amount": 6000
+      },
+      {
+        "item": "Potato Battery",
+        "amount": 1000
+      },
+      {
+        "item": "Purple Bag",
+        "amount": 6000
+      },
+      {
+        "item": "Red Trunk",
+        "amount": 1000
+      },
+      {
+        "item": "Rice",
+        "amount": 1000
+      },
+      {
+        "item": "Ruby Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 1000
+      },
+      {
+        "item": "Steel Vise",
+        "amount": 2000
+      },
+      {
+        "item": "Treasure Chest",
+        "amount": 3000
+      },
+      {
+        "item": "Wizard Hat",
+        "amount": 3000
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 175000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Ramjoram's Mask",
+        "label": "Ramjoram's Mask",
+        "amount": 1
+      },
+      {
+        "type": "item",
+        "item": "100 Gold",
+        "label": "100 Gold",
+        "amount": 1
+      },
+      {
+        "type": "item",
+        "item": "Spooky Cookies",
+        "label": "Spooky Cookies",
+        "amount": 2
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -90767,7 +91776,7 @@
   },
   {
     "id": 4133747,
-    "title": "Starting To Actually Realize <br/>Magic Ain't Pretty VIII",
+    "title": "Starting To Actually Realize Magic Ain't Pretty VIII",
     "npc": "Star Meerif",
     "description": "You return to Star’s tower and head into the basement.  It has been cleaned up entirely, with the map sitting in the middle of the room.  It glows slightly, and you can see the familiar topography of your region, but something strikes you as off about the whole view.  It feels…skewed as if done from memory.  Inspecting the map for a few moments longer, you realize Star has not visited you yet and you head up into his tower, finding him sitting dejected in his sitting room.<br><br>\r\n\r\nHe gives you a half-hearted wave.  The sitting room is a luxurious purple and green.  The sofa is a material you’ve never seen before, and various pictures adorn the walls.  They shift in the light and glimmer softly.  After a moment, Star stands and addresses you, “I’m sorry, {player}, in my haste for discovering what this map said, I tried using a form of transmutation to shortcut the items required, but instead of supercharging this spell of clarification, it actually absorbed some of the magic in an exvestitation like I’ve never seen before.”  He sighs, and offers you an orange juice before shuffling off to the basement.  “Really, I am sorry, but your help still means the world to me.  Oh and, don’t tell Rosalie about this, would you?”<br><br>\r\n\r\nYou follow him to the basement, feeling rejuvenated by his orange juice and candor.  <br><br>\r\n\r\nItems piled around, Star begins to cast the spell again and halfway through his motions he stops.  “Great Scott!  That’s it!”  <br><br>\r\n\r\nHe stops and moves the rings into a new pattern and looks to you excitedly, “I know how to speed this up, it’s…temporally related somehow!  This map doesn’t exist where it should!  No wonder it was taking so much juice, it’s not from now!”<br><br>\r\n\r\nWaving his hands, he hands you a list as he mutters to himself about realigning the future and past according to the tomes of Thafeproc the Wise, using Ylberian methods combined with Romuskan gravitronic coupling.",
     "image": "/img/items/npc_figure.png",
@@ -90787,9 +91796,144 @@
     "stepNumber": 8,
     "totalSteps": 12,
     "prevQuestId": 4133743,
-    "prevQuestTitle": "Starting To Actually Realize <br/>Magic Ain't Pretty VII",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Starting To Actually Realize Magic Ain't Pretty VII",
+    "requirements": [
+      {
+        "item": "Aquamarine Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Blue Purse",
+        "amount": 6000
+      },
+      {
+        "item": "Breakfast Boost",
+        "amount": 50
+      },
+      {
+        "item": "Butter",
+        "amount": 3000
+      },
+      {
+        "item": "Corn Oil",
+        "amount": 1000
+      },
+      {
+        "item": "Crossbow",
+        "amount": 6000
+      },
+      {
+        "item": "Emerald Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Fancy Chair",
+        "amount": 3000
+      },
+      {
+        "item": "Fancy Guitar",
+        "amount": 3000
+      },
+      {
+        "item": "Flywheel",
+        "amount": 500
+      },
+      {
+        "item": "Garnet Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Squid",
+        "amount": 2000
+      },
+      {
+        "item": "Grape Juice",
+        "amount": 500
+      },
+      {
+        "item": "Machine Press",
+        "amount": 2500
+      },
+      {
+        "item": "Medium Chest 02",
+        "amount": 500
+      },
+      {
+        "item": "Mushroom Stew",
+        "amount": 25
+      },
+      {
+        "item": "Mystic Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Orange Gecko",
+        "amount": 750
+      },
+      {
+        "item": "Over The Moon",
+        "amount": 25
+      },
+      {
+        "item": "Pear Grease",
+        "amount": 3000
+      },
+      {
+        "item": "Pie Pan",
+        "amount": 6000
+      },
+      {
+        "item": "Red Shield",
+        "amount": 1000
+      },
+      {
+        "item": "Rice",
+        "amount": 1000
+      },
+      {
+        "item": "Ruby Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Ship in a Bottle",
+        "amount": 100
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 1000
+      },
+      {
+        "item": "Steel Vise",
+        "amount": 2000
+      },
+      {
+        "item": "Treasure Chest",
+        "amount": 3000
+      },
+      {
+        "item": "Wizard Hat",
+        "amount": 3000
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 175000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Arnold Palmer",
+        "label": "Arnold Palmer",
+        "amount": 4000
+      },
+      {
+        "type": "item",
+        "item": "Borgen Buck",
+        "label": "Borgen Buck",
+        "amount": 10
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -90797,7 +91941,7 @@
   },
   {
     "id": 4133751,
-    "title": "Starting To Actually Realize <br/>Magic Ain't Pretty IX",
+    "title": "Starting To Actually Realize Magic Ain't Pretty IX",
     "npc": "Star Meerif",
     "description": "As you arrive in Star’s tower basement, he stands in the center and greets you with open arms. \r\n\r\n“{player}, can you feel it?  Now that I’ve figured out the trick, it’s all working so marvelously.  I’ve even marked off Tuesday, Wednesday, <i>and</i> Sunday from the equatorial denomination of enervescence! I think now we can be done in just two more quick requests.  Progress is not lost,  you know what they always say, ‘You have to break several cartons of eggs to make a hickory omelette!’  Well at least that’s what Mariya told me once.  Anyways, I’ve got to work on this spell some more.  There’s a misalignment between how many Leaves and Branches I’m channeling in the 87th chakramma.”<br><br>\r\n\r\nHe waves his hand and another list appears in your hands.  This one is titled, <br><br>“NO SERIOUSLY ONLY ONE MORE AFTER THIS.”",
     "image": "/img/items/npc_figure.png",
@@ -90817,9 +91961,144 @@
     "stepNumber": 9,
     "totalSteps": 12,
     "prevQuestId": 4133747,
-    "prevQuestTitle": "Starting To Actually Realize <br/>Magic Ain't Pretty VIII",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Starting To Actually Realize Magic Ain't Pretty VIII",
+    "requirements": [
+      {
+        "item": "Aquamarine Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Blue Purse",
+        "amount": 6000
+      },
+      {
+        "item": "Breakfast Boost",
+        "amount": 50
+      },
+      {
+        "item": "Butter",
+        "amount": 3000
+      },
+      {
+        "item": "Concord Grape Pie",
+        "amount": 200
+      },
+      {
+        "item": "Crossbow",
+        "amount": 6000
+      },
+      {
+        "item": "Emerald Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Fancy Drum",
+        "amount": 3000
+      },
+      {
+        "item": "Fancy Table",
+        "amount": 2000
+      },
+      {
+        "item": "Flywheel",
+        "amount": 500
+      },
+      {
+        "item": "Frost Shield",
+        "amount": 2000
+      },
+      {
+        "item": "Garnet Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Squid",
+        "amount": 2000
+      },
+      {
+        "item": "Grape Juice",
+        "amount": 500
+      },
+      {
+        "item": "Jade Charm",
+        "amount": 6000
+      },
+      {
+        "item": "Medium Chest 02",
+        "amount": 500
+      },
+      {
+        "item": "Mushroom Stew",
+        "amount": 25
+      },
+      {
+        "item": "Mystic Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Over The Moon",
+        "amount": 25
+      },
+      {
+        "item": "Pear Grease",
+        "amount": 3000
+      },
+      {
+        "item": "Pie Pan",
+        "amount": 6000
+      },
+      {
+        "item": "Potato Battery",
+        "amount": 1000
+      },
+      {
+        "item": "Red Trunk",
+        "amount": 1000
+      },
+      {
+        "item": "Rice",
+        "amount": 1000
+      },
+      {
+        "item": "Ruby Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Ship in a Bottle",
+        "amount": 100
+      },
+      {
+        "item": "Steel Vise",
+        "amount": 2000
+      },
+      {
+        "item": "Treasure Chest",
+        "amount": 3000
+      },
+      {
+        "item": "Wizard Hat",
+        "amount": 3000
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 175000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Ramjoram's Mask",
+        "label": "Ramjoram's Mask",
+        "amount": 1
+      },
+      {
+        "type": "item",
+        "item": "Lemon Cream Pie",
+        "label": "Lemon Cream Pie",
+        "amount": 5
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -90827,7 +92106,7 @@
   },
   {
     "id": 4133752,
-    "title": "Starting To Actually Realize <br/>Magic Ain't Pretty X",
+    "title": "Starting To Actually Realize Magic Ain't Pretty X",
     "npc": "Star Meerif",
     "description": "Star is positively brimming with excitement as you finish bringing in the last of the items.<br><br>\r\n\r\n“{player}, are you familiar with time?  The construct is so fascinating.  Ever heard of a wormhole?  A diagetical explanation of apocryphal Merfi paradoxical analogies with lack of evidence wrapped in sheep’s clothing?  Feh!  I tell you the truth, now that I understand. <i>This map is not from here.</i>  It positively radiates magic that is impossible.  It’s so familiar and yet so…mysterious.  The secret was feathers. And strangely…a few lemons.”<br><br>\r\n\r\nHe waves his hand and a list materializes in your hands.  <br><br>\r\n\r\n“If my calculations are correct, and I’m a wizard, not a mathematician, this is the last thing we’ll need.  See you soon, {player}, and all will be explained!<br><br>\r\n\r\n…I hope.”",
     "image": "/img/items/npc_figure.png",
@@ -90847,9 +92126,166 @@
     "stepNumber": 10,
     "totalSteps": 12,
     "prevQuestId": 4133751,
-    "prevQuestTitle": "Starting To Actually Realize <br/>Magic Ain't Pretty IX",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Starting To Actually Realize Magic Ain't Pretty IX",
+    "requirements": [
+      {
+        "item": "Aquamarine Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Blue Purse",
+        "amount": 6000
+      },
+      {
+        "item": "Breakfast Boost",
+        "amount": 50
+      },
+      {
+        "item": "Corn Oil",
+        "amount": 2000
+      },
+      {
+        "item": "Crossbow",
+        "amount": 6000
+      },
+      {
+        "item": "Emerald Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Fancy Chair",
+        "amount": 3000
+      },
+      {
+        "item": "Fancy Guitar",
+        "amount": 3000
+      },
+      {
+        "item": "Flywheel",
+        "amount": 500
+      },
+      {
+        "item": "Frost Shield",
+        "amount": 2000
+      },
+      {
+        "item": "Garnet Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Squid",
+        "amount": 2000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 3000
+      },
+      {
+        "item": "Gold Leaf",
+        "amount": 6000
+      },
+      {
+        "item": "Grape Juice",
+        "amount": 500
+      },
+      {
+        "item": "Lemon",
+        "amount": 6000
+      },
+      {
+        "item": "Machine Press",
+        "amount": 2500
+      },
+      {
+        "item": "Medium Chest 02",
+        "amount": 500
+      },
+      {
+        "item": "Mushroom Stew",
+        "amount": 25
+      },
+      {
+        "item": "Mystic Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Orange Gecko",
+        "amount": 750
+      },
+      {
+        "item": "Over The Moon",
+        "amount": 25
+      },
+      {
+        "item": "Pear Grease",
+        "amount": 3000
+      },
+      {
+        "item": "Pie Pan",
+        "amount": 6000
+      },
+      {
+        "item": "Potato Battery",
+        "amount": 1000
+      },
+      {
+        "item": "Red Berry Pie",
+        "amount": 200
+      },
+      {
+        "item": "Red Shield",
+        "amount": 1000
+      },
+      {
+        "item": "Rice",
+        "amount": 1000
+      },
+      {
+        "item": "Ruby Ring",
+        "amount": 6000
+      },
+      {
+        "item": "Ship in a Bottle",
+        "amount": 100
+      },
+      {
+        "item": "Steel Vise",
+        "amount": 2000
+      },
+      {
+        "item": "Treasure Chest",
+        "amount": 3000
+      },
+      {
+        "item": "Wizard Hat",
+        "amount": 3000
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 175000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Apple Cider",
+        "label": "Apple Cider",
+        "amount": 4000
+      },
+      {
+        "type": "item",
+        "item": "Orange Juice",
+        "label": "Orange Juice",
+        "amount": 6000
+      },
+      {
+        "type": "item",
+        "item": "Raptor Claw",
+        "label": "Raptor Claw",
+        "amount": 100
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -92036,7 +93472,7 @@
   },
   {
     "id": 4388089,
-    "title": "Starting To Actually Realize <br/>Magic Ain't Pretty XI",
+    "title": "Starting To Actually Realize Magic Ain't Pretty XI",
     "npc": "Star Meerif",
     "description": "Star takes the organized items and arranges them in a precise manner you don’t fully understand.  Each item is placed even more delicately than usual - Star’s intensity is in full display as your anticipation for the spell’s conclusion builds, hoping against hope this was your last request and he can proceed.  <br><br>\r\n\r\nFinally, when all is said and done, you see a look of disgust on Star’s face as he places the lemon directly on top of the map.  “What I wouldn’t give for some gloves and an incineration facility.”<br><br>\r\n\r\nStar stands back, and begins to raise his arms. For a moment, nothing happens.  You see a look of strain on Star’s face and finally a spark coalesces into a dazzling pulsating pinpoint of light from between his outstretched hand and falls gently towards the map.  <br><br>\r\n\r\nAs the pinpoint of light descends towards the map, it begins to get brighter and brighter until you are forced to avert your eyes and a sound like a rushing tornado hits you - from across the room Star cries out and a rush of wind and energy envelops you as your vision grows dark.",
     "image": "/img/items/npc_figure.png",
@@ -92056,9 +93492,200 @@
     "stepNumber": 11,
     "totalSteps": 12,
     "prevQuestId": 4133752,
-    "prevQuestTitle": "Starting To Actually Realize <br/>Magic Ain't Pretty X",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Starting To Actually Realize Magic Ain't Pretty X",
+    "requirements": [
+      {
+        "item": "Aquamarine Ring",
+        "amount": 1
+      },
+      {
+        "item": "Blue Purse",
+        "amount": 1
+      },
+      {
+        "item": "Breakfast Boost",
+        "amount": 1
+      },
+      {
+        "item": "Butter",
+        "amount": 1
+      },
+      {
+        "item": "Cabbage Stew",
+        "amount": 1
+      },
+      {
+        "item": "Concord Grape Pie",
+        "amount": 1
+      },
+      {
+        "item": "Corn Oil",
+        "amount": 1
+      },
+      {
+        "item": "Crab Claw",
+        "amount": 1
+      },
+      {
+        "item": "Crossbow",
+        "amount": 1
+      },
+      {
+        "item": "Emerald Ring",
+        "amount": 1
+      },
+      {
+        "item": "Fancy Chair",
+        "amount": 1
+      },
+      {
+        "item": "Fancy Drum",
+        "amount": 1
+      },
+      {
+        "item": "Fancy Guitar",
+        "amount": 1
+      },
+      {
+        "item": "Fancy Table",
+        "amount": 1
+      },
+      {
+        "item": "Flywheel",
+        "amount": 1
+      },
+      {
+        "item": "Frost Shield",
+        "amount": 1
+      },
+      {
+        "item": "Garnet Ring",
+        "amount": 1
+      },
+      {
+        "item": "Giant Squid",
+        "amount": 1
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 1
+      },
+      {
+        "item": "Gold Leaf",
+        "amount": 1
+      },
+      {
+        "item": "Grape Juice",
+        "amount": 1
+      },
+      {
+        "item": "Jade Charm",
+        "amount": 1
+      },
+      {
+        "item": "Machine Press",
+        "amount": 1
+      },
+      {
+        "item": "Medium Chest 02",
+        "amount": 1
+      },
+      {
+        "item": "Mushroom Stew",
+        "amount": 1
+      },
+      {
+        "item": "Mystic Ring",
+        "amount": 1
+      },
+      {
+        "item": "Orange Gecko",
+        "amount": 1
+      },
+      {
+        "item": "Over The Moon",
+        "amount": 1
+      },
+      {
+        "item": "Pear Grease",
+        "amount": 1
+      },
+      {
+        "item": "Pie Pan",
+        "amount": 1
+      },
+      {
+        "item": "Potato Battery",
+        "amount": 1
+      },
+      {
+        "item": "Purple Bag",
+        "amount": 1
+      },
+      {
+        "item": "Red Berry Pie",
+        "amount": 1
+      },
+      {
+        "item": "Red Shield",
+        "amount": 1
+      },
+      {
+        "item": "Red Trunk",
+        "amount": 1
+      },
+      {
+        "item": "Rice",
+        "amount": 1
+      },
+      {
+        "item": "Ruby Ring",
+        "amount": 1
+      },
+      {
+        "item": "Ship in a Bottle",
+        "amount": 1
+      },
+      {
+        "item": "Small Chest 01",
+        "amount": 1
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 1
+      },
+      {
+        "item": "Steel Vise",
+        "amount": 1
+      },
+      {
+        "item": "Treasure Chest",
+        "amount": 1
+      },
+      {
+        "item": "Wizard Hat",
+        "amount": 1
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 175000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Ramjoram's Mask",
+        "label": "Ramjoram's Mask",
+        "amount": 1
+      },
+      {
+        "type": "item",
+        "item": "Happy Cookies",
+        "label": "Happy Cookies",
+        "amount": 2
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -92066,7 +93693,7 @@
   },
   {
     "id": 4388093,
-    "title": "Starting To Actually Realize <br/>Magic Ain't Pretty XII",
+    "title": "Starting To Actually Realize Magic Ain't Pretty XII",
     "npc": "Star Meerif",
     "description": "When you regain consciousness - you are in unfamiliar confines.  The room is well lit with glowing balls of light that hang from the ceiling, not unlike some of the technology you recognize as Romuskan.  Sitting up, you find yourself in a room covered with books in various states of age and dust while unfamiliar markings cover the floor.  There are two banners hanging on each side of the wall with a symbol that you do not recognize, and Star seems to be leafing through books.  The bookshelves are made of a material you do not recognize, and you notice there seems to be no doors or windows in the room at all.  <br><br>\r\n\r\nA small desk sits at the middle of the room, with a bed and several chairs haphazardly placed to allow easy access to all the shelves.<br><br> \r\n\r\n“ACCESS GRANTED. WELCOME SON OF MEERIF.  THE ARCHIVE HAS BEEN ATTUNED.”<br><br>\r\n\r\nYou bolt upright - this is a voice you recognize from your first trip to the Romuskan castle.  Star seems unconcerned however, and you notice his hand is placed on a piece of metal and glass that retracts into the ground after a moment.  <br><br>\r\n\r\nStar looks back to you and smiles grimly.  “Well, we found it.  The anchor was a lemon. I will have to spend more time learning here, but this seems to be the vault of my ancestors and many more ancient wizards - I don’t know how it got here, or how the map lead me here, but there seems to be a reason I’m here, and it’s thanks to your help and persistence I’ve arrived here.  On the walls sits a treasured family heirloom, the Meerif crest.  I want to give this to you as thanks, {player}.  I will send you home for now, but I will need to learn more about this place.  I’m truly grateful to your help, but let’s keep this to ourselves for now, eh?”<br><br>\r\n\r\nStar throws a handful of feathers over you and that unfamiliar sensation of being pushed and pulled into a thousand different directions overwhelms you, and that strange sense of seeing yourself in a mirror overtakes you before suddenly you’re once again in your home.<br><br>\r\n\r\nYou're left to wonder what exactly just happened.  The memory of the Romuskan voice and the experience of teleportation combine to leave a shiver down your spine.  Maybe tomorrow you'll get to farm in peace...",
     "image": "/img/items/npc_figure.png",
@@ -92086,9 +93713,34 @@
     "stepNumber": 12,
     "totalSteps": 12,
     "prevQuestId": 4388089,
-    "prevQuestTitle": "Starting To Actually Realize <br/>Magic Ain't Pretty XI",
+    "prevQuestTitle": "Starting To Actually Realize Magic Ain't Pretty XI",
     "requirements": [],
-    "rewards": [],
+    "rewards": [
+      {
+        "type": "item",
+        "item": "Meerif Crest",
+        "label": "Meerif Crest",
+        "amount": 1
+      },
+      {
+        "type": "item",
+        "item": "Wizard's Second Favorite Feather",
+        "label": "Wizard's Second Favorite Feather",
+        "amount": 1
+      },
+      {
+        "type": "item",
+        "item": "Time Egg",
+        "label": "Time Egg",
+        "amount": 1
+      },
+      {
+        "type": "item",
+        "item": "Gold Feather",
+        "label": "Gold Feather",
+        "amount": 1
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -94646,7 +96298,7 @@
   },
   {
     "id": 5434065,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted I",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted I",
     "npc": "Borgen",
     "description": "Potatoes and steaks served as a main course, the brothers quickly fall into a conversational pattern that can only be describe as tense, but friendly.  Their topics are far and varied, but almost completely superficial in nature until Borgen begins to slowly describe his travels. <br><br>\r\n\r\n“You see, at first I thought this area was quite droll, but the forest behind our dear {player}’s house was so charming, I found all manner of delightful things, collectibles, valuables, and the like.  I may have even spent a little time fishing in the pond.  {player} can tell you!  Stones! They’re Redbrook’s notary, I bet they’ll confirm all of my claims!”<br><br>\r\n\r\nIt's unclear why he's talking about such common areas of Redbrook, but you realize it's your duty as a notary to help confirm these things and keep the claims honest between the brothers.  There's a level of braggadocio that you find concerning in his words, even as the description is quite calm.",
     "image": "/img/items/borgen.png",
@@ -94665,10 +96317,67 @@
     "questline": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted",
     "stepNumber": 1,
     "totalSteps": 13,
-    "prevQuestId": null,
-    "prevQuestTitle": null,
-    "requirements": [],
-    "rewards": [],
+    "prevQuestId": 5434121,
+    "prevQuestTitle": "An Interesting Lunch II",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 6000
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1500
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 6000
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 6000
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 6000
+      },
+      {
+        "item": "Flier",
+        "amount": 6000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 4000
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 6000
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 6000
+      },
+      {
+        "item": "Red Twine",
+        "amount": 6000
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 600
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 100000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Moonstone",
+        "label": "Moonstone",
+        "amount": 2000
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -94676,7 +96385,7 @@
   },
   {
     "id": 5434066,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted II",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted II",
     "npc": "Holger",
     "description": "Returning from your notarial duties, you step back into the room and quickly realize that Holger's nervousness has melted away in the presence of Borgen.  And yet...a hint of some unrest is still plain on his face.  <br><br>\r\n\r\nHolger looks over the notarized list, “Aye, {player}’s forest has always been a great place to explore, but me?  I’ve been all over. Have you been to the small pond, or even the small cave?  I found these glorious old things. I’ve even been debating adding these masks and cogwheels to my new venture… {player} can show you what they are.  As for my venture...\"<br><br>\r\n\r\nHolger trails off looking thoughtful after he hands you the list.  You set about looking for the items noted while the two men dine in peace.",
     "image": "/img/items/a_028.png",
@@ -94696,9 +96405,100 @@
     "stepNumber": 2,
     "totalSteps": 13,
     "prevQuestId": 5434065,
-    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted I",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted I",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 6000
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1500
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 6000
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 6000
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 6000
+      },
+      {
+        "item": "Flier",
+        "amount": 6000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 4000
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 6000
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 6000
+      },
+      {
+        "item": "Red Twine",
+        "amount": 6000
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 600
+      },
+      {
+        "item": "Cogwheel",
+        "amount": 4000
+      },
+      {
+        "item": "Spoon",
+        "amount": 6000
+      },
+      {
+        "item": "Wooden Mask",
+        "amount": 3000
+      },
+      {
+        "item": "Diamond",
+        "amount": 200
+      },
+      {
+        "item": "Magicite",
+        "amount": 6000
+      },
+      {
+        "item": "Spectacles",
+        "amount": 2000
+      },
+      {
+        "item": "Water Lily",
+        "amount": 2500
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 100000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Apple Cider",
+        "label": "Apple Cider",
+        "amount": 2000
+      },
+      {
+        "type": "item",
+        "item": "Orange Juice",
+        "label": "Orange Juice",
+        "amount": 6000
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -94706,7 +96506,7 @@
   },
   {
     "id": 5434067,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted III",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted III",
     "npc": "Borgen",
     "description": "Borgen stands up, first looking indignant, but with a throaty laugh and back slap he leads Holger into your living room.  They both light up pipes together and take a moment before Borgen speaks up.<br><br> \r\n\r\n“Brother, there is change coming to our lands, and we’ve got to be ready to meet it head on. The reemergence of wizards, the unrest in Bahltruvia, that business with 'Alghavaz', I’ve been preparing, slowly.  Those coins hold a significance you don’t yet understand.” <br><br>  \r\n\r\nHe flips a singular coin into the air, it glints in the light of your home before his hand reaches up almost too quickly to see, grabbing it from midair - as he opens his palm, the coin is gone completely.  <br><br> \r\n\r\n“Your venture though, it sounds…interesting.  Perhaps we should explore it together?  I’d like to show you some rarities I picked up from various places around greater Redbrook and even passing into the great Romuskan desert.  Those wastes are no place for sane men.”<br><br> \r\n\r\nHolger studies Borgen intently as Borgen hands you another list to verify and notarize.",
     "image": "/img/items/borgen.png",
@@ -94726,9 +96526,144 @@
     "stepNumber": 3,
     "totalSteps": 13,
     "prevQuestId": 5434066,
-    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted II",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted II",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 6000
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1500
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 6000
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 6000
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 6000
+      },
+      {
+        "item": "Flier",
+        "amount": 6000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 4000
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 6000
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 6000
+      },
+      {
+        "item": "Red Twine",
+        "amount": 6000
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 600
+      },
+      {
+        "item": "Cogwheel",
+        "amount": 4000
+      },
+      {
+        "item": "Spoon",
+        "amount": 6000
+      },
+      {
+        "item": "Wooden Mask",
+        "amount": 3000
+      },
+      {
+        "item": "Diamond",
+        "amount": 200
+      },
+      {
+        "item": "Magicite",
+        "amount": 6000
+      },
+      {
+        "item": "Spectacles",
+        "amount": 2000
+      },
+      {
+        "item": "Water Lily",
+        "amount": 2500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 250
+      },
+      {
+        "item": "Caterpillar",
+        "amount": 6000
+      },
+      {
+        "item": "Monster Skull",
+        "amount": 3000
+      },
+      {
+        "item": "Belt Drive",
+        "amount": 6000
+      },
+      {
+        "item": "Step Ladder",
+        "amount": 2000
+      },
+      {
+        "item": "Runestone 14",
+        "amount": 400
+      },
+      {
+        "item": "Runestone 15",
+        "amount": 400
+      },
+      {
+        "item": "Magic Conch Shell",
+        "amount": 100
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 100000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Cabbage Stew",
+        "label": "Cabbage Stew",
+        "amount": 10
+      },
+      {
+        "type": "item",
+        "item": "Quandary Chowder",
+        "label": "Quandary Chowder",
+        "amount": 10
+      },
+      {
+        "type": "item",
+        "item": "Large Net",
+        "label": "Large Net",
+        "amount": 5000
+      },
+      {
+        "type": "item",
+        "item": "Spades",
+        "label": "Spades",
+        "amount": 3
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -94736,7 +96671,7 @@
   },
   {
     "id": 5434068,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted IV",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted IV",
     "npc": "Holger",
     "description": "The list passes from Borgen to you to Holger, and Holger studies it for a moment with a furrowed brow.<br><br>\r\n\r\n“It seems, it seems we are on similar paths indeed, my good brother.  Your efforts and observations of our world have not been in vain. I’ve also noticed we could be in need of some support in the fair town of Redbrook in the coming years, so I’ve come up with an alternative solution, inspired by you actually. Using my standard operating accumulated profit system, I’ve discovered a way to help generate what we need and incentivize our good friend at the same time…”<br><br>\r\n\r\n\r\nIn a moment, you realize Holger has the self-same determined look of mischievousness and intensity as his brother.  It’s at once encouraging and terrifying.  You wonder if you’ve misjudged the man based on his love of potatoes for all these years.<br><br>\r\n\r\n\r\n“You see, my search yielded results in the Misty Forest - the amber there, it reminded me of one of your belts, and it was there I found the basis for my future idea!”<br><br>\r\n\r\n\r\nHolger hands you another list to notarize.",
     "image": "/img/items/a_028.png",
@@ -94756,9 +96691,144 @@
     "stepNumber": 4,
     "totalSteps": 13,
     "prevQuestId": 5434067,
-    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted III",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted III",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 6000
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1500
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 6000
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 6000
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 6000
+      },
+      {
+        "item": "Flier",
+        "amount": 6000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 4000
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 6000
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 6000
+      },
+      {
+        "item": "Red Twine",
+        "amount": 6000
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 600
+      },
+      {
+        "item": "Cogwheel",
+        "amount": 4000
+      },
+      {
+        "item": "Spoon",
+        "amount": 6000
+      },
+      {
+        "item": "Wooden Mask",
+        "amount": 3000
+      },
+      {
+        "item": "Diamond",
+        "amount": 200
+      },
+      {
+        "item": "Magicite",
+        "amount": 6000
+      },
+      {
+        "item": "Spectacles",
+        "amount": 2000
+      },
+      {
+        "item": "Water Lily",
+        "amount": 2500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 250
+      },
+      {
+        "item": "Caterpillar",
+        "amount": 6000
+      },
+      {
+        "item": "Monster Skull",
+        "amount": 3000
+      },
+      {
+        "item": "Belt Drive",
+        "amount": 6000
+      },
+      {
+        "item": "Step Ladder",
+        "amount": 2000
+      },
+      {
+        "item": "Runestone 14",
+        "amount": 400
+      },
+      {
+        "item": "Runestone 15",
+        "amount": 400
+      },
+      {
+        "item": "Amber Cane",
+        "amount": 80
+      },
+      {
+        "item": "Seaweed",
+        "amount": 6000
+      },
+      {
+        "item": "Shiny Beetle",
+        "amount": 6000
+      },
+      {
+        "item": "Magic Conch Shell",
+        "amount": 100
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 100000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Corn Prize Bag",
+        "label": "Corn Prize Bag",
+        "amount": 50
+      },
+      {
+        "type": "item",
+        "item": "Orange Gecko",
+        "label": "Orange Gecko",
+        "amount": 100
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -94766,7 +96836,7 @@
   },
   {
     "id": 5434069,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted V",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted V",
     "npc": "Borgen",
     "description": "As you notarize the list and pass it back to Borgen, their conversation continues, almost as if you aren’t there.<br><br>\r\n\r\n“Ah yes, belt number 42?\"<br><br>\r\n\r\nBorgen trails off, lost deep in thought for a moment.  He effortlessly threads a coin between his fingers while he’s thinking.  The absentmindedness of the gesture is astounding, his dexterity is akin to magic by your eyes.<br><br>\r\n\r\nHe continues, almost to himself, \"What could you possibly do with amber?  What madness are you brewing Holger?  The world has enough turmoil as it is without having two irresponsible members of the family... one of us has to look out for all of us...\"<br><br>\r\n\r\nBorgen flips the old coin to his other hand, the subconscious motions are at once a delight and mystifying.  <br><br>\r\nHolger gives a start at this final declaration but Borgen continues on once more.<br><br>\r\n\r\n“Well, I’ve gone a few other places, perhaps this madness can be stopped. Perhaps you’d be interested to see the specimens I’ve uncovered in the canyons and the strange magic in the rivers?  It couldn’t hurt.  And could be a lot safer...”<br><br>\r\n\r\nBorgen hands you a list and you head off to once again verify his claims, just to be sure.  It’s a notaries job, after all.",
     "image": "/img/items/borgen.png",
@@ -94786,9 +96856,154 @@
     "stepNumber": 5,
     "totalSteps": 13,
     "prevQuestId": 5434068,
-    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted IV",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted IV",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 6000
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1500
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 6000
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 6000
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 6000
+      },
+      {
+        "item": "Flier",
+        "amount": 6000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 4000
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 6000
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 6000
+      },
+      {
+        "item": "Red Twine",
+        "amount": 6000
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 600
+      },
+      {
+        "item": "Cogwheel",
+        "amount": 4000
+      },
+      {
+        "item": "Spoon",
+        "amount": 6000
+      },
+      {
+        "item": "Wooden Mask",
+        "amount": 3000
+      },
+      {
+        "item": "Diamond",
+        "amount": 200
+      },
+      {
+        "item": "Magicite",
+        "amount": 6000
+      },
+      {
+        "item": "Spectacles",
+        "amount": 2000
+      },
+      {
+        "item": "Water Lily",
+        "amount": 2500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 250
+      },
+      {
+        "item": "Caterpillar",
+        "amount": 6000
+      },
+      {
+        "item": "Monster Skull",
+        "amount": 3000
+      },
+      {
+        "item": "Belt Drive",
+        "amount": 6000
+      },
+      {
+        "item": "Step Ladder",
+        "amount": 2000
+      },
+      {
+        "item": "Runestone 14",
+        "amount": 400
+      },
+      {
+        "item": "Runestone 15",
+        "amount": 400
+      },
+      {
+        "item": "Amber Cane",
+        "amount": 80
+      },
+      {
+        "item": "Seaweed",
+        "amount": 6000
+      },
+      {
+        "item": "Shiny Beetle",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Centipede",
+        "amount": 6000
+      },
+      {
+        "item": "Ruby Scorpion",
+        "amount": 4000
+      },
+      {
+        "item": "Runestone 12",
+        "amount": 600
+      },
+      {
+        "item": "Steel Buckle",
+        "amount": 6000
+      },
+      {
+        "item": "Magic Conch Shell",
+        "amount": 100
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 100000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Protein Bar",
+        "label": "Protein Bar",
+        "amount": 1
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -94796,7 +97011,7 @@
   },
   {
     "id": 5434070,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted VI",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted VI",
     "npc": "Holger",
     "description": "Holger takes the list and smiles grimly. <br><br>\r\n\r\n“Oh brother, these, they won’t do at all.  And what in stars and stone is belt 42?  No no no, magic is useless to me, I’m a simple man with a simple plan.  These bugs might make a good snack though…”<br><br>\r\n\r\nHolger trails off and he looks hungrily towards your pantry.  More and more, Holger begins to seem a different person in your eyes.  He is craftier and more instinctive than you have previously observed.  Maybe he’s always been this way, or maybe Borgen brings it out of him, you’re not quite sure.<br><br>\r\n\r\n“Well, I thought dragons were the answer, but the Mountain was as fruitless as ever.  The skulls of some long forgotten war are littered there though, but have little value it seems, except as a reminder of a world we know nothing about.  Still, maybe you’d be interested?”<br><br>\r\n\r\nHolger hands you back the list, and you go about your notarial duties.  Maybe you need to petition the board of T’rah’s Notaries for an increase in maximum allowable fees...",
     "image": "/img/items/a_028.png",
@@ -94816,9 +97031,162 @@
     "stepNumber": 6,
     "totalSteps": 13,
     "prevQuestId": 5434069,
-    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted V",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted V",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 6000
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1500
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 6000
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 6000
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 6000
+      },
+      {
+        "item": "Flier",
+        "amount": 6000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 4000
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 6000
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 6000
+      },
+      {
+        "item": "Red Twine",
+        "amount": 6000
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 600
+      },
+      {
+        "item": "Cogwheel",
+        "amount": 4000
+      },
+      {
+        "item": "Spoon",
+        "amount": 6000
+      },
+      {
+        "item": "Wooden Mask",
+        "amount": 3000
+      },
+      {
+        "item": "Diamond",
+        "amount": 200
+      },
+      {
+        "item": "Magicite",
+        "amount": 6000
+      },
+      {
+        "item": "Spectacles",
+        "amount": 2000
+      },
+      {
+        "item": "Water Lily",
+        "amount": 2500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 250
+      },
+      {
+        "item": "Caterpillar",
+        "amount": 6000
+      },
+      {
+        "item": "Monster Skull",
+        "amount": 3000
+      },
+      {
+        "item": "Belt Drive",
+        "amount": 6000
+      },
+      {
+        "item": "Step Ladder",
+        "amount": 2000
+      },
+      {
+        "item": "Runestone 14",
+        "amount": 400
+      },
+      {
+        "item": "Runestone 15",
+        "amount": 400
+      },
+      {
+        "item": "Amber Cane",
+        "amount": 80
+      },
+      {
+        "item": "Seaweed",
+        "amount": 6000
+      },
+      {
+        "item": "Shiny Beetle",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Centipede",
+        "amount": 6000
+      },
+      {
+        "item": "Ruby Scorpion",
+        "amount": 4000
+      },
+      {
+        "item": "Runestone 12",
+        "amount": 600
+      },
+      {
+        "item": "Steel Buckle",
+        "amount": 6000
+      },
+      {
+        "item": "Dragon Skull",
+        "amount": 88
+      },
+      {
+        "item": "Magna Quartz",
+        "amount": 1200
+      },
+      {
+        "item": "Magic Conch Shell",
+        "amount": 100
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 100000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Joker",
+        "label": "Joker",
+        "amount": 2
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -94826,7 +97194,7 @@
   },
   {
     "id": 5434071,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted VII",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted VII",
     "npc": "Borgen",
     "description": "You hand the notarized list to Borgen.<br><br>\r\n\r\n“Dragons?  How very like you my brother.  There’s no answer in those ancient creatures.  They’re a myth at best, and lost to time at worst.  Geist is all there is, she should accept it and move on.  That whacko Ric was off his rocker about Alghavaz.  It’s not real.  It can’t be.  But then again…{player} found Glacier Lake, Sinking Swamps…what next, the Unknown Lands?  They’d be just the…known lands, right?”  <br><br>\r\n\r\nBorgen gives a mirthful snort as he puts his pipe down and rummages in his satchel.  <br><br>\r\n\r\n“Oh Holger, you don’t mean belt 37 do you?  Raptors?  Aren’t they…extinct?  You’re mad brother, MAD!  But still, it’s worth exploring…”<br><br>\r\n\r\nBorgen scribbles on the list some items you’d find in the Whispering Creek, and…the ocean?  Well, a notaries job is to verify, not question.",
     "image": "/img/items/borgen.png",
@@ -94846,9 +97214,180 @@
     "stepNumber": 7,
     "totalSteps": 13,
     "prevQuestId": 5434070,
-    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted VI",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted VI",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 6000
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1500
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 6000
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 6000
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 6000
+      },
+      {
+        "item": "Flier",
+        "amount": 6000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 4000
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 6000
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 6000
+      },
+      {
+        "item": "Red Twine",
+        "amount": 6000
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 600
+      },
+      {
+        "item": "Cogwheel",
+        "amount": 4000
+      },
+      {
+        "item": "Spoon",
+        "amount": 6000
+      },
+      {
+        "item": "Wooden Mask",
+        "amount": 3000
+      },
+      {
+        "item": "Diamond",
+        "amount": 200
+      },
+      {
+        "item": "Magicite",
+        "amount": 6000
+      },
+      {
+        "item": "Spectacles",
+        "amount": 2000
+      },
+      {
+        "item": "Water Lily",
+        "amount": 2500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 250
+      },
+      {
+        "item": "Caterpillar",
+        "amount": 6000
+      },
+      {
+        "item": "Monster Skull",
+        "amount": 3000
+      },
+      {
+        "item": "Belt Drive",
+        "amount": 6000
+      },
+      {
+        "item": "Step Ladder",
+        "amount": 2000
+      },
+      {
+        "item": "Runestone 14",
+        "amount": 400
+      },
+      {
+        "item": "Runestone 15",
+        "amount": 400
+      },
+      {
+        "item": "Amber Cane",
+        "amount": 80
+      },
+      {
+        "item": "Seaweed",
+        "amount": 6000
+      },
+      {
+        "item": "Shiny Beetle",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Centipede",
+        "amount": 6000
+      },
+      {
+        "item": "Ruby Scorpion",
+        "amount": 4000
+      },
+      {
+        "item": "Runestone 12",
+        "amount": 600
+      },
+      {
+        "item": "Steel Buckle",
+        "amount": 6000
+      },
+      {
+        "item": "Dragon Skull",
+        "amount": 88
+      },
+      {
+        "item": "Magna Quartz",
+        "amount": 1200
+      },
+      {
+        "item": "Magic Conch Shell",
+        "amount": 100
+      },
+      {
+        "item": "Diving Helmet",
+        "amount": 300
+      },
+      {
+        "item": "Striped Feather",
+        "amount": 6000
+      },
+      {
+        "item": "Thorns",
+        "amount": 6000
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 100000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Large Net",
+        "label": "Large Net",
+        "amount": 5000
+      },
+      {
+        "type": "item",
+        "item": "Grab Bag 08",
+        "label": "Grab Bag 08",
+        "amount": 2000
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -94856,7 +97395,7 @@
   },
   {
     "id": 5434072,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted VIII",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted VIII",
     "npc": "Holger",
     "description": "Holger exasperatedly grabs the list back.  <br><br>\r\n\r\n“You missed something Borgen, you must stop being so jaded.  {player} knows where they are, I can have them prove it to you.  <br><br>\r\n\r\nHolger hands you back the list with RAPTOR CLAWS written significantly across the bottom.",
     "image": "/img/items/a_028.png",
@@ -94876,9 +97415,178 @@
     "stepNumber": 8,
     "totalSteps": 13,
     "prevQuestId": 5434071,
-    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted VII",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted VII",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 6000
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1500
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 6000
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 6000
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 6000
+      },
+      {
+        "item": "Flier",
+        "amount": 6000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 4000
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 6000
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 6000
+      },
+      {
+        "item": "Red Twine",
+        "amount": 6000
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 600
+      },
+      {
+        "item": "Cogwheel",
+        "amount": 4000
+      },
+      {
+        "item": "Spoon",
+        "amount": 6000
+      },
+      {
+        "item": "Wooden Mask",
+        "amount": 3000
+      },
+      {
+        "item": "Diamond",
+        "amount": 200
+      },
+      {
+        "item": "Magicite",
+        "amount": 6000
+      },
+      {
+        "item": "Spectacles",
+        "amount": 2000
+      },
+      {
+        "item": "Water Lily",
+        "amount": 2500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 250
+      },
+      {
+        "item": "Caterpillar",
+        "amount": 6000
+      },
+      {
+        "item": "Monster Skull",
+        "amount": 3000
+      },
+      {
+        "item": "Belt Drive",
+        "amount": 6000
+      },
+      {
+        "item": "Step Ladder",
+        "amount": 2000
+      },
+      {
+        "item": "Runestone 14",
+        "amount": 400
+      },
+      {
+        "item": "Runestone 15",
+        "amount": 400
+      },
+      {
+        "item": "Amber Cane",
+        "amount": 80
+      },
+      {
+        "item": "Seaweed",
+        "amount": 6000
+      },
+      {
+        "item": "Shiny Beetle",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Centipede",
+        "amount": 6000
+      },
+      {
+        "item": "Ruby Scorpion",
+        "amount": 4000
+      },
+      {
+        "item": "Runestone 12",
+        "amount": 600
+      },
+      {
+        "item": "Steel Buckle",
+        "amount": 6000
+      },
+      {
+        "item": "Dragon Skull",
+        "amount": 88
+      },
+      {
+        "item": "Magna Quartz",
+        "amount": 1200
+      },
+      {
+        "item": "Magic Conch Shell",
+        "amount": 100
+      },
+      {
+        "item": "Diving Helmet",
+        "amount": 300
+      },
+      {
+        "item": "Striped Feather",
+        "amount": 6000
+      },
+      {
+        "item": "Thorns",
+        "amount": 6000
+      },
+      {
+        "item": "Raptor Claw",
+        "amount": 50
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 100000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Arnold Palmer",
+        "label": "Arnold Palmer",
+        "amount": 4000
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -94886,7 +97594,7 @@
   },
   {
     "id": 5434073,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted IX",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted IX",
     "npc": "Borgen",
     "description": "Borgen looks to you both incredulously.<br><br>\r\n\r\nThe raptor claws sit before the three of you, Holger looking triumphantly towards his brother and exclaims, “It was the belt!  You told me that story a few years ago about raptors from Whispering Creek and I asked myself, what could possibly be a better defense to the threats of Redbrook than a force of raptors!  But the first rule about this defense is that you never talk about this defense.  It’s our last resort, but I’m confident it’ll surprise anyone who comes to pillage our fair town.”<br><br>\r\n\r\nBorgen smiles again, this time in a mix of horror and awe at his brother.<br><br>\r\n\r\n“You magnificent man, I would never have dreamt up such a crazy idea.  How are you doing it?  How do you keep them in check?  Have you tried these…?”<br><br>\r\n\r\nBorgen hands you back the list again.  These two just can’t seem to stop trying to outdo the other, and you’re stuck in the middle.",
     "image": "/img/items/borgen.png",
@@ -94906,9 +97614,194 @@
     "stepNumber": 9,
     "totalSteps": 13,
     "prevQuestId": 5434072,
-    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted VIII",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted VIII",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 6000
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1500
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 6000
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 6000
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 6000
+      },
+      {
+        "item": "Flier",
+        "amount": 6000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 4000
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 6000
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 6000
+      },
+      {
+        "item": "Red Twine",
+        "amount": 6000
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 600
+      },
+      {
+        "item": "Cogwheel",
+        "amount": 4000
+      },
+      {
+        "item": "Spoon",
+        "amount": 6000
+      },
+      {
+        "item": "Wooden Mask",
+        "amount": 3000
+      },
+      {
+        "item": "Diamond",
+        "amount": 200
+      },
+      {
+        "item": "Magicite",
+        "amount": 6000
+      },
+      {
+        "item": "Spectacles",
+        "amount": 2000
+      },
+      {
+        "item": "Water Lily",
+        "amount": 2500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 250
+      },
+      {
+        "item": "Caterpillar",
+        "amount": 6000
+      },
+      {
+        "item": "Monster Skull",
+        "amount": 3000
+      },
+      {
+        "item": "Belt Drive",
+        "amount": 6000
+      },
+      {
+        "item": "Step Ladder",
+        "amount": 2000
+      },
+      {
+        "item": "Runestone 14",
+        "amount": 400
+      },
+      {
+        "item": "Runestone 15",
+        "amount": 400
+      },
+      {
+        "item": "Amber Cane",
+        "amount": 80
+      },
+      {
+        "item": "Seaweed",
+        "amount": 6000
+      },
+      {
+        "item": "Shiny Beetle",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Centipede",
+        "amount": 6000
+      },
+      {
+        "item": "Ruby Scorpion",
+        "amount": 4000
+      },
+      {
+        "item": "Runestone 12",
+        "amount": 600
+      },
+      {
+        "item": "Steel Buckle",
+        "amount": 6000
+      },
+      {
+        "item": "Dragon Skull",
+        "amount": 88
+      },
+      {
+        "item": "Magna Quartz",
+        "amount": 1200
+      },
+      {
+        "item": "Magic Conch Shell",
+        "amount": 100
+      },
+      {
+        "item": "Diving Helmet",
+        "amount": 300
+      },
+      {
+        "item": "Striped Feather",
+        "amount": 6000
+      },
+      {
+        "item": "Thorns",
+        "amount": 6000
+      },
+      {
+        "item": "Raptor Claw",
+        "amount": 50
+      },
+      {
+        "item": "Strange Ring",
+        "amount": 400
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 100000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Apple Cider",
+        "label": "Apple Cider",
+        "amount": 3000
+      },
+      {
+        "type": "item",
+        "item": "Orange Juice",
+        "label": "Orange Juice",
+        "amount": 6000
+      },
+      {
+        "type": "item",
+        "item": "Apple",
+        "label": "Apple",
+        "amount": 6000
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -94916,7 +97809,7 @@
   },
   {
     "id": 5434074,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted X",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted X",
     "npc": "Holger",
     "description": "Holger takes the list and looks at the rings.\r\n\r\n“Oh yes, I’ve used these, they’re quite effective in many situations.  Awfully rare though.  After some of the weirdness with the Thomas’s, I actually discovered these staves that help create a safe barrier to keep the raptors in-line and from harming others.”\r\n\r\nHolger hands you back the list and you already know what you have to do, the life of a notary is not particularly exciting, and sometimes quite droll.",
     "image": "/img/items/a_028.png",
@@ -94936,9 +97829,186 @@
     "stepNumber": 10,
     "totalSteps": 13,
     "prevQuestId": 5434073,
-    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted IX",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted IX",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 6000
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1500
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 6000
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 6000
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 6000
+      },
+      {
+        "item": "Flier",
+        "amount": 6000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 4000
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 6000
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 6000
+      },
+      {
+        "item": "Red Twine",
+        "amount": 6000
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 600
+      },
+      {
+        "item": "Cogwheel",
+        "amount": 4000
+      },
+      {
+        "item": "Spoon",
+        "amount": 6000
+      },
+      {
+        "item": "Wooden Mask",
+        "amount": 3000
+      },
+      {
+        "item": "Diamond",
+        "amount": 200
+      },
+      {
+        "item": "Magicite",
+        "amount": 6000
+      },
+      {
+        "item": "Spectacles",
+        "amount": 2000
+      },
+      {
+        "item": "Water Lily",
+        "amount": 2500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 250
+      },
+      {
+        "item": "Caterpillar",
+        "amount": 6000
+      },
+      {
+        "item": "Monster Skull",
+        "amount": 3000
+      },
+      {
+        "item": "Belt Drive",
+        "amount": 6000
+      },
+      {
+        "item": "Step Ladder",
+        "amount": 2000
+      },
+      {
+        "item": "Runestone 14",
+        "amount": 400
+      },
+      {
+        "item": "Runestone 15",
+        "amount": 400
+      },
+      {
+        "item": "Amber Cane",
+        "amount": 80
+      },
+      {
+        "item": "Seaweed",
+        "amount": 6000
+      },
+      {
+        "item": "Shiny Beetle",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Centipede",
+        "amount": 6000
+      },
+      {
+        "item": "Ruby Scorpion",
+        "amount": 4000
+      },
+      {
+        "item": "Runestone 12",
+        "amount": 600
+      },
+      {
+        "item": "Steel Buckle",
+        "amount": 6000
+      },
+      {
+        "item": "Dragon Skull",
+        "amount": 88
+      },
+      {
+        "item": "Magna Quartz",
+        "amount": 1200
+      },
+      {
+        "item": "Magic Conch Shell",
+        "amount": 100
+      },
+      {
+        "item": "Diving Helmet",
+        "amount": 300
+      },
+      {
+        "item": "Striped Feather",
+        "amount": 6000
+      },
+      {
+        "item": "Thorns",
+        "amount": 6000
+      },
+      {
+        "item": "Raptor Claw",
+        "amount": 50
+      },
+      {
+        "item": "Strange Ring",
+        "amount": 400
+      },
+      {
+        "item": "Tribal Staff",
+        "amount": 750
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 100000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Apple Pie",
+        "label": "Apple Pie",
+        "amount": 1
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -94946,7 +98016,7 @@
   },
   {
     "id": 5434075,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted XI",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted XI",
     "npc": "Borgen",
     "description": "You return with the requested items, confirming their existence and signing the notary.  <br><br>\r\n\r\nThe brothers seem to have come to some accord while you were gone this time.  They sit quietly, both contemplating. <br><br>\r\n\r\nBorgen, for all his bluster, seems to genuinely care for his brother, though the mystery around the coins is no clearer today. You have garnered new respect for Holger.  Though he hasn’t said it outright, the purpose of this visit was clearly to prove to you his ingenuity and drive for the town of Redbrook, his brother being there was just the icing on the cake, for him.  The fireplace crackles, shadows shift and flicker in the room as the linked lanterns glimmer behind you.  There’s a certain peace you aren’t ready to break as you enter the room.<br><br>\r\n\r\nBorgen breaks the silence after a few moments.  “Ah yes, {player}, thank you for confirming these tales.  Perhaps my travels have made me jaded, but in this moment, I’m just grateful for the time we’ve spent together.  There’s one last thing we need from you.  There’s been rumblings of a new pirate fleet gathering in the Vast.  I heard a rumor in Bahltruvia that there was a cove guarded by a pirate legend that had been co-opted.  Perhaps they were talking about Pirate’s Cove?  It’s too dangerous for me to go, and Holger has some preparations to make. There are rumors that you've gone fishing there in the past, maybe you can get in and out more easily than any of us could?”<br><br>\r\n\r\nYou remember the Notary oath you signed, but Borgen looks like he’s brooking no argument from you.",
     "image": "/img/items/borgen.png",
@@ -94966,9 +98036,190 @@
     "stepNumber": 11,
     "totalSteps": 13,
     "prevQuestId": 5434074,
-    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted X",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted X",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 6000
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1500
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 6000
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 6000
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 6000
+      },
+      {
+        "item": "Flier",
+        "amount": 6000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 4000
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 6000
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 6000
+      },
+      {
+        "item": "Red Twine",
+        "amount": 6000
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 600
+      },
+      {
+        "item": "Cogwheel",
+        "amount": 4000
+      },
+      {
+        "item": "Spoon",
+        "amount": 6000
+      },
+      {
+        "item": "Wooden Mask",
+        "amount": 3000
+      },
+      {
+        "item": "Diamond",
+        "amount": 200
+      },
+      {
+        "item": "Magicite",
+        "amount": 6000
+      },
+      {
+        "item": "Spectacles",
+        "amount": 2000
+      },
+      {
+        "item": "Water Lily",
+        "amount": 2500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 250
+      },
+      {
+        "item": "Caterpillar",
+        "amount": 6000
+      },
+      {
+        "item": "Monster Skull",
+        "amount": 3000
+      },
+      {
+        "item": "Belt Drive",
+        "amount": 6000
+      },
+      {
+        "item": "Step Ladder",
+        "amount": 2000
+      },
+      {
+        "item": "Runestone 14",
+        "amount": 400
+      },
+      {
+        "item": "Runestone 15",
+        "amount": 400
+      },
+      {
+        "item": "Amber Cane",
+        "amount": 80
+      },
+      {
+        "item": "Seaweed",
+        "amount": 6000
+      },
+      {
+        "item": "Shiny Beetle",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Centipede",
+        "amount": 6000
+      },
+      {
+        "item": "Ruby Scorpion",
+        "amount": 4000
+      },
+      {
+        "item": "Runestone 12",
+        "amount": 600
+      },
+      {
+        "item": "Steel Buckle",
+        "amount": 6000
+      },
+      {
+        "item": "Dragon Skull",
+        "amount": 88
+      },
+      {
+        "item": "Magna Quartz",
+        "amount": 1200
+      },
+      {
+        "item": "Magic Conch Shell",
+        "amount": 100
+      },
+      {
+        "item": "Diving Helmet",
+        "amount": 300
+      },
+      {
+        "item": "Striped Feather",
+        "amount": 6000
+      },
+      {
+        "item": "Thorns",
+        "amount": 6000
+      },
+      {
+        "item": "Raptor Claw",
+        "amount": 50
+      },
+      {
+        "item": "Strange Ring",
+        "amount": 400
+      },
+      {
+        "item": "Tribal Staff",
+        "amount": 750
+      },
+      {
+        "item": "Pirate Hook",
+        "amount": 1500
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 400000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Arnold Palmer",
+        "label": "Arnold Palmer",
+        "amount": 4000
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -94976,7 +98227,7 @@
   },
   {
     "id": 5434076,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted XII",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted XII",
     "npc": "Borgen",
     "description": "With a satisfying click, you disable the traps of Pirate Cove’s secret entrance.  Buddy was right, it never gets old. The immediate din of activity shocks you.  Navigating through the tunnels, you can hear extremely unusual commotion in the distance.  Moving slowly, you edge towards an outcropping, the cliff you normally fish from is quiet, but the echoes of activity bounce through the cave walls and the cove all the same.  You decide to go deeper into the cove, through a tunnel that you have never needed to pass through before, and using your knowledge of the cove’s defense system, you realize none of the traps are active.  <br><br>\r\n\r\nInching forward, you see a different cove, larger and bustling with activity.  A massive ship sits directly in the middle. It is painted a dark black, and the sails shimmer in the sunlight - oscillating between white and black in a strange and hypnotizing pattern that make it hard to pin down what their intended color is.  On the crows nest, a single small flag sits with a skull and crossbone - <i>pirates!</i>.  <br><br>\r\n\r\nYou attempt to count their number when you realize that there are even more ships outside the cove.  How could anyone have missed this?  <br><br>\r\n\r\nRealizing you could be caught, you slink back into the dark passages and back to the quietness of your fishing cove.  You will have to bring proof back to Borgen and Holger of this change, and you might have some questions for Buddy as well…",
     "image": "/img/items/borgen.png",
@@ -94996,9 +98247,202 @@
     "stepNumber": 12,
     "totalSteps": 13,
     "prevQuestId": 5434075,
-    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted XI",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted XI",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 6000
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1500
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 6000
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 6000
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 6000
+      },
+      {
+        "item": "Flier",
+        "amount": 6000
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 4000
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 6000
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 6000
+      },
+      {
+        "item": "Red Twine",
+        "amount": 6000
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 600
+      },
+      {
+        "item": "Cogwheel",
+        "amount": 4000
+      },
+      {
+        "item": "Spoon",
+        "amount": 6000
+      },
+      {
+        "item": "Wooden Mask",
+        "amount": 3000
+      },
+      {
+        "item": "Diamond",
+        "amount": 200
+      },
+      {
+        "item": "Magicite",
+        "amount": 6000
+      },
+      {
+        "item": "Spectacles",
+        "amount": 2000
+      },
+      {
+        "item": "Water Lily",
+        "amount": 2500
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 250
+      },
+      {
+        "item": "Caterpillar",
+        "amount": 6000
+      },
+      {
+        "item": "Monster Skull",
+        "amount": 3000
+      },
+      {
+        "item": "Belt Drive",
+        "amount": 6000
+      },
+      {
+        "item": "Step Ladder",
+        "amount": 2000
+      },
+      {
+        "item": "Runestone 14",
+        "amount": 400
+      },
+      {
+        "item": "Runestone 15",
+        "amount": 400
+      },
+      {
+        "item": "Amber Cane",
+        "amount": 80
+      },
+      {
+        "item": "Seaweed",
+        "amount": 6000
+      },
+      {
+        "item": "Shiny Beetle",
+        "amount": 6000
+      },
+      {
+        "item": "Giant Centipede",
+        "amount": 6000
+      },
+      {
+        "item": "Ruby Scorpion",
+        "amount": 4000
+      },
+      {
+        "item": "Runestone 12",
+        "amount": 600
+      },
+      {
+        "item": "Steel Buckle",
+        "amount": 6000
+      },
+      {
+        "item": "Dragon Skull",
+        "amount": 88
+      },
+      {
+        "item": "Magna Quartz",
+        "amount": 1200
+      },
+      {
+        "item": "Magic Conch Shell",
+        "amount": 100
+      },
+      {
+        "item": "Diving Helmet",
+        "amount": 300
+      },
+      {
+        "item": "Striped Feather",
+        "amount": 6000
+      },
+      {
+        "item": "Thorns",
+        "amount": 6000
+      },
+      {
+        "item": "Raptor Claw",
+        "amount": 50
+      },
+      {
+        "item": "Strange Ring",
+        "amount": 400
+      },
+      {
+        "item": "Tribal Staff",
+        "amount": 750
+      },
+      {
+        "item": "Pirate Hook",
+        "amount": 3000
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 400000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "item",
+        "item": "Large Net",
+        "label": "Large Net",
+        "amount": 5000
+      },
+      {
+        "type": "item",
+        "item": "Clubs",
+        "label": "Clubs",
+        "amount": 2
+      },
+      {
+        "type": "item",
+        "item": "Hearts",
+        "label": "Hearts",
+        "amount": 2
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",
@@ -95006,7 +98450,7 @@
   },
   {
     "id": 5434077,
-    "title": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted XIII",
+    "title": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted XIII",
     "npc": "Borgen",
     "description": "You return to the brothers with your hooks in tow and their shock is apparent. <br><br>\r\n\r\nHolger gives a wry smile, “Well, it’s a good thing the Raptor Fight Club exists, how else were we going to defend the town?  We can’t rely on wizards or dragons, but our own talents and ingenuity.  We need to find Buddy and find out what went wrong, and what we need to prepare for.  {player}, thank you for your help.  And for keeping the peace between my brother and I.  Take this, it should help in your other ventures in the times ahead.”<br><br>\r\n\r\nBorgen stands up and shakes Holgers hand, and then yours.  “It’s been a pleasure. Here, take this belt as a reminder of the brilliance of my brother’s fight club. There are none left in the world after the devastation of Romuska besides this one, so keep it safe. Perhaps the secret of Redbrook's raptors can be the surprise we need in the time ahead.”<br><br>\r\n\r\nThe brothers leave - and you are left more questions than answers.  Who are these pirates?  Why would they threaten Redbrook?  Did Holger know this all along?  What weren't you being told?  And why does a notary make so little anyways?",
     "image": "/img/items/borgen.png",
@@ -95026,9 +98470,207 @@
     "stepNumber": 13,
     "totalSteps": 13,
     "prevQuestId": 5434076,
-    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued<br/>Relational Affronts, Troubles Skirted XII",
-    "requirements": [],
-    "rewards": [],
+    "prevQuestTitle": "Pleasantly Arbitrating Misconstrued Relational Affronts, Troubles Skirted XII",
+    "requirements": [
+      {
+        "item": "Awl",
+        "amount": 1
+      },
+      {
+        "item": "Corn Husk Doll",
+        "amount": 1
+      },
+      {
+        "item": "Essence of Slime",
+        "amount": 1
+      },
+      {
+        "item": "Fire Ant",
+        "amount": 1
+      },
+      {
+        "item": "Fish Bones",
+        "amount": 1
+      },
+      {
+        "item": "Flier",
+        "amount": 1
+      },
+      {
+        "item": "Gold Feather",
+        "amount": 1
+      },
+      {
+        "item": "Leather Belt",
+        "amount": 1
+      },
+      {
+        "item": "Linked Lantern",
+        "amount": 1
+      },
+      {
+        "item": "Red Twine",
+        "amount": 1
+      },
+      {
+        "item": "Sunflower Oil",
+        "amount": 1
+      },
+      {
+        "item": "Cogwheel",
+        "amount": 1
+      },
+      {
+        "item": "Spoon",
+        "amount": 1
+      },
+      {
+        "item": "Wooden Mask",
+        "amount": 1
+      },
+      {
+        "item": "Diamond",
+        "amount": 1
+      },
+      {
+        "item": "Magicite",
+        "amount": 1
+      },
+      {
+        "item": "Spectacles",
+        "amount": 1
+      },
+      {
+        "item": "Water Lily",
+        "amount": 1
+      },
+      {
+        "item": "Spiked Shell",
+        "amount": 1
+      },
+      {
+        "item": "Caterpillar",
+        "amount": 1
+      },
+      {
+        "item": "Monster Skull",
+        "amount": 1
+      },
+      {
+        "item": "Belt Drive",
+        "amount": 1
+      },
+      {
+        "item": "Step Ladder",
+        "amount": 1
+      },
+      {
+        "item": "Runestone 14",
+        "amount": 1
+      },
+      {
+        "item": "Runestone 15",
+        "amount": 1
+      },
+      {
+        "item": "Amber Cane",
+        "amount": 1
+      },
+      {
+        "item": "Seaweed",
+        "amount": 1
+      },
+      {
+        "item": "Shiny Beetle",
+        "amount": 1
+      },
+      {
+        "item": "Giant Centipede",
+        "amount": 1
+      },
+      {
+        "item": "Ruby Scorpion",
+        "amount": 1
+      },
+      {
+        "item": "Runestone 12",
+        "amount": 1
+      },
+      {
+        "item": "Steel Buckle",
+        "amount": 1
+      },
+      {
+        "item": "Dragon Skull",
+        "amount": 1
+      },
+      {
+        "item": "Magna Quartz",
+        "amount": 1
+      },
+      {
+        "item": "Magic Conch Shell",
+        "amount": 1
+      },
+      {
+        "item": "Diving Helmet",
+        "amount": 1
+      },
+      {
+        "item": "Striped Feather",
+        "amount": 1
+      },
+      {
+        "item": "Thorns",
+        "amount": 1
+      },
+      {
+        "item": "Raptor Claw",
+        "amount": 1
+      },
+      {
+        "item": "Strange Ring",
+        "amount": 1
+      },
+      {
+        "item": "Tribal Staff",
+        "amount": 1
+      },
+      {
+        "item": "Pirate Hook",
+        "amount": 1
+      }
+    ],
+    "rewards": [
+      {
+        "type": "silver",
+        "amount": 400000000000,
+        "label": "Silver"
+      },
+      {
+        "type": "gold",
+        "amount": 50,
+        "label": "Gold"
+      },
+      {
+        "type": "item",
+        "item": "Raptor Wrangler Belt",
+        "label": "Raptor Wrangler Belt",
+        "amount": 1
+      },
+      {
+        "type": "item",
+        "item": "Borgen Bag 01",
+        "label": "Borgen Bag 01",
+        "amount": 1
+      },
+      {
+        "type": "item",
+        "item": "VIP Platinum Card",
+        "label": "VIP Platinum Card",
+        "amount": 1
+      }
+    ],
     "startDate": null,
     "endDate": null,
     "status": "active",

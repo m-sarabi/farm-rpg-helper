@@ -6,6 +6,14 @@
 
 import { getQuestCatalogEntry } from "./quests-catalog.js";
 
+export function sanitizeQuestTitle(title) {
+  if (!title) return "";
+  return String(title)
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /**
  * Extracts the quest slug from a buddy.farm URL, pathname, or raw string.
  */
@@ -19,7 +27,7 @@ export function extractQuestSlug(input) {
     return qMatch[1].toLowerCase();
   }
 
-  let cleaned = s.replace(/^https?:\/\//i, "");
+  let cleaned = sanitizeQuestTitle(s).replace(/^https?:\/\//i, "");
   cleaned = cleaned.replace(/^[a-zA-Z0-9.-]+\//, "");
   cleaned = cleaned.split("?")[0].split("#")[0].trim().replace(/^\/+|\/+$/g, "");
 
@@ -52,8 +60,8 @@ function parseRoman(str) {
 }
 
 export function parseStepNumber(questName, questlineTitle) {
-  const qName = (questName || "").trim();
-  const qlTitle = (questlineTitle || "").trim();
+  const qName = sanitizeQuestTitle(questName);
+  const qlTitle = sanitizeQuestTitle(questlineTitle);
 
   if (qlTitle && qName.toLowerCase() === qlTitle.toLowerCase()) {
     return 1;
@@ -78,7 +86,7 @@ export function parseBuddyQuestData(rawQuest) {
     throw new Error("Invalid quest data received from buddy.farm.");
   }
 
-  const title = (rawQuest.name || "").trim();
+  const title = sanitizeQuestTitle(rawQuest.name);
   const npc = (rawQuest.npc || "").trim() || "Unknown";
   const description = (rawQuest.cleanDescription || rawQuest.description || "").trim();
 
@@ -268,8 +276,8 @@ export async function fetchBuddyFarmAllQuests(onProgress = () => {}) {
   const questStepMap = new Map();
   for (const [title, group] of qlGroups.entries()) {
     group.sort((a, b) => {
-      const catA = getQuestCatalogEntry(a.name);
-      const catB = getQuestCatalogEntry(b.name);
+      const catA = getQuestCatalogEntry(a.id) || getQuestCatalogEntry(a.name);
+      const catB = getQuestCatalogEntry(b.id) || getQuestCatalogEntry(b.name);
       if (catA?.stepNumber !== undefined && catB?.stepNumber !== undefined) {
         return catA.stepNumber - catB.stepNumber;
       }
@@ -279,13 +287,13 @@ export async function fetchBuddyFarmAllQuests(onProgress = () => {}) {
     for (let i = 0; i < group.length; i++) {
       const current = group[i];
       const prev = i > 0 ? group[i - 1] : null;
-      const catalog = getQuestCatalogEntry(current.name);
+      const catalog = getQuestCatalogEntry(current.id) || getQuestCatalogEntry(current.name);
       questStepMap.set(current.id, {
         questlineTitle: title,
         stepNumber: catalog?.stepNumber !== undefined ? catalog.stepNumber : (i + 1),
         totalSteps: catalog?.totalSteps !== undefined ? catalog.totalSteps : group.length,
         prevQuestId: catalog?.prevQuestId ?? (prev ? prev.id : null),
-        prevQuestTitle: catalog?.prevQuestTitle ?? (prev ? prev.name : null)
+        prevQuestTitle: catalog?.prevQuestTitle ? sanitizeQuestTitle(catalog.prevQuestTitle) : (prev ? sanitizeQuestTitle(prev.name) : null)
       });
     }
   }
@@ -300,7 +308,8 @@ export async function fetchBuddyFarmAllQuests(onProgress = () => {}) {
   };
 
   const finalQuests = rawQuests.map(q => {
-    const catalogEntry = getQuestCatalogEntry(q.name);
+    const cleanTitle = sanitizeQuestTitle(q.name);
+    const catalogEntry = getQuestCatalogEntry(q.id) || getQuestCatalogEntry(cleanTitle) || getQuestCatalogEntry(q.name);
     const stepInfo = questStepMap.get(q.id) || {
       questlineTitle: q.questlines?.[0]?.questline?.title || catalogEntry?.questline || null,
       stepNumber: catalogEntry?.stepNumber || 1,
@@ -310,7 +319,7 @@ export async function fetchBuddyFarmAllQuests(onProgress = () => {}) {
     };
 
     const finalPrevId = catalogEntry?.prevQuestId ?? stepInfo.prevQuestId;
-    const finalPrevTitle = catalogEntry?.prevQuestTitle ?? stepInfo.prevQuestTitle;
+    const finalPrevTitle = catalogEntry?.prevQuestTitle ? sanitizeQuestTitle(catalogEntry.prevQuestTitle) : (stepInfo.prevQuestTitle ? sanitizeQuestTitle(stepInfo.prevQuestTitle) : null);
 
     const skills = {
       farming: q.requiredFarmingLevel || 0,
@@ -335,7 +344,7 @@ export async function fetchBuddyFarmAllQuests(onProgress = () => {}) {
 
     return {
       id: q.id,
-      title: q.name.trim(),
+      title: cleanTitle,
       npc: (q.npc || "Buddy").trim(),
       description: (q.cleanDescription || "").trim(),
       image: q.image || "",

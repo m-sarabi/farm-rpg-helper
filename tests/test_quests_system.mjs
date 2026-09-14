@@ -343,6 +343,65 @@ async function runTests() {
   assert.strictEqual(cachedBFG.pinned, true, "Pinned state must be preserved during enrichment");
   console.log("✓ Predecessor auto-enrichment for cached data verified!");
 
+  console.log("\n--- Test 16: 'You Spin Me Right Round, Buddy, Right Round' Prerequisite & Data ---");
+  const q249 = state.quests.find(q => q.id === 249);
+  const q247 = state.quests.find(q => q.id === 247);
+  assert.ok(q249, "Quest 249 must exist in state");
+  assert.ok(q247, "Quest 247 ('A Horse Of A Different Color VII') must exist in state");
+
+  // Verify clean title (no HTML break tags)
+  assert.strictEqual(q249.title, "You Spin Me Right Round, Buddy, Right Round", "Quest 249 title must be clean of HTML");
+  assert.strictEqual(q249.prevQuestId, 247, "Quest 249 prevQuestId must be 247");
+  assert.strictEqual(q249.prevQuestTitle, "A Horse Of A Different Color VII", "Quest 249 prevQuestTitle must match Quest 247");
+
+  // Verify material requirements and rewards
+  assert.strictEqual(q249.requirements.length, 1, "Quest 249 must have 1 requirement");
+  assert.strictEqual(q249.requirements[0].item, "Treasure Chest");
+  assert.strictEqual(q249.requirements[0].amount, 1);
+  assert.ok(q249.rewards.length >= 2, "Quest 249 must have at least 2 rewards");
+  const silverReward = q249.rewards.find(r => r.type === "silver");
+  const coinReward = q249.rewards.find(r => r.item === "Ancient Coin");
+  assert.ok(silverReward && silverReward.amount === 500000, "Silver reward must be 500,000");
+  assert.ok(coinReward && coinReward.amount === 25, "Ancient Coin reward must be 25");
+
+  // Dynamic availability check
+  state.setPlayerLevels({ crafting: 35, exploring: 35 });
+  state.setQuestStatus(q247.id, "active");
+  state.setQuestStatus(q249.id, "active");
+  assert.strictEqual(state.isQuestAvailable(q249), false, "Quest 249 must NOT be available while Quest 247 is active");
+
+  const lockReasons249 = state.getQuestLockReasons(q249);
+  assert.ok(lockReasons249.some(r => r.includes("A Horse Of A Different Color VII")), "Lock reasons must mention prerequisite");
+
+  // Complete Quest 247
+  state.setQuestStatus(q247.id, "completed");
+  assert.strictEqual(state.isQuestAvailable(q249), true, "Quest 249 must become available once Quest 247 is completed");
+
+  // Reopen Quest 247
+  state.setQuestStatus(q247.id, "active");
+  assert.strictEqual(state.isQuestAvailable(q249), false, "Quest 249 must re-lock if Quest 247 is reopened");
+  console.log("✓ 'You Spin Me Right Round, Buddy, Right Round' prerequisite & data verified!");
+
+  console.log("\n--- Test 17: Automatic Recovery of Cached Quest with <br/> and Empty Data ---");
+  // Simulate corrupt cached entry in user's localStorage
+  const corruptCached249 = state.quests.find(q => q.id === 249);
+  corruptCached249.title = "You Spin Me Right Round,<br/>Buddy, Right Round";
+  corruptCached249.prevQuestId = null;
+  corruptCached249.prevQuestTitle = null;
+  corruptCached249.requirements = [];
+  corruptCached249.rewards = [];
+  corruptCached249.pinned = true;
+
+  await state.enrichQuestsFromCatalog();
+  assert.strictEqual(corruptCached249.title, "You Spin Me Right Round, Buddy, Right Round", "Enrichment must sanitize title");
+  assert.strictEqual(corruptCached249.prevQuestId, 247, "Enrichment must restore prevQuestId 247");
+  assert.strictEqual(corruptCached249.prevQuestTitle, "A Horse Of A Different Color VII", "Enrichment must restore prevQuestTitle");
+  assert.strictEqual(corruptCached249.requirements.length, 1, "Enrichment must restore requirements");
+  assert.strictEqual(corruptCached249.rewards.length, 2, "Enrichment must restore rewards");
+  assert.strictEqual(corruptCached249.pinned, true, "Pinned status preserved");
+  assert.strictEqual(state.isQuestAvailable(corruptCached249), false, "With restored prerequisite, quest must be locked");
+  console.log("✓ Legacy cache recovery with HTML tags and empty data verified!");
+
   console.log("\n==========================================");
   console.log("ALL AUTOMATED TESTS PASSED! 🎉");
   console.log("==========================================");

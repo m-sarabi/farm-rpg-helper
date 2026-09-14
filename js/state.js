@@ -97,11 +97,16 @@ class StateManager {
       const savedQuests = localStorage.getItem(STORAGE_KEYS.QUESTS);
       if (savedQuests) {
         this.quests = JSON.parse(savedQuests);
-        // If stored quests lack date fields or predecessor fields, enrich from data/quests.json
+        // If stored quests lack date fields, predecessor fields, have HTML in title,
+        // or have missing requirements/rewards, enrich from data/quests.json
         const hasDates = this.quests.some(q => q.startDate || q.endDate);
-        const bfg = this.quests.find(q => q.title === "Bowling for Goldie I");
+        const bfg = this.quests.find(q => q.title === "Bowling for Goldie I" || q.id === 268);
         const hasPrereqs = bfg ? Boolean(bfg.prevQuestId) : true;
-        if ((!hasDates || !hasPrereqs) && this.quests.length > 0) {
+        const hasHtmlTitles = this.quests.some(q => /<[^>]+>/.test(q.title));
+        const q249 = this.quests.find(q => q.id === 249 || (q.title && q.title.includes("You Spin Me Right Round")));
+        const needsQ249Repair = q249 ? (!q249.prevQuestId || (q249.requirements || []).length === 0) : false;
+
+        if ((!hasDates || !hasPrereqs || hasHtmlTitles || needsQ249Repair) && this.quests.length > 0) {
           this.enrichQuestsFromCatalog();
         }
       } else {
@@ -168,11 +173,20 @@ class StateManager {
           data.forEach(q => {
             catalogMap.set(q.id, q);
             catalogMap.set(q.title.toLowerCase().trim(), q);
+            const clean = (q.title || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
+            catalogMap.set(clean, q);
           });
           let enriched = false;
           for (const q of this.quests) {
-            const cat = catalogMap.get(q.id) || catalogMap.get(q.title.toLowerCase().trim());
+            const cleanTitle = (q.title || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+            const cat = catalogMap.get(q.id)
+              || catalogMap.get(cleanTitle.toLowerCase())
+              || catalogMap.get((q.title || "").toLowerCase().trim());
             if (cat) {
+              if (q.title !== cat.title) {
+                q.title = cat.title;
+                enriched = true;
+              }
               if ((!q.startDate || !q.endDate) && (cat.startDate || cat.endDate)) {
                 q.startDate = cat.startDate;
                 q.endDate = cat.endDate;
@@ -181,6 +195,14 @@ class StateManager {
               if (cat.prevQuestId && q.prevQuestId !== cat.prevQuestId) {
                 q.prevQuestId = cat.prevQuestId;
                 q.prevQuestTitle = cat.prevQuestTitle;
+                enriched = true;
+              }
+              if ((!q.requirements || q.requirements.length === 0) && Array.isArray(cat.requirements) && cat.requirements.length > 0) {
+                q.requirements = [...cat.requirements];
+                enriched = true;
+              }
+              if ((!q.rewards || q.rewards.length === 0) && Array.isArray(cat.rewards) && cat.rewards.length > 0) {
+                q.rewards = [...cat.rewards];
                 enriched = true;
               }
             }
@@ -485,14 +507,20 @@ class StateManager {
 
     const existingStatusMap = new Map();
     for (const q of this.quests) {
+      const clean = (q.title || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().toLowerCase();
       existingStatusMap.set(q.id, { status: q.status, pinned: q.pinned });
-      existingStatusMap.set(q.title.toLowerCase().trim(), { status: q.status, pinned: q.pinned });
+      existingStatusMap.set(clean, { status: q.status, pinned: q.pinned });
+      existingStatusMap.set((q.title || "").toLowerCase().trim(), { status: q.status, pinned: q.pinned });
     }
 
     this.quests = importedQuests.map(q => {
-      const existing = existingStatusMap.get(q.id) || existingStatusMap.get(q.title.toLowerCase().trim());
+      const cleanTitle = (q.title || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      const existing = existingStatusMap.get(q.id)
+        || existingStatusMap.get(cleanTitle.toLowerCase())
+        || existingStatusMap.get((q.title || "").toLowerCase().trim());
       return {
         ...q,
+        title: cleanTitle,
         startDate: q.startDate || null,
         endDate: q.endDate || null,
         status: existing?.status || "active",

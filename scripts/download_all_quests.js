@@ -23,9 +23,17 @@ const BASE_QL_URL = 'https://buddy.farm/page-data/ql';
 const BASE_Q_URL = 'https://buddy.farm/page-data/q';
 const USER_AGENT = 'FarmRPG-Helper-Bot/1.0 (+https://github.com/m-sarabi/farm-rpg-helper)';
 
+export function sanitizeQuestTitle(title) {
+  if (!title) return '';
+  return title
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function slugify(text) {
   if (!text) return '';
-  return text
+  return sanitizeQuestTitle(text)
     .toLowerCase()
     .replace(/[^a-z0-9-_]+/g, '-')
     .replace(/-+/g, '-')
@@ -136,12 +144,15 @@ async function main() {
                 }
               }
 
-              questDetailsMap.set(quest.name.toLowerCase().trim(), {
+              const cleanQName = sanitizeQuestTitle(quest.name);
+              const qDetailsObj = {
                 order: step.order,
                 requirements: reqItems,
                 rewards,
                 pred: null
-              });
+              };
+              questDetailsMap.set(cleanQName.toLowerCase(), qDetailsObj);
+              questDetailsMap.set(quest.name.toLowerCase().trim(), qDetailsObj);
             }
           }
         }
@@ -165,7 +176,10 @@ async function main() {
     if (Array.isArray(searchData)) {
       for (const entry of searchData) {
         if (entry.name && entry.href && entry.href.startsWith('/q/')) {
-          questPathMap.set(entry.name.toLowerCase().trim(), entry.href);
+          const rawKey = entry.name.toLowerCase().trim();
+          const cleanKey = sanitizeQuestTitle(entry.name).toLowerCase();
+          questPathMap.set(rawKey, entry.href);
+          questPathMap.set(cleanKey, entry.href);
         }
       }
     }
@@ -181,15 +195,16 @@ async function main() {
   async function questDetailWorker() {
     while (questDetailQueue.length > 0) {
       const q = questDetailQueue.shift();
-      const key = q.name.toLowerCase().trim();
-      const href = questPathMap.get(key) || `/q/${slugify(q.name)}/`;
+      const rawKey = q.name.toLowerCase().trim();
+      const cleanKey = sanitizeQuestTitle(q.name).toLowerCase();
+      const href = questPathMap.get(cleanKey) || questPathMap.get(rawKey) || `/q/${slugify(q.name)}/`;
       const pageDataUrl = `https://buddy.farm/page-data${href.startsWith('/') ? href : `/${href}`}page-data.json`;
 
       try {
         const qData = await fetchJson(pageDataUrl);
         const questObj = qData?.result?.data?.farmrpg?.quests?.[0];
         if (questObj) {
-          const existing = questDetailsMap.get(key) || { order: 0, requirements: [], rewards: [] };
+          const existing = questDetailsMap.get(cleanKey) || questDetailsMap.get(rawKey) || { order: 0, requirements: [], rewards: [] };
 
           let reqItems = existing.requirements;
           if (!reqItems || reqItems.length === 0) {
@@ -233,15 +248,18 @@ async function main() {
 
           const pred = questObj.pred ? {
             id: questObj.pred.id,
-            title: questObj.pred.name ? questObj.pred.name.trim() : null
+            title: questObj.pred.name ? sanitizeQuestTitle(questObj.pred.name) : null
           } : null;
 
-          questDetailsMap.set(key, {
+          const detailsObj = {
             ...existing,
             requirements: reqItems,
             rewards,
             pred
-          });
+          };
+
+          questDetailsMap.set(cleanKey, detailsObj);
+          questDetailsMap.set(rawKey, detailsObj);
           detailFetched++;
         }
       } catch (err) {
@@ -267,19 +285,19 @@ async function main() {
   const questStepMap = new Map(); // questId -> { questlineTitle, stepNumber, totalSteps, prevQuestId, prevQuestTitle }
   for (const [title, group] of qlGroups.entries()) {
     group.sort((a, b) => {
-      const detailsA = questDetailsMap.get(a.name.toLowerCase().trim());
-      const detailsB = questDetailsMap.get(b.name.toLowerCase().trim());
+      const detailsA = questDetailsMap.get(sanitizeQuestTitle(a.name).toLowerCase()) || questDetailsMap.get(a.name.toLowerCase().trim());
+      const detailsB = questDetailsMap.get(sanitizeQuestTitle(b.name).toLowerCase()) || questDetailsMap.get(b.name.toLowerCase().trim());
       if (detailsA?.order !== undefined && detailsB?.order !== undefined) {
         return detailsA.order - detailsB.order;
       }
-      return parseStepNumber(a.name, title) - parseStepNumber(b.name, title);
+      return parseStepNumber(sanitizeQuestTitle(a.name), title) - parseStepNumber(sanitizeQuestTitle(b.name), title);
     });
 
     for (let i = 0; i < group.length; i++) {
       const current = group[i];
       const prev = i > 0 ? group[i - 1] : null;
-      const key = current.name.toLowerCase().trim();
-      const details = questDetailsMap.get(key);
+      const cleanKey = sanitizeQuestTitle(current.name).toLowerCase();
+      const details = questDetailsMap.get(cleanKey) || questDetailsMap.get(current.name.toLowerCase().trim());
       const pred = details?.pred;
 
       questStepMap.set(current.id, {
@@ -287,15 +305,16 @@ async function main() {
         stepNumber: i + 1,
         totalSteps: group.length,
         prevQuestId: pred ? pred.id : (prev ? prev.id : null),
-        prevQuestTitle: pred ? pred.title : (prev ? prev.name : null)
+        prevQuestTitle: pred ? sanitizeQuestTitle(pred.title) : (prev ? sanitizeQuestTitle(prev.name) : null)
       });
     }
   }
 
   // 5. Compile all quests into final standardized models
   const compiledQuests = rawQuests.map(q => {
-    const key = q.name.toLowerCase().trim();
-    const details = questDetailsMap.get(key) || { requirements: [], rewards: [], pred: null };
+    const cleanTitle = sanitizeQuestTitle(q.name);
+    const key = cleanTitle.toLowerCase();
+    const details = questDetailsMap.get(key) || questDetailsMap.get(q.name.toLowerCase().trim()) || { requirements: [], rewards: [], pred: null };
     const stepInfo = questStepMap.get(q.id) || {
       questlineTitle: q.questlines?.[0]?.questline?.title || null,
       stepNumber: 1,
@@ -305,7 +324,7 @@ async function main() {
     };
 
     const finalPrevId = details.pred ? details.pred.id : stepInfo.prevQuestId;
-    const finalPrevTitle = details.pred ? details.pred.title : stepInfo.prevQuestTitle;
+    const finalPrevTitle = details.pred ? sanitizeQuestTitle(details.pred.title) : stepInfo.prevQuestTitle;
 
     const skills = {
       farming: q.requiredFarmingLevel || 0,
@@ -331,7 +350,7 @@ async function main() {
 
     return {
       id: q.id,
-      title: q.name.trim(),
+      title: cleanTitle,
       npc: (q.npc || 'Buddy').trim(),
       description: (q.cleanDescription || '').trim(),
       image: q.image || '',
@@ -365,7 +384,7 @@ async function main() {
   // 7. Save js/quests-catalog.js (lookup map for requirements/rewards and questlines)
   const lookup = {};
   for (const q of compiledQuests) {
-    lookup[q.title.toLowerCase().trim()] = {
+    const entry = {
       id: q.id,
       requirements: q.requirements,
       rewards: q.rewards,
@@ -375,6 +394,9 @@ async function main() {
       prevQuestId: q.prevQuestId,
       prevQuestTitle: q.prevQuestTitle
     };
+    lookup[q.title.toLowerCase().trim()] = entry;
+    // Also store by id
+    lookup[`id_${q.id}`] = entry;
   }
 
   const catalogJsPath = path.join(JS_DIR, 'quests-catalog.js');
@@ -384,9 +406,23 @@ async function main() {
 
 export const QUESTS_CATALOG = ${JSON.stringify(lookup)};
 
-export function getQuestCatalogEntry(questName) {
-  if (!questName) return null;
-  return QUESTS_CATALOG[questName.toLowerCase().trim()] || null;
+export function sanitizeQuestTitle(title) {
+  if (!title) return '';
+  return String(title)
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\\s+/g, ' ')
+    .trim();
+}
+
+export function getQuestCatalogEntry(questNameOrId) {
+  if (questNameOrId === null || questNameOrId === undefined) return null;
+  if (typeof questNameOrId === 'number' || /^\\d+$/.test(String(questNameOrId).trim())) {
+    const idKey = \`id_\${String(questNameOrId).trim()}\`;
+    if (QUESTS_CATALOG[idKey]) return QUESTS_CATALOG[idKey];
+  }
+  const raw = String(questNameOrId).toLowerCase().trim();
+  const clean = sanitizeQuestTitle(questNameOrId).toLowerCase();
+  return QUESTS_CATALOG[clean] || QUESTS_CATALOG[raw] || null;
 }
 `;
   await fsp.writeFile(catalogJsPath, catalogContent, 'utf-8');
