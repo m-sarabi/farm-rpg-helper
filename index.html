@@ -80,6 +80,32 @@
       </div>
       <form id="quest-form">
         <div class="modal-body">
+          <!-- Buddy.farm Quick Fetch -->
+          <div class="buddy-fetch-card" id="buddy-fetch-card">
+            <div class="buddy-fetch-header">
+              <span class="buddy-fetch-title">
+                <span class="buddy-fetch-icon">🌐</span>
+                Fetch from buddy.farm
+              </span>
+              <span class="buddy-fetch-hint">Auto-fill levels, items & rewards</span>
+            </div>
+            <div class="buddy-fetch-input-group">
+              <input
+                type="text"
+                id="buddy-url-input"
+                class="input-field buddy-url-input"
+                placeholder="Paste link (e.g. https://buddy.farm/q/not-from-around-here/)"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button type="button" class="btn btn-secondary btn-fetch-buddy" id="btn-fetch-buddy">
+                <span class="btn-spinner is-hidden" id="buddy-fetch-spinner"></span>
+                <span id="buddy-fetch-btn-text">Fetch</span>
+              </button>
+            </div>
+            <div class="buddy-fetch-feedback is-hidden" id="buddy-fetch-feedback"></div>
+          </div>
+
           <div class="form-row-2">
             <div class="form-group">
               <label class="form-label" for="quest-name-input">Quest Title *</label>

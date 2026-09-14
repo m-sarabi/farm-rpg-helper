@@ -234,6 +234,9 @@ function renderQuestsView() {
         <input type="text" id="quest-search-input" class="search-input" placeholder="Search quests by title, NPC, or required item..." value="${state.filters.search}" />
       </div>
       <div class="toolbar-actions">
+        <button class="btn btn-outline" id="btn-import-buddy" title="Import quest details from a buddy.farm link">
+          <span>🌐</span> Import from buddy.farm
+        </button>
         <button class="btn btn-primary" id="btn-add-quest">
           <span>➕</span> Add Quest
         </button>
@@ -313,6 +316,16 @@ function renderQuestsView() {
       showToast(`Quest "${created.title}" added successfully!`, "success");
     });
   });
+
+  const btnImportBuddy = toolbar.querySelector("#btn-import-buddy");
+  if (btnImportBuddy) {
+    btnImportBuddy.addEventListener("click", () => {
+      openQuestModal(null, (questData) => {
+        const created = state.addQuest(questData);
+        showToast(`Quest "${created.title}" added successfully!`, "success");
+      }, true);
+    });
+  }
 
   container.appendChild(toolbar);
 

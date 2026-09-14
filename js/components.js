@@ -1,6 +1,7 @@
 import { getItemIcon, renderItemIconHtml, getSkillIconHtml, NPC_LIST, KNOWN_ITEM_NAMES } from "./quests-data.js";
 import { getQuestRequirementsStatus, aggregateMaterials, aggregateRewards, formatMaterialsAsText } from "./calculator.js";
 import { attachItemAutocomplete } from "./autocomplete.js";
+import { fetchBuddyFarmQuest } from "./buddy-fetch.js";
 
 /**
  * Creates and displays a floating toast notification.
@@ -448,7 +449,7 @@ let activeModalAutocompletes = [];
 /**
  * Setup and populate the Add/Edit Quest Modal
  */
-export function openQuestModal(questToEdit = null, onSave) {
+export function openQuestModal(questToEdit = null, onSave, focusBuddyLink = false) {
   let modal = document.getElementById("quest-modal");
   if (!modal) return;
 
@@ -460,6 +461,42 @@ export function openQuestModal(questToEdit = null, onSave) {
   const reqContainer = document.getElementById("modal-requirements-list");
   const rewContainer = document.getElementById("modal-rewards-list");
   const npcSelect = document.getElementById("quest-npc-input");
+  const titleInput = document.getElementById("quest-name-input");
+  const descInput = document.getElementById("quest-desc-input");
+  const pinnedInput = document.getElementById("quest-pinned-input");
+
+  // Buddy.farm quick fetch elements
+  const buddyUrlInput = document.getElementById("buddy-url-input");
+  const buddyFetchBtn = document.getElementById("btn-fetch-buddy");
+  const buddyFetchSpinner = document.getElementById("buddy-fetch-spinner");
+  const buddyFetchBtnText = document.getElementById("buddy-fetch-btn-text");
+  const buddyFetchFeedback = document.getElementById("buddy-fetch-feedback");
+
+  function setFetchingState(isFetching) {
+    if (buddyFetchBtn) buddyFetchBtn.disabled = isFetching;
+    if (buddyFetchSpinner) {
+      if (isFetching) buddyFetchSpinner.classList.remove("is-hidden");
+      else buddyFetchSpinner.classList.add("is-hidden");
+    }
+    if (buddyFetchBtnText) {
+      buddyFetchBtnText.textContent = isFetching ? "Fetching..." : "Fetch";
+    }
+  }
+
+  function showFeedback(msg, type = "info") {
+    if (!buddyFetchFeedback) return;
+    buddyFetchFeedback.textContent = msg;
+    buddyFetchFeedback.className = `buddy-fetch-feedback feedback-${type}`;
+    buddyFetchFeedback.classList.remove("is-hidden");
+  }
+
+  // Reset buddy fetch controls
+  if (buddyUrlInput) buddyUrlInput.value = "";
+  if (buddyFetchFeedback) {
+    buddyFetchFeedback.textContent = "";
+    buddyFetchFeedback.className = "buddy-fetch-feedback is-hidden";
+  }
+  setFetchingState(false);
 
   // Populate NPC options if not yet populated
   if (npcSelect.options.length <= 1) {
@@ -477,10 +514,10 @@ export function openQuestModal(questToEdit = null, onSave) {
   const SKILL_NAMES = { farming: "Farming", fishing: "Fishing", crafting: "Crafting", exploring: "Exploring", cooking: "Cooking", mining: "Mining" };
 
   // Fill form fields
-  document.getElementById("quest-name-input").value = questToEdit?.title || "";
-  document.getElementById("quest-npc-input").value = questToEdit?.npc || "Buddy";
-  document.getElementById("quest-desc-input").value = questToEdit?.description || "";
-  document.getElementById("quest-pinned-input").checked = !!questToEdit?.pinned;
+  titleInput.value = questToEdit?.title || "";
+  npcSelect.value = questToEdit?.npc || "Buddy";
+  descInput.value = questToEdit?.description || "";
+  pinnedInput.checked = !!questToEdit?.pinned;
 
   // Level Prerequisites Accordion setup
   const skillsSummaryBadge = document.getElementById("skills-summary-badge");
@@ -621,6 +658,122 @@ export function openQuestModal(questToEdit = null, onSave) {
     addRewardRow("silver", "", "");
   }
 
+  // Handle buddy.farm fetch logic
+  async function handleBuddyFetch() {
+    const rawInput = buddyUrlInput ? buddyUrlInput.value.trim() : "";
+    if (!rawInput) {
+      showFeedback("Please paste a buddy.farm link or enter a quest slug (e.g. https://buddy.farm/q/not-from-around-here/).", "error");
+      if (buddyUrlInput) buddyUrlInput.focus();
+      return;
+    }
+
+    setFetchingState(true);
+    showFeedback("Connecting to buddy.farm...", "info");
+
+    try {
+      const questData = await fetchBuddyFarmQuest(rawInput);
+
+      // 1. Populate Title
+      if (questData.title && titleInput) {
+        titleInput.value = questData.title;
+      }
+
+      // 2. Populate NPC
+      if (questData.npc && npcSelect) {
+        const matchingOpt = Array.from(npcSelect.options).find(
+          o => o.value.toLowerCase() === questData.npc.toLowerCase()
+        );
+        if (matchingOpt) {
+          npcSelect.value = matchingOpt.value;
+        } else {
+          const opt = document.createElement("option");
+          opt.value = questData.npc;
+          opt.textContent = questData.npc;
+          npcSelect.appendChild(opt);
+          npcSelect.value = questData.npc;
+        }
+      }
+
+      // 3. Populate Description
+      if (descInput) {
+        descInput.value = questData.description || "";
+      }
+
+      // 4. Populate Skills
+      let hasSkills = false;
+      SKILL_KEYS.forEach(k => {
+        const input = document.getElementById(`skill-req-${k}`);
+        if (input) {
+          const lvl = questData.skills[k] || 0;
+          input.value = lvl;
+          if (lvl > 0) hasSkills = true;
+        }
+      });
+      updateSkillsSummary();
+      if (hasSkills && accordion) {
+        accordion.open = true;
+      }
+
+      // 5. Populate Requirements
+      activeModalAutocompletes.forEach(ac => ac.destroy());
+      activeModalAutocompletes = [];
+      reqContainer.innerHTML = "";
+      if (questData.requirements && questData.requirements.length > 0) {
+        questData.requirements.forEach(r => addRequirementRow(r.item, r.amount));
+      } else {
+        addRequirementRow("", "");
+      }
+
+      // 6. Populate Rewards
+      rewContainer.innerHTML = "";
+      if (questData.rewards && questData.rewards.length > 0) {
+        questData.rewards.forEach(r => {
+          const rewType = (r.type || "").toLowerCase();
+          const isItem = rewType === "item" || (!["silver", "gold", "xp"].includes(rewType));
+          const normalizedType = isItem ? "item" : rewType;
+          addRewardRow(normalizedType, r.item || r.label || "", r.amount);
+        });
+      } else {
+        addRewardRow("silver", "", "");
+      }
+
+      showFeedback(`✓ Loaded "${questData.title}" (${questData.requirements.length} requirements, ${questData.rewards.length} rewards)!`, "success");
+      showToast(`🎉 Imported "${questData.title}" from buddy.farm!`, "success");
+    } catch (err) {
+      showFeedback(`⚠️ ${err.message || "Failed to fetch quest details"}`, "error");
+    } finally {
+      setFetchingState(false);
+    }
+  }
+
+  if (buddyFetchBtn) {
+    buddyFetchBtn.onclick = (e) => {
+      e.preventDefault();
+      handleBuddyFetch();
+    };
+  }
+
+  if (buddyUrlInput) {
+    buddyUrlInput.onkeydown = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleBuddyFetch();
+      }
+    };
+  }
+
+  // Auto-transfer if user pastes buddy.farm link into Title input
+  if (titleInput) {
+    titleInput.oninput = () => {
+      const val = titleInput.value.trim();
+      if (val.includes("buddy.farm/q/")) {
+        if (buddyUrlInput) buddyUrlInput.value = val;
+        titleInput.value = "";
+        handleBuddyFetch();
+      }
+    };
+  }
+
   // Bind add row buttons
   document.getElementById("modal-add-req-btn").onclick = () => addRequirementRow();
   document.getElementById("modal-add-rew-btn").onclick = () => addRewardRow();
@@ -696,6 +849,13 @@ export function openQuestModal(questToEdit = null, onSave) {
   // Open modal
   modal.classList.add("is-active");
   document.body.style.overflow = "hidden";
+
+  if (focusBuddyLink && buddyUrlInput) {
+    setTimeout(() => {
+      buddyUrlInput.focus();
+      buddyUrlInput.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 50);
+  }
 }
 
 export function closeModal() {
@@ -703,6 +863,11 @@ export function closeModal() {
   if (modal) {
     modal.classList.remove("is-active");
     document.body.style.overflow = "";
+  }
+  const buddyFetchFeedback = document.getElementById("buddy-fetch-feedback");
+  if (buddyFetchFeedback) {
+    buddyFetchFeedback.textContent = "";
+    buddyFetchFeedback.className = "buddy-fetch-feedback is-hidden";
   }
   activeModalAutocompletes.forEach(ac => ac.destroy());
   activeModalAutocompletes = [];
