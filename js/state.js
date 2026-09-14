@@ -43,7 +43,7 @@ class StateManager {
       rewardItem: "all"
     };
     this.eventFilters = {
-      timeline: "all", // "all" | "active_now" | "upcoming" | "expired" | "completed" | "missed"
+      timeline: "active_now", // "all" | "active_now" | "upcoming" | "expired" | "completed" | "missed"
       npc: "all",
       search: "",
       year: "all",
@@ -53,7 +53,42 @@ class StateManager {
     this.theme = "light";
     this.importedAt = null;
     this.subscribers = [];
+    this._questById = new Map();
+    this._questByTitle = new Map();
+    this._questByQuestlineStep = new Map();
+    this._availabilityCache = new Map();
+    this._lockReasonsCache = new Map();
     this.init();
+  }
+
+  clearAvailabilityCache() {
+    if (this._availabilityCache) this._availabilityCache.clear();
+    if (this._lockReasonsCache) this._lockReasonsCache.clear();
+  }
+
+  buildQuestIndexes() {
+    this._questById = new Map();
+    this._questByTitle = new Map();
+    this._questByQuestlineStep = new Map();
+    this.clearAvailabilityCache();
+    for (const q of this.quests) {
+      if (q.id != null) {
+        this._questById.set(q.id, q);
+      }
+      if (q.title) {
+        this._questByTitle.set(q.title.toLowerCase().trim(), q);
+      }
+      if (q.questline && q.stepNumber != null) {
+        this._questByQuestlineStep.set(`${q.questline.toLowerCase().trim()}::${q.stepNumber}`, q);
+      }
+    }
+  }
+
+  getQuestById(id) {
+    if (this._questById && this._questById.has(id)) {
+      return this._questById.get(id);
+    }
+    return this.quests.find(q => q.id === id) || null;
   }
 
   init() {
@@ -118,6 +153,7 @@ class StateManager {
       console.error("Failed to load quests from localStorage:", e);
       this.quests = [];
     }
+    this.buildQuestIndexes();
 
     // 4. Load importedAt
     this.importedAt = localStorage.getItem(STORAGE_KEYS.IMPORTED_AT) || null;
@@ -152,6 +188,7 @@ class StateManager {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0 && this.quests.length === 0) {
           this.quests = data;
+          this.buildQuestIndexes();
           this.importedAt = new Date().toISOString();
           this.saveQuests();
           localStorage.setItem(STORAGE_KEYS.IMPORTED_AT, this.importedAt);
@@ -208,6 +245,7 @@ class StateManager {
             }
           }
           if (enriched) {
+            this.buildQuestIndexes();
             this.saveQuests();
             this.notify();
           }
@@ -255,6 +293,7 @@ class StateManager {
       this.playerLevels.friendships[canonical] = !isNaN(parsed) && parsed >= 0 ? Math.min(99, parsed) : 0;
     }
     this.savePlayerLevels();
+    this.clearAvailabilityCache();
     this.notify();
   }
 
@@ -288,6 +327,7 @@ class StateManager {
     }
 
     this.savePlayerLevels();
+    this.clearAvailabilityCache();
     this.notify();
   }
 
@@ -374,8 +414,25 @@ class StateManager {
    */
   isQuestAvailable(quest) {
     if (!quest) return false;
-    if (quest.status === "completed" || quest.status === "missed") return false;
+    if (this._availabilityCache && quest.id != null && this._availabilityCache.has(quest.id)) {
+      return this._availabilityCache.get(quest.id);
+    }
 
+    if (quest.status === "completed" || quest.status === "missed") {
+      if (this._availabilityCache && quest.id != null) {
+        this._availabilityCache.set(quest.id, false);
+      }
+      return false;
+    }
+
+    const available = this._computeQuestAvailable(quest);
+    if (this._availabilityCache && quest.id != null) {
+      this._availabilityCache.set(quest.id, available);
+    }
+    return available;
+  }
+
+  _computeQuestAvailable(quest) {
     // 1. Skill requirements check
     const skills = ["farming", "fishing", "crafting", "exploring", "cooking", "mining"];
     for (const skill of skills) {
@@ -408,8 +465,9 @@ class StateManager {
 
     // 4. Predecessor quest check (canonical buddy.farm pred)
     if (quest.prevQuestId) {
-      const prev = this.quests.find(q => q.id === quest.prevQuestId)
-        || (quest.prevQuestTitle ? this.quests.find(q => q.title.toLowerCase().trim() === quest.prevQuestTitle.toLowerCase().trim()) : null);
+      const prev = (this._questById && this._questById.get(quest.prevQuestId))
+        || (quest.prevQuestTitle && this._questByTitle ? this._questByTitle.get(quest.prevQuestTitle.toLowerCase().trim()) : null)
+        || this.quests.find(q => q.id === quest.prevQuestId);
       if (!prev || prev.status !== "completed") {
         return false;
       }
@@ -417,9 +475,9 @@ class StateManager {
 
     // 5. Sequential questline predecessor check (for steps > 1 if distinct from prevQuestId)
     if (quest.questline && quest.stepNumber > 1) {
-      const prevStepQuest = this.quests.find(
-        q => q.questline === quest.questline && q.stepNumber === quest.stepNumber - 1
-      );
+      const key = `${quest.questline.toLowerCase().trim()}::${quest.stepNumber - 1}`;
+      const prevStepQuest = (this._questByQuestlineStep && this._questByQuestlineStep.get(key))
+        || this.quests.find(q => q.questline === quest.questline && q.stepNumber === quest.stepNumber - 1);
       if (prevStepQuest && prevStepQuest.id !== quest.prevQuestId && prevStepQuest.status !== "completed") {
         return false;
       }
@@ -435,6 +493,18 @@ class StateManager {
     if (!quest) return [];
     if (quest.status === "completed" || quest.status === "missed") return [];
 
+    if (this._lockReasonsCache && quest.id != null && this._lockReasonsCache.has(quest.id)) {
+      return this._lockReasonsCache.get(quest.id);
+    }
+
+    const reasons = this._computeQuestLockReasons(quest);
+    if (this._lockReasonsCache && quest.id != null) {
+      this._lockReasonsCache.set(quest.id, reasons);
+    }
+    return reasons;
+  }
+
+  _computeQuestLockReasons(quest) {
     const reasons = [];
     const skills = [
       { id: "farming", name: "Farming" },
@@ -477,17 +547,20 @@ class StateManager {
     }
 
     if (quest.prevQuestId) {
-      const prev = this.quests.find(q => q.id === quest.prevQuestId)
-        || (quest.prevQuestTitle ? this.quests.find(q => q.title.toLowerCase().trim() === quest.prevQuestTitle.toLowerCase().trim()) : null);
-      if (!prev || prev.status !== "completed") {
+      const prev = (this._questById && this._questById.get(quest.prevQuestId))
+        || (quest.prevQuestTitle && this._questByTitle ? this._questByTitle.get(quest.prevQuestTitle.toLowerCase().trim()) : null)
+        || this.quests.find(q => q.id === quest.prevQuestId);
+      if (!prev) {
+        reasons.push(`Complete "${quest.prevQuestTitle || `Quest #${quest.prevQuestId}`}" first`);
+      } else if (prev.status !== "completed") {
         reasons.push(`Complete "${quest.prevQuestTitle || prev?.title || "previous quest"}" first`);
       }
     }
 
     if (quest.questline && quest.stepNumber > 1) {
-      const prevStepQuest = this.quests.find(
-        q => q.questline === quest.questline && q.stepNumber === quest.stepNumber - 1
-      );
+      const key = `${quest.questline.toLowerCase().trim()}::${quest.stepNumber - 1}`;
+      const prevStepQuest = (this._questByQuestlineStep && this._questByQuestlineStep.get(key))
+        || this.quests.find(q => q.questline === quest.questline && q.stepNumber === quest.stepNumber - 1);
       if (prevStepQuest && prevStepQuest.id !== quest.prevQuestId && prevStepQuest.status !== "completed") {
         reasons.push(`Complete "${prevStepQuest?.title || `${quest.questline} Step ${quest.stepNumber - 1}`}" first`);
       }
@@ -529,6 +602,7 @@ class StateManager {
     });
 
     this.importedAt = new Date().toISOString();
+    this.buildQuestIndexes();
     this.saveQuests();
     localStorage.setItem(STORAGE_KEYS.IMPORTED_AT, this.importedAt);
     this.notify();
@@ -539,9 +613,10 @@ class StateManager {
    * Sets quest status directly ("active" | "completed" | "missed").
    */
   setQuestStatus(id, newStatus) {
-    const quest = this.quests.find(q => q.id === id);
+    const quest = this.getQuestById(id);
     if (quest) {
       quest.status = newStatus;
+      this.clearAvailabilityCache();
       this.saveQuests();
       this.notify();
       return newStatus;
@@ -555,10 +630,11 @@ class StateManager {
    * If currently active or missed, marks as completed.
    */
   toggleQuestStatus(id) {
-    const quest = this.quests.find(q => q.id === id);
+    const quest = this.getQuestById(id);
     if (quest) {
       const newStatus = quest.status === "completed" ? "active" : "completed";
       quest.status = newStatus;
+      this.clearAvailabilityCache();
       this.saveQuests();
       this.notify();
       return newStatus;
@@ -572,10 +648,11 @@ class StateManager {
    * If active or completed, marks as missed.
    */
   toggleQuestMissed(id) {
-    const quest = this.quests.find(q => q.id === id);
+    const quest = this.getQuestById(id);
     if (quest) {
       const newStatus = quest.status === "missed" ? "active" : "missed";
       quest.status = newStatus;
+      this.clearAvailabilityCache();
       this.saveQuests();
       this.notify();
       return newStatus;
@@ -599,6 +676,7 @@ class StateManager {
       }
     }
     if (markedCount > 0) {
+      this.clearAvailabilityCache();
       this.saveQuests();
       this.notify();
     }
@@ -609,7 +687,7 @@ class StateManager {
    * Toggles pin status for Material Planner.
    */
   toggleQuestPin(id) {
-    const quest = this.quests.find(q => q.id === id);
+    const quest = this.getQuestById(id);
     if (quest) {
       quest.pinned = !quest.pinned;
       this.saveQuests();
@@ -644,6 +722,7 @@ class StateManager {
         throw new Error("Invalid backup file format: missing quests array.");
       }
       this.quests = data.quests;
+      this.buildQuestIndexes();
       if (data.playerLevels && typeof data.playerLevels === "object") {
         this.playerLevels = {
           ...DEFAULT_PLAYER_LEVELS,
@@ -676,6 +755,7 @@ class StateManager {
       q.status = "active";
       q.pinned = false;
     });
+    this.clearAvailabilityCache();
     this.playerLevels = {
       ...DEFAULT_PLAYER_LEVELS,
       friendships: { ...DEFAULT_FRIENDSHIPS }

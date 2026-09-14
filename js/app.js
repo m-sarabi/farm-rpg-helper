@@ -93,11 +93,32 @@ function updateHeaderStats() {
   if (badgePlannerCount) badgePlannerCount.textContent = pinnedActiveQuests.length;
 }
 
+let currentRenderedTab = null;
+let questsGridObserver = null;
+let eventsGridObserver = null;
+let cachedQuestsRef = null;
+let cachedNormalRewards = null;
+let cachedEventRewards = null;
+
+function getCachedRewardItems(quests, isEvent = false) {
+  if (cachedQuestsRef !== state.quests) {
+    cachedQuestsRef = state.quests;
+    const normalQuests = state.quests.filter(q => !state.isEventQuest(q));
+    const eventQuests = state.quests.filter(q => state.isEventQuest(q));
+    cachedNormalRewards = getAvailableRewardItems(normalQuests);
+    cachedEventRewards = getAvailableRewardItems(eventQuests);
+  }
+  return isEvent ? cachedEventRewards : cachedNormalRewards;
+}
+
 /**
  * Render the appropriate view based on state.activeTab
  */
 function renderCurrentTab() {
-  mainContent.innerHTML = "";
+  if (currentRenderedTab !== state.activeTab) {
+    mainContent.innerHTML = "";
+    currentRenderedTab = state.activeTab;
+  }
 
   switch (state.activeTab) {
     case "quests":
@@ -107,9 +128,11 @@ function renderCurrentTab() {
       renderEventsView();
       break;
     case "planner":
+      mainContent.innerHTML = "";
       renderPlannerTab();
       break;
     case "settings":
+      mainContent.innerHTML = "";
       renderSettingsTab();
       break;
     default:
@@ -187,6 +210,102 @@ function getRewardOptionText(item) {
 }
 
 /**
+ * Batched card rendering with IntersectionObserver infinite scroll and Load More button.
+ * Prevents main thread freeze when displaying hundreds of quest cards.
+ */
+function renderBatchedCards(grid, quests, state, entityLabel = "Quests", observerKey = "quests") {
+  if (observerKey === "quests" && questsGridObserver) {
+    questsGridObserver.disconnect();
+    questsGridObserver = null;
+  } else if (observerKey === "events" && eventsGridObserver) {
+    eventsGridObserver.disconnect();
+    eventsGridObserver = null;
+  }
+
+  grid.innerHTML = "";
+  if (!quests || quests.length === 0) return;
+
+  const total = quests.length;
+  const BATCH_SIZE = 60;
+  let renderedCount = 0;
+  let sentinel = null;
+
+  const loadBatch = (count) => {
+    const batch = quests.slice(renderedCount, renderedCount + count);
+    if (batch.length === 0) return;
+
+    const fragment = document.createDocumentFragment();
+    for (const quest of batch) {
+      const card = renderQuestCard(quest, state);
+      bindQuestCardEvents(card, quest);
+      fragment.appendChild(card);
+    }
+
+    if (sentinel && sentinel.parentNode === grid) {
+      grid.insertBefore(fragment, sentinel);
+    } else {
+      grid.appendChild(fragment);
+    }
+    renderedCount += batch.length;
+    updateSentinel();
+  };
+
+  const updateSentinel = () => {
+    if (renderedCount >= total) {
+      if (sentinel) {
+        if (observerKey === "quests" && questsGridObserver) {
+          questsGridObserver.disconnect();
+          questsGridObserver = null;
+        } else if (observerKey === "events" && eventsGridObserver) {
+          eventsGridObserver.disconnect();
+          eventsGridObserver = null;
+        }
+        sentinel.remove();
+        sentinel = null;
+      }
+      return;
+    }
+
+    if (!sentinel) {
+      sentinel = document.createElement("div");
+      sentinel.className = "load-more-container";
+      grid.appendChild(sentinel);
+
+      if ("IntersectionObserver" in window) {
+        const obs = new IntersectionObserver((entries) => {
+          if (entries[0] && entries[0].isIntersecting) {
+            loadBatch(BATCH_SIZE);
+          }
+        }, { rootMargin: "300px" });
+
+        if (observerKey === "quests") {
+          questsGridObserver = obs;
+        } else {
+          eventsGridObserver = obs;
+        }
+        obs.observe(sentinel);
+      }
+    }
+
+    const remaining = total - renderedCount;
+    sentinel.innerHTML = `
+      <button type="button" class="btn btn-load-more">
+        Load More ${entityLabel} (Showing ${renderedCount} of ${total.toLocaleString()} • ${remaining.toLocaleString()} remaining)
+      </button>
+    `;
+    const btn = sentinel.querySelector(".btn-load-more");
+    if (btn) {
+      btn.addEventListener("click", () => {
+        loadBatch(BATCH_SIZE);
+      });
+    }
+  };
+
+  // Initial batch load
+  loadBatch(BATCH_SIZE);
+}
+
+/**
  * Quests View (Player Levels bar, Toolbar, Cards)
  */
 function renderQuestsView() {
@@ -208,7 +327,7 @@ function renderQuestsView() {
 
   const normalQuests = state.quests.filter(q => !state.isEventQuest(q));
   const activeNpcs = Array.from(new Set([...NPC_LIST, ...normalQuests.map(q => q.npc)])).sort();
-  const activeRewards = getAvailableRewardItems(normalQuests);
+  const activeRewards = [...getCachedRewardItems(normalQuests, false)];
   if (state.filters.rewardItem && state.filters.rewardItem !== "all" && !activeRewards.includes(state.filters.rewardItem)) {
     activeRewards.push(state.filters.rewardItem);
   }
@@ -275,7 +394,7 @@ function renderQuestsView() {
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
       state.setFilters({ search: e.target.value });
-    }, 120);
+    }, 200);
   });
 
   const npcSelect = toolbar.querySelector("#npc-filter-select");
@@ -311,35 +430,53 @@ function renderQuestsView() {
 }
 
 function updateQuestsGridAndFilters(container) {
+  // Sync search input value if not actively focused by the user
+  const searchInput = container.querySelector("#quest-search-input");
+  if (searchInput && document.activeElement !== searchInput && searchInput.value !== state.filters.search) {
+    searchInput.value = state.filters.search;
+  }
+
   // Update filter pills
   const pillsContainer = container.querySelector("#filter-pills-container");
   const normalQuests = state.quests.filter(q => !state.isEventQuest(q));
   if (pillsContainer) {
     const availableCount = normalQuests.filter(q => state.isQuestAvailable(q)).length;
-    const completedCount = normalQuests.filter(q => state.isQuestCompleted(q)).length;
-    const lockedCount = normalQuests.filter(q => !state.isQuestCompleted(q) && !state.isQuestAvailable(q)).length;
+    const completedCount = normalQuests.filter(q => q.status === "completed").length;
+    const lockedCount = normalQuests.filter(q => q.status !== "completed" && !state.isQuestAvailable(q)).length;
     const allCount = normalQuests.length;
 
-    pillsContainer.innerHTML = `
-      <button class="filter-pill ${state.filters.status === 'available' ? 'active' : ''}" data-status="available">
-        ✨ Ready / Available (${availableCount})
-      </button>
-      <button class="filter-pill ${state.filters.status === 'completed' ? 'active' : ''}" data-status="completed">
-        ✓ Completed (${completedCount})
-      </button>
-      <button class="filter-pill ${state.filters.status === 'locked' ? 'active' : ''}" data-status="locked">
-        🔒 Locked (${lockedCount})
-      </button>
-      <button class="filter-pill ${state.filters.status === 'all' ? 'active' : ''}" data-status="all">
-        All (${allCount})
-      </button>
-    `;
-
-    pillsContainer.querySelectorAll(".filter-pill").forEach(pill => {
-      pill.addEventListener("click", () => {
-        state.setFilters({ status: pill.dataset.status });
+    const pillButtons = pillsContainer.querySelectorAll(".filter-pill");
+    if (pillButtons.length === 4) {
+      pillButtons.forEach(pill => {
+        const status = pill.dataset.status;
+        pill.classList.toggle("active", state.filters.status === status);
+        if (status === "available") pill.textContent = `✨ Ready / Available (${availableCount})`;
+        else if (status === "completed") pill.textContent = `✓ Completed (${completedCount})`;
+        else if (status === "locked") pill.textContent = `🔒 Locked (${lockedCount})`;
+        else if (status === "all") pill.textContent = `All (${allCount})`;
       });
-    });
+    } else {
+      pillsContainer.innerHTML = `
+        <button class="filter-pill ${state.filters.status === 'available' ? 'active' : ''}" data-status="available">
+          ✨ Ready / Available (${availableCount})
+        </button>
+        <button class="filter-pill ${state.filters.status === 'completed' ? 'active' : ''}" data-status="completed">
+          ✓ Completed (${completedCount})
+        </button>
+        <button class="filter-pill ${state.filters.status === 'locked' ? 'active' : ''}" data-status="locked">
+          🔒 Locked (${lockedCount})
+        </button>
+        <button class="filter-pill ${state.filters.status === 'all' ? 'active' : ''}" data-status="all">
+          All (${allCount})
+        </button>
+      `;
+
+      pillsContainer.querySelectorAll(".filter-pill").forEach(pill => {
+        pill.addEventListener("click", () => {
+          state.setFilters({ status: pill.dataset.status });
+        });
+      });
+    }
   }
 
   // Sync dropdown values if changed
@@ -350,7 +487,7 @@ function updateQuestsGridAndFilters(container) {
 
   const rewardSelect = container.querySelector("#reward-filter-select");
   if (rewardSelect) {
-    const activeRewards = getAvailableRewardItems(normalQuests);
+    const activeRewards = getCachedRewardItems(normalQuests, false);
     if (state.filters.rewardItem && state.filters.rewardItem !== "all" && !activeRewards.includes(state.filters.rewardItem)) {
       activeRewards.push(state.filters.rewardItem);
     }
@@ -395,7 +532,6 @@ function updateQuestsGridAndFilters(container) {
   const grid = container.querySelector("#quests-grid-container");
   if (grid) {
     const filteredQuests = filterQuests(normalQuests, state.filters);
-    grid.innerHTML = "";
 
     if (normalQuests.length === 0) {
       grid.innerHTML = `
@@ -429,12 +565,7 @@ function updateQuestsGridAndFilters(container) {
         </div>
       `;
     } else {
-      // Render capped batch for performance (or all if under 150)
-      filteredQuests.forEach(quest => {
-        const card = renderQuestCard(quest, state);
-        bindQuestCardEvents(card, quest);
-        grid.appendChild(card);
-      });
+      renderBatchedCards(grid, filteredQuests, state, "Quests", "quests");
     }
   }
 }
@@ -452,37 +583,41 @@ function getQuestSkillLevel(quest, skillKey) {
  * Filter and sort logic
  */
 function filterQuests(quests, filters) {
+  const query = (filters.search || "").toLowerCase().trim();
+  const filterNpc = (filters.npc || "all").toLowerCase();
+  const filterStatus = filters.status || "available";
+  const filterReward = filters.rewardItem || "all";
+
   const filtered = quests.filter(q => {
     // Status Filter (Available, Completed, Locked, All)
-    if (filters.status === "available") {
+    if (filterStatus === "available") {
       if (!state.isQuestAvailable(q)) return false;
-    } else if (filters.status === "completed") {
-      if (!state.isQuestCompleted(q)) return false;
-    } else if (filters.status === "locked") {
-      if (state.isQuestCompleted(q) || state.isQuestAvailable(q)) return false;
+    } else if (filterStatus === "completed") {
+      if (q.status !== "completed") return false;
+    } else if (filterStatus === "locked") {
+      if (q.status === "completed" || state.isQuestAvailable(q)) return false;
     }
 
     // NPC Filter
-    if (filters.npc !== "all" && q.npc.toLowerCase() !== filters.npc.toLowerCase()) {
+    if (filterNpc !== "all" && (q.npc || "").toLowerCase() !== filterNpc) {
       return false;
     }
 
     // Reward Item Filter
-    if (filters.rewardItem && filters.rewardItem !== "all") {
-      if (getQuestRewardAmount(q, filters.rewardItem) <= 0) {
+    if (filterReward !== "all") {
+      if (getQuestRewardAmount(q, filterReward) <= 0) {
         return false;
       }
     }
 
     // Search Filter
-    if (filters.search) {
-      const query = filters.search.toLowerCase().trim();
-      const inTitle = q.title.toLowerCase().includes(query);
-      const inNpc = q.npc.toLowerCase().includes(query);
-      const inQl = (q.questline || "").toLowerCase().includes(query);
-      const inDesc = (q.description || "").toLowerCase().includes(query);
-      const inReqs = (q.requirements || []).some(r => r.item.toLowerCase().includes(query));
-      const inRewards = (q.rewards || []).some(r => (r.item || r.label || r.type || "").toLowerCase().includes(query));
+    if (query) {
+      const inTitle = q.title && q.title.toLowerCase().includes(query);
+      const inNpc = q.npc && q.npc.toLowerCase().includes(query);
+      const inQl = q.questline && q.questline.toLowerCase().includes(query);
+      const inDesc = q.description && q.description.toLowerCase().includes(query);
+      const inReqs = q.requirements && q.requirements.some(r => r.item && r.item.toLowerCase().includes(query));
+      const inRewards = q.rewards && q.rewards.some(r => (r.item || r.label || r.type || "").toLowerCase().includes(query));
       if (!inTitle && !inNpc && !inQl && !inDesc && !inReqs && !inRewards) {
         return false;
       }
@@ -602,7 +737,7 @@ function renderEventsView() {
 
   const eventQuests = state.quests.filter(q => state.isEventQuest(q));
   const activeNpcs = Array.from(new Set([...NPC_LIST, ...eventQuests.map(q => q.npc)])).sort();
-  const activeRewards = getAvailableRewardItems(eventQuests);
+  const activeRewards = [...getCachedRewardItems(eventQuests, true)];
   if (state.eventFilters.rewardItem && state.eventFilters.rewardItem !== "all" && !activeRewards.includes(state.eventFilters.rewardItem)) {
     activeRewards.push(state.eventFilters.rewardItem);
   }
@@ -679,7 +814,7 @@ function renderEventsView() {
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
       state.setEventFilters({ search: e.target.value });
-    }, 120);
+    }, 200);
   });
 
   const yearSelect = toolbar.querySelector("#event-year-filter-select");
@@ -735,6 +870,12 @@ function renderEventsView() {
 }
 
 function updateEventsGridAndFilters(container) {
+  // Sync search input value if not actively focused by user
+  const searchInput = container.querySelector("#event-search-input");
+  if (searchInput && document.activeElement !== searchInput && searchInput.value !== state.eventFilters.search) {
+    searchInput.value = state.eventFilters.search;
+  }
+
   const eventQuests = state.quests.filter(q => state.isEventQuest(q));
   const now = new Date();
 
@@ -757,32 +898,46 @@ function updateEventsGridAndFilters(container) {
 
   const pillsContainer = container.querySelector("#event-filter-pills-container");
   if (pillsContainer) {
-    pillsContainer.innerHTML = `
-      <button class="filter-pill ${state.eventFilters.timeline === 'active_now' ? 'active' : ''}" data-timeline="active_now">
-        🟢 Active Now (${activeNowCount})
-      </button>
-      <button class="filter-pill ${state.eventFilters.timeline === 'upcoming' ? 'active' : ''}" data-timeline="upcoming">
-        ⏳ Upcoming (${upcomingCount})
-      </button>
-      <button class="filter-pill ${state.eventFilters.timeline === 'expired' ? 'active' : ''}" data-timeline="expired">
-        ⌛ Expired (${expiredCount})
-      </button>
-      <button class="filter-pill ${state.eventFilters.timeline === 'completed' ? 'active' : ''}" data-timeline="completed">
-        ✓ Completed (${completedCount})
-      </button>
-      <button class="filter-pill ${state.eventFilters.timeline === 'missed' ? 'active' : ''}" data-timeline="missed">
-        ❌ Missed (${missedCount})
-      </button>
-      <button class="filter-pill ${state.eventFilters.timeline === 'all' ? 'active' : ''}" data-timeline="all">
-        All (${allCount})
-      </button>
-    `;
-
-    pillsContainer.querySelectorAll(".filter-pill").forEach(pill => {
-      pill.addEventListener("click", () => {
-        state.setEventFilters({ timeline: pill.dataset.timeline });
+    const pillButtons = pillsContainer.querySelectorAll(".filter-pill");
+    if (pillButtons.length === 6) {
+      pillButtons.forEach(pill => {
+        const tl = pill.dataset.timeline;
+        pill.classList.toggle("active", state.eventFilters.timeline === tl);
+        if (tl === "active_now") pill.textContent = `🟢 Active Now (${activeNowCount})`;
+        else if (tl === "upcoming") pill.textContent = `⏳ Upcoming (${upcomingCount})`;
+        else if (tl === "expired") pill.textContent = `⌛ Expired (${expiredCount})`;
+        else if (tl === "completed") pill.textContent = `✓ Completed (${completedCount})`;
+        else if (tl === "missed") pill.textContent = `❌ Missed (${missedCount})`;
+        else if (tl === "all") pill.textContent = `All (${allCount})`;
       });
-    });
+    } else {
+      pillsContainer.innerHTML = `
+        <button class="filter-pill ${state.eventFilters.timeline === 'active_now' ? 'active' : ''}" data-timeline="active_now">
+          🟢 Active Now (${activeNowCount})
+        </button>
+        <button class="filter-pill ${state.eventFilters.timeline === 'upcoming' ? 'active' : ''}" data-timeline="upcoming">
+          ⏳ Upcoming (${upcomingCount})
+        </button>
+        <button class="filter-pill ${state.eventFilters.timeline === 'expired' ? 'active' : ''}" data-timeline="expired">
+          ⌛ Expired (${expiredCount})
+        </button>
+        <button class="filter-pill ${state.eventFilters.timeline === 'completed' ? 'active' : ''}" data-timeline="completed">
+          ✓ Completed (${completedCount})
+        </button>
+        <button class="filter-pill ${state.eventFilters.timeline === 'missed' ? 'active' : ''}" data-timeline="missed">
+          ❌ Missed (${missedCount})
+        </button>
+        <button class="filter-pill ${state.eventFilters.timeline === 'all' ? 'active' : ''}" data-timeline="all">
+          All (${allCount})
+        </button>
+      `;
+
+      pillsContainer.querySelectorAll(".filter-pill").forEach(pill => {
+        pill.addEventListener("click", () => {
+          state.setEventFilters({ timeline: pill.dataset.timeline });
+        });
+      });
+    }
   }
 
   // Sync Year select
@@ -800,7 +955,7 @@ function updateEventsGridAndFilters(container) {
   // Sync Reward select
   const rewardSelect = container.querySelector("#event-reward-filter-select");
   if (rewardSelect) {
-    const activeRewards = getAvailableRewardItems(eventQuests);
+    const activeRewards = getCachedRewardItems(eventQuests, true);
     if (state.eventFilters.rewardItem && state.eventFilters.rewardItem !== "all" && !activeRewards.includes(state.eventFilters.rewardItem)) {
       activeRewards.push(state.eventFilters.rewardItem);
     }
@@ -831,7 +986,6 @@ function updateEventsGridAndFilters(container) {
   const grid = container.querySelector("#events-grid-container");
   if (grid) {
     const filteredEvents = filterEventQuests(eventQuests, state.eventFilters);
-    grid.innerHTML = "";
 
     if (eventQuests.length === 0) {
       grid.innerHTML = `
@@ -854,11 +1008,7 @@ function updateEventsGridAndFilters(container) {
         </div>
       `;
     } else {
-      filteredEvents.forEach(quest => {
-        const card = renderQuestCard(quest, state);
-        bindQuestCardEvents(card, quest);
-        grid.appendChild(card);
-      });
+      renderBatchedCards(grid, filteredEvents, state, "Event Quests", "events");
     }
   }
 }
@@ -868,58 +1018,63 @@ function updateEventsGridAndFilters(container) {
  */
 function filterEventQuests(quests, filters) {
   const now = new Date();
+  const query = (filters.search || "").toLowerCase().trim();
+  const filterNpc = (filters.npc || "all").toLowerCase();
+  const filterYear = filters.year || "all";
+  const filterReward = filters.rewardItem || "all";
+  const filterTimeline = filters.timeline || "active_now";
+
   const filtered = quests.filter(q => {
     const tl = getEventTimeline(q, now);
 
     // Timeline / Status filter
-    if (filters.timeline === "active_now") {
+    if (filterTimeline === "active_now") {
       if (!tl || tl.status !== "active_now" || q.status === "completed" || q.status === "missed") {
         return false;
       }
-    } else if (filters.timeline === "upcoming") {
+    } else if (filterTimeline === "upcoming") {
       if (!tl || tl.status !== "upcoming" || q.status === "completed" || q.status === "missed") {
         return false;
       }
-    } else if (filters.timeline === "expired") {
+    } else if (filterTimeline === "expired") {
       if (!tl || tl.status !== "expired" || q.status === "completed" || q.status === "missed") {
         return false;
       }
-    } else if (filters.timeline === "completed") {
+    } else if (filterTimeline === "completed") {
       if (q.status !== "completed") return false;
-    } else if (filters.timeline === "missed") {
+    } else if (filterTimeline === "missed") {
       if (q.status !== "missed") return false;
     }
 
     // Year Filter
-    if (filters.year && filters.year !== "all") {
+    if (filterYear !== "all") {
       const startYear = q.startDate ? q.startDate.slice(0, 4) : "";
       const endYear = q.endDate ? q.endDate.slice(0, 4) : "";
-      if (startYear !== filters.year && endYear !== filters.year) {
+      if (startYear !== filterYear && endYear !== filterYear) {
         return false;
       }
     }
 
     // NPC Filter
-    if (filters.npc !== "all" && q.npc.toLowerCase() !== filters.npc.toLowerCase()) {
+    if (filterNpc !== "all" && (q.npc || "").toLowerCase() !== filterNpc) {
       return false;
     }
 
     // Reward Item Filter
-    if (filters.rewardItem && filters.rewardItem !== "all") {
-      if (getQuestRewardAmount(q, filters.rewardItem) <= 0) {
+    if (filterReward !== "all") {
+      if (getQuestRewardAmount(q, filterReward) <= 0) {
         return false;
       }
     }
 
     // Search Filter
-    if (filters.search) {
-      const query = filters.search.toLowerCase().trim();
-      const inTitle = q.title.toLowerCase().includes(query);
-      const inNpc = q.npc.toLowerCase().includes(query);
-      const inQl = (q.questline || "").toLowerCase().includes(query);
-      const inDesc = (q.description || "").toLowerCase().includes(query);
-      const inReqs = (q.requirements || []).some(r => r.item.toLowerCase().includes(query));
-      const inRewards = (q.rewards || []).some(r => (r.item || r.label || r.type || "").toLowerCase().includes(query));
+    if (query) {
+      const inTitle = q.title && q.title.toLowerCase().includes(query);
+      const inNpc = q.npc && q.npc.toLowerCase().includes(query);
+      const inQl = q.questline && q.questline.toLowerCase().includes(query);
+      const inDesc = q.description && q.description.toLowerCase().includes(query);
+      const inReqs = q.requirements && q.requirements.some(r => r.item && r.item.toLowerCase().includes(query));
+      const inRewards = q.rewards && q.rewards.some(r => (r.item || r.label || r.type || "").toLowerCase().includes(query));
       if (!inTitle && !inNpc && !inQl && !inDesc && !inReqs && !inRewards) {
         return false;
       }

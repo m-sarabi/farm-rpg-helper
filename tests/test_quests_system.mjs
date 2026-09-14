@@ -402,6 +402,47 @@ async function runTests() {
   assert.strictEqual(state.isQuestAvailable(corruptCached249), false, "With restored prerequisite, quest must be locked");
   console.log("✓ Legacy cache recovery with HTML tags and empty data verified!");
 
+  console.log("\n--- Test 18: Events Tab Default Timeline is active_now ---");
+  assert.strictEqual(
+    state.eventFilters.timeline,
+    "active_now",
+    "state.eventFilters.timeline must default to 'active_now' and not 'all'"
+  );
+  console.log("✓ Events default timeline is 'active_now' verified!");
+
+  console.log("\n--- Test 19: Quest Indexing and Fast Lookups ---");
+  assert.ok(state._questById instanceof Map, "state._questById must be a Map");
+  assert.ok(state._questById.size > 2000, `Expected >2000 indexed quests, found ${state._questById.size}`);
+  const q268 = state.getQuestById(268);
+  assert.ok(q268, "Quest #268 should be looked up in O(1)");
+  assert.strictEqual(q268.title, "Thank You!");
+
+  state.setPlayerLevels({ farming: 99, fishing: 99, crafting: 99, exploring: 99, cooking: 99, mining: 99, tower: 99 });
+  const avail = state.isQuestAvailable(q268);
+  assert.ok(state._availabilityCache.has(q268.id), "Availability result should be cached");
+  assert.strictEqual(state._availabilityCache.get(q268.id), avail);
+
+  state.setPlayerLevels({ farming: 0 });
+  assert.strictEqual(state._availabilityCache.size, 0, "Cache must invalidate on level update");
+  console.log("✓ O(1) Map lookups and cache invalidation verified!");
+
+  console.log("\n--- Test 20: Search Performance Benchmark ---");
+  state.setPlayerLevels({ farming: 99, fishing: 99, crafting: 99, exploring: 99, cooking: 99, mining: 99, tower: 99 });
+  const targetQuests = state.quests.filter(q => !state.isEventQuest(q));
+  const t0 = performance.now();
+  for (let i = 0; i < 10; i++) {
+    const query = "corn";
+    const matches = targetQuests.filter(q => {
+      if (!state.isQuestAvailable(q)) return false;
+      return q.title.toLowerCase().includes(query) ||
+        (q.requirements || []).some(r => r.item.toLowerCase().includes(query));
+    });
+    assert.ok(matches.length > 0);
+  }
+  const duration = performance.now() - t0;
+  console.log(`✓ 10 sequential searches executed in ${duration.toFixed(2)}ms (${(duration / 10).toFixed(2)}ms/search)`);
+  assert.ok(duration < 200, `Search benchmark took ${duration.toFixed(2)}ms, expected < 200ms`);
+
   console.log("\n==========================================");
   console.log("ALL AUTOMATED TESTS PASSED! 🎉");
   console.log("==========================================");
