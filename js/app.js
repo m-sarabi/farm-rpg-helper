@@ -188,10 +188,7 @@ function renderQuestsView() {
   container.className = "quests-view";
   container.id = "quests-view-container";
 
-  // 1. Player Levels Quick-Bar
-  container.appendChild(renderPlayerLevelsBar(state));
-
-  // 2. Toolbar
+  // 1. Toolbar
   const toolbar = document.createElement("div");
   toolbar.className = "quests-toolbar";
 
@@ -208,6 +205,10 @@ function renderQuestsView() {
         <span class="search-icon">🔍</span>
         <input type="text" id="quest-search-input" class="search-input" placeholder="Search quests by title, questline, NPC, or item..." value="${state.filters.search}" />
       </div>
+      <button type="button" class="btn btn-outline btn-sm btn-quick-settings" id="btn-goto-settings-skills" title="Configure Skills & Friendships in Settings">
+        <span>⚙️</span>
+        <span>Skills & Friendships</span>
+      </button>
     </div>
 
     <div class="toolbar-filters">
@@ -277,6 +278,11 @@ function renderQuestsView() {
   skillSortSelect.addEventListener("change", (e) => {
     state.setFilters({ skillSort: e.target.value });
   });
+
+  const btnGoSettings = toolbar.querySelector("#btn-goto-settings-skills");
+  if (btnGoSettings) {
+    btnGoSettings.addEventListener("click", () => switchTab("settings"));
+  }
 
   container.appendChild(toolbar);
 
@@ -652,7 +658,7 @@ function renderSettingsTab() {
     });
   }
 
-  // 2. Bind Player Level Form
+  // 2. Bind Player Skills Form
   const saveLevelsBtn = settingsEl.querySelector("#settings-save-levels-btn");
   const maxLevelsBtn = settingsEl.querySelector("#settings-max-levels-btn");
   const zeroLevelsBtn = settingsEl.querySelector("#settings-zero-levels-btn");
@@ -671,48 +677,136 @@ function renderSettingsTab() {
     saveLevelsBtn.addEventListener("click", () => {
       const levels = readLevelsFromInputs();
       state.setPlayerLevels(levels);
-      showToast("Player levels saved successfully!", "success");
+      showToast("Player skills saved successfully!", "success");
     });
   }
 
   if (maxLevelsBtn) {
     maxLevelsBtn.addEventListener("click", () => {
-      const maxLevels = {
+      const maxSkills = {
         farming: 99,
         fishing: 99,
         crafting: 99,
         exploring: 99,
         cooking: 99,
         mining: 99,
-        tower: 320,
-        friendship: 99
+        tower: 320
       };
-      state.setPlayerLevels(maxLevels);
+      state.setPlayerLevels(maxSkills);
       settingsEl.querySelectorAll(".settings-level-input").forEach(input => {
         const skill = input.dataset.skill;
-        if (maxLevels[skill] !== undefined) input.value = maxLevels[skill];
+        if (maxSkills[skill] !== undefined) input.value = maxSkills[skill];
       });
-      showToast("All player levels set to max!", "success");
+      showToast("All skills set to max (99 / Tower 320)!", "success");
     });
   }
 
   if (zeroLevelsBtn) {
     zeroLevelsBtn.addEventListener("click", () => {
-      const zeroLevels = {
+      const zeroSkills = {
         farming: 0,
         fishing: 0,
         crafting: 0,
         exploring: 0,
         cooking: 0,
         mining: 0,
-        tower: 0,
-        friendship: 0
+        tower: 0
       };
-      state.setPlayerLevels(zeroLevels);
+      state.setPlayerLevels(zeroSkills);
       settingsEl.querySelectorAll(".settings-level-input").forEach(input => {
         input.value = 0;
       });
       showToast("All skills locked (0)!", "info");
+    });
+  }
+
+  // 3. Bind Townsfolk Friendships Form
+  const saveFriendshipsBtn = settingsEl.querySelector("#settings-save-friendships-btn");
+  const maxFriendshipsBtn = settingsEl.querySelector("#settings-max-friendships-btn");
+  const zeroFriendshipsBtn = settingsEl.querySelector("#settings-zero-friendships-btn");
+  const npcSearchInput = settingsEl.querySelector("#settings-npc-search-input");
+
+  function readFriendshipsFromInputs() {
+    const updated = {};
+    settingsEl.querySelectorAll(".settings-npc-input").forEach(input => {
+      const npc = input.dataset.npc;
+      const val = parseInt(input.value, 10);
+      updated[npc] = !isNaN(val) && val >= 0 ? Math.min(99, val) : 0;
+    });
+    return updated;
+  }
+
+  function updateNpcCardBadges() {
+    settingsEl.querySelectorAll(".settings-npc-card").forEach(card => {
+      const input = card.querySelector(".settings-npc-input");
+      const statusEl = card.querySelector(".npc-card-status");
+      if (input && statusEl) {
+        const val = parseInt(input.value, 10) || 0;
+        if (val === 0) {
+          card.classList.add("is-locked-npc");
+          statusEl.textContent = "🔒 Locked (0)";
+          statusEl.className = "npc-card-status status-locked";
+        } else {
+          card.classList.remove("is-locked-npc");
+          statusEl.textContent = `Level ${val}`;
+          statusEl.className = "npc-card-status status-active";
+        }
+      }
+    });
+  }
+
+  // Live input changes update card badge styling immediately
+  settingsEl.querySelectorAll(".settings-npc-input").forEach(input => {
+    input.addEventListener("input", updateNpcCardBadges);
+  });
+
+  if (saveFriendshipsBtn) {
+    saveFriendshipsBtn.addEventListener("click", () => {
+      const friendships = readFriendshipsFromInputs();
+      state.setNpcFriendships(friendships);
+      updateNpcCardBadges();
+      showToast("Townsfolk friendships saved successfully!", "success");
+    });
+  }
+
+  if (maxFriendshipsBtn) {
+    maxFriendshipsBtn.addEventListener("click", () => {
+      const allMax = {};
+      settingsEl.querySelectorAll(".settings-npc-input").forEach(input => {
+        input.value = 99;
+        allMax[input.dataset.npc] = 99;
+      });
+      state.setNpcFriendships(allMax);
+      updateNpcCardBadges();
+      showToast("All 24 NPC friendships set to 99!", "success");
+    });
+  }
+
+  if (zeroFriendshipsBtn) {
+    zeroFriendshipsBtn.addEventListener("click", () => {
+      const allZero = {};
+      settingsEl.querySelectorAll(".settings-npc-input").forEach(input => {
+        input.value = 0;
+        allZero[input.dataset.npc] = 0;
+      });
+      state.setNpcFriendships(allZero);
+      updateNpcCardBadges();
+      showToast("All NPC friendships locked (0)!", "info");
+    });
+  }
+
+  // Live NPC search filter
+  if (npcSearchInput) {
+    npcSearchInput.addEventListener("input", () => {
+      const term = npcSearchInput.value.toLowerCase().trim();
+      settingsEl.querySelectorAll(".settings-npc-card").forEach(card => {
+        const name = card.dataset.npcName || "";
+        if (!term || name.includes(term)) {
+          card.style.display = "";
+        } else {
+          card.style.display = "none";
+        }
+      });
     });
   }
 

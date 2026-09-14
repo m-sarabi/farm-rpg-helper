@@ -1,4 +1,4 @@
-import { getItemIcon, renderItemIconHtml, getSkillIconHtml, NPC_LIST } from "./quests-data.js";
+import { getItemIcon, renderItemIconHtml, getSkillIconHtml, NPC_LIST, MAIN_NPCS, getNpcIcon } from "./quests-data.js";
 import { getQuestRequirementsStatus, aggregateMaterials, aggregateRewards, formatMaterialsAsText } from "./calculator.js";
 
 /**
@@ -105,11 +105,12 @@ export function renderQuestCard(quest, state) {
 
   if (quest.requiredNpcLevel > 0) {
     const npcName = quest.requiredNpc || "Townsfolk";
-    const playerFriendship = state.playerLevels.friendship || 0;
+    const playerFriendship = state.getNpcFriendship ? state.getNpcFriendship(npcName) : (state.playerLevels.friendship || 0);
     const isMet = playerFriendship >= quest.requiredNpcLevel && playerFriendship > 0;
+    const npcIcon = getNpcIcon(npcName);
     skillItems.push(`
       <span class="prereq-chip ${isMet ? 'prereq-met' : 'prereq-unmet'}" title="${npcName} Friendship requirement: Level ${quest.requiredNpcLevel} (Your Level: ${playerFriendship})">
-        <span class="skill-icon-xs">🤝</span>
+        ${npcIcon ? `<img src="${npcIcon}" alt="${npcName}" class="skill-icon-xs" style="object-fit: contain; image-rendering: pixelated;" />` : '<span class="skill-icon-xs">🤝</span>'}
         <span class="prereq-name">${npcName}</span>
         <span class="prereq-level">${quest.requiredNpcLevel}</span>
         <span class="prereq-status-icon">${isMet ? '✓' : '🔒'}</span>
@@ -617,13 +618,13 @@ export function renderSettingsView(state) {
         </div>
       </div>
 
-      <!-- 2. Player Skills & Level Requirements Section -->
+      <!-- 2. Player Skills & Tower Progression Section -->
       <div class="settings-section">
         <div class="settings-section-header">
           <span class="settings-section-icon">🎯</span>
           <div>
-            <h3>Player Levels & Skill Requirements</h3>
-            <p>Specify your current skill and tower levels. Available quests dynamically unlock as your levels satisfy requirements.</p>
+            <h3>Player Skills & Tower Level</h3>
+            <p>Specify your current skill and tower levels. Quests dynamically unlock as your levels satisfy requirements.</p>
           </div>
         </div>
 
@@ -688,24 +689,69 @@ export function renderSettingsView(state) {
             </label>
             <input type="number" id="settings-lvl-tower" class="input-field settings-level-input" data-skill="tower" min="0" max="350" value="${state.playerLevels.tower || 0}" />
           </div>
-
-          <div class="settings-skill-item">
-            <label class="settings-skill-label" for="settings-lvl-friendship">
-              <span class="skill-badge-img emoji-badge">🤝</span>
-              <span>Townsfolk Friendship (0-99)</span>
-            </label>
-            <input type="number" id="settings-lvl-friendship" class="input-field settings-level-input" data-skill="friendship" min="0" max="99" value="${state.playerLevels.friendship || 0}" />
-          </div>
         </div>
 
         <div class="settings-buttons-row" style="margin-top: 1rem;">
-          <button type="button" class="btn btn-primary" id="settings-save-levels-btn">💾 Save Levels</button>
-          <button type="button" class="btn btn-secondary" id="settings-max-levels-btn">⚡ Set All to Max (99 / Tower 320)</button>
+          <button type="button" class="btn btn-primary" id="settings-save-levels-btn">💾 Save Skills</button>
+          <button type="button" class="btn btn-secondary" id="settings-max-levels-btn">⚡ Set Skills to Max (99 / Tower 320)</button>
           <button type="button" class="btn btn-outline" id="settings-zero-levels-btn">🔒 Lock All Skills (All 0)</button>
         </div>
       </div>
 
-      <!-- 3. Inventory Cap Section -->
+      <!-- 3. Townsfolk NPC Friendships Section -->
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <span class="settings-section-icon">🤝</span>
+          <div>
+            <h3>Townsfolk NPC Friendships (24 Main NPCs)</h3>
+            <p>Specify individual friendship levels (0-99) for each townsfolk NPC. Quests requiring friendship with a specific NPC will unlock once requirements are met (0 = locked).</p>
+          </div>
+        </div>
+
+        <div class="settings-toolbar-row" style="display: flex; gap: 0.6rem; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 1rem;">
+          <div class="settings-search-box" style="display: flex; align-items: center; gap: 0.4rem;">
+            <input type="text" id="settings-npc-search-input" class="input-field" placeholder="🔍 Filter NPCs..." style="max-width: 220px; font-size: 0.85rem;" />
+          </div>
+          <div class="settings-buttons-row">
+            <button type="button" class="btn btn-primary" id="settings-save-friendships-btn">💾 Save Friendships</button>
+            <button type="button" class="btn btn-secondary" id="settings-max-friendships-btn">⚡ Set All to 99</button>
+            <button type="button" class="btn btn-outline" id="settings-zero-friendships-btn">🔒 Lock All (0)</button>
+          </div>
+        </div>
+
+        <div class="settings-npcs-grid" id="settings-npcs-grid">
+          ${MAIN_NPCS.map(npc => {
+            const lvl = state.getNpcFriendship ? state.getNpcFriendship(npc.name) : 0;
+            const safeId = "npc-lvl-" + npc.name.replace(/[^a-zA-Z0-9]/g, "_");
+            return `
+              <div class="settings-npc-card ${lvl === 0 ? 'is-locked-npc' : ''}" data-npc-name="${npc.name.toLowerCase()}">
+                <div class="npc-card-header">
+                  <img src="${npc.icon}" alt="${npc.name}" class="npc-bobblehead-img" />
+                  <div class="npc-card-titles">
+                    <span class="npc-card-name">${npc.name}</span>
+                    <span class="npc-card-status ${lvl === 0 ? 'status-locked' : 'status-active'}">${lvl === 0 ? '🔒 Locked (0)' : `Level ${lvl}`}</span>
+                  </div>
+                </div>
+                <div class="npc-card-input-row">
+                  <label class="npc-card-label" for="${safeId}">Friendship:</label>
+                  <input
+                    type="number"
+                    id="${safeId}"
+                    class="input-field settings-npc-input"
+                    data-npc="${npc.name}"
+                    min="0"
+                    max="99"
+                    value="${lvl}"
+                    title="${npc.name} Friendship Level (0-99)"
+                  />
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+
+      <!-- 4. Inventory Cap Section -->
       <div class="settings-section">
         <div class="settings-section-header">
           <span class="settings-section-icon">🎒</span>
@@ -720,7 +766,7 @@ export function renderSettingsView(state) {
         </div>
       </div>
 
-      <!-- 4. Backup & Portability Section -->
+      <!-- 5. Backup & Portability Section -->
       <div class="settings-section">
         <div class="settings-section-header">
           <span class="settings-section-icon">💾</span>
@@ -740,7 +786,7 @@ export function renderSettingsView(state) {
         </div>
       </div>
 
-      <!-- 5. Reset Data Section -->
+      <!-- 6. Reset Data Section -->
       <div class="settings-section">
         <div class="settings-section-header">
           <span class="settings-section-icon">🔄</span>

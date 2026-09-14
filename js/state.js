@@ -1,3 +1,5 @@
+import { MAIN_NPCS, normalizeNpcName } from "./quests-data.js";
+
 const STORAGE_KEYS = {
   QUESTS: "farmrpg_helper_quests_v2",
   PLAYER_LEVELS: "farmrpg_helper_player_levels_v1",
@@ -7,7 +9,11 @@ const STORAGE_KEYS = {
   IMPORTED_AT: "farmrpg_helper_imported_at_v1"
 };
 
-const DEFAULT_PLAYER_LEVELS = {
+export const DEFAULT_FRIENDSHIPS = Object.freeze(
+  Object.fromEntries(MAIN_NPCS.map(npc => [npc.name, 0]))
+);
+
+export const DEFAULT_PLAYER_LEVELS = {
   farming: 0,
   fishing: 0,
   crafting: 0,
@@ -15,13 +21,17 @@ const DEFAULT_PLAYER_LEVELS = {
   cooking: 0,
   mining: 0,
   tower: 0,
-  friendship: 0
+  friendship: 0,
+  friendships: { ...DEFAULT_FRIENDSHIPS }
 };
 
 class StateManager {
   constructor() {
     this.quests = [];
-    this.playerLevels = { ...DEFAULT_PLAYER_LEVELS };
+    this.playerLevels = {
+      ...DEFAULT_PLAYER_LEVELS,
+      friendships: { ...DEFAULT_FRIENDSHIPS }
+    };
     this.inventoryCap = 1000;
     this.activeTab = "quests";
     this.plannerFilter = "pinned"; // "pinned" | "active"
@@ -52,12 +62,26 @@ class StateManager {
     try {
       const savedLevels = localStorage.getItem(STORAGE_KEYS.PLAYER_LEVELS);
       if (savedLevels) {
-        this.playerLevels = { ...DEFAULT_PLAYER_LEVELS, ...JSON.parse(savedLevels) };
+        const parsed = JSON.parse(savedLevels);
+        this.playerLevels = {
+          ...DEFAULT_PLAYER_LEVELS,
+          ...parsed,
+          friendships: {
+            ...DEFAULT_FRIENDSHIPS,
+            ...(parsed.friendships || {})
+          }
+        };
       } else {
-        this.playerLevels = { ...DEFAULT_PLAYER_LEVELS };
+        this.playerLevels = {
+          ...DEFAULT_PLAYER_LEVELS,
+          friendships: { ...DEFAULT_FRIENDSHIPS }
+        };
       }
     } catch (e) {
-      this.playerLevels = { ...DEFAULT_PLAYER_LEVELS };
+      this.playerLevels = {
+        ...DEFAULT_PLAYER_LEVELS,
+        friendships: { ...DEFAULT_FRIENDSHIPS }
+      };
     }
 
     // 3. Load quests
@@ -135,13 +159,59 @@ class StateManager {
     localStorage.setItem(STORAGE_KEYS.PLANNER_MODE, this.plannerFilter);
   }
 
-  setPlayerLevels(newLevels) {
-    this.playerLevels = { ...this.playerLevels, ...newLevels };
-    // Ensure all values are integers >= 0
-    for (const key of Object.keys(this.playerLevels)) {
-      const val = parseInt(this.playerLevels[key], 10);
-      this.playerLevels[key] = !isNaN(val) && val >= 0 ? val : 0;
+  getNpcFriendship(npcName) {
+    if (!npcName) return 0;
+    const canonical = normalizeNpcName(npcName);
+    if (this.playerLevels.friendships && this.playerLevels.friendships[canonical] !== undefined) {
+      return this.playerLevels.friendships[canonical];
     }
+    // Fallback to legacy playerLevels.friendship if present
+    return this.playerLevels.friendship || 0;
+  }
+
+  setNpcFriendships(newFriendships) {
+    if (!newFriendships || typeof newFriendships !== "object") return;
+    if (!this.playerLevels.friendships) {
+      this.playerLevels.friendships = { ...DEFAULT_FRIENDSHIPS };
+    }
+    for (const [key, val] of Object.entries(newFriendships)) {
+      const canonical = normalizeNpcName(key);
+      const parsed = parseInt(val, 10);
+      this.playerLevels.friendships[canonical] = !isNaN(parsed) && parsed >= 0 ? Math.min(99, parsed) : 0;
+    }
+    this.savePlayerLevels();
+    this.notify();
+  }
+
+  setPlayerLevels(newLevels) {
+    if (!newLevels || typeof newLevels !== "object") return;
+
+    if (!this.playerLevels.friendships) {
+      this.playerLevels.friendships = { ...DEFAULT_FRIENDSHIPS };
+    }
+
+    // 1. Handle nested friendships object
+    if (newLevels.friendships && typeof newLevels.friendships === "object") {
+      for (const [key, val] of Object.entries(newLevels.friendships)) {
+        const canonical = normalizeNpcName(key);
+        const parsed = parseInt(val, 10);
+        this.playerLevels.friendships[canonical] = !isNaN(parsed) && parsed >= 0 ? Math.min(99, parsed) : 0;
+      }
+    }
+
+    // 2. Handle top-level keys
+    for (const [key, val] of Object.entries(newLevels)) {
+      if (key === "friendships") continue;
+      const normalizedNpc = normalizeNpcName(key);
+      if (MAIN_NPCS.some(n => n.name === normalizedNpc)) {
+        const parsed = parseInt(val, 10);
+        this.playerLevels.friendships[normalizedNpc] = !isNaN(parsed) && parsed >= 0 ? Math.min(99, parsed) : 0;
+      } else {
+        const num = parseInt(val, 10);
+        this.playerLevels[key] = !isNaN(num) && num >= 0 ? num : 0;
+      }
+    }
+
     this.savePlayerLevels();
     this.notify();
   }
@@ -236,7 +306,7 @@ class StateManager {
     // 3. NPC Friendship check
     const requiredFriendship = quest.requiredNpcLevel || 0;
     if (requiredFriendship > 0) {
-      const playerFriendship = this.playerLevels.friendship || 0;
+      const playerFriendship = this.getNpcFriendship(quest.requiredNpc);
       if (playerFriendship <= 0 || playerFriendship < requiredFriendship) {
         return false;
       }
@@ -299,10 +369,10 @@ class StateManager {
     }
 
     if (quest.requiredNpcLevel > 0) {
-      const pFriendship = this.playerLevels.friendship || 0;
       const npcName = quest.requiredNpc || "Townsfolk";
+      const pFriendship = this.getNpcFriendship(npcName);
       if (pFriendship <= 0) {
-        reasons.push(`${npcName} Friendship ${quest.requiredNpcLevel} required (Friendship is Locked - 0)`);
+        reasons.push(`${npcName} Friendship ${quest.requiredNpcLevel} required (${npcName} Friendship is Locked - 0)`);
       } else if (pFriendship < quest.requiredNpcLevel) {
         reasons.push(`${npcName} Friendship ${quest.requiredNpcLevel} required (You: ${pFriendship})`);
       }
@@ -412,7 +482,14 @@ class StateManager {
       }
       this.quests = data.quests;
       if (data.playerLevels && typeof data.playerLevels === "object") {
-        this.playerLevels = { ...DEFAULT_PLAYER_LEVELS, ...data.playerLevels };
+        this.playerLevels = {
+          ...DEFAULT_PLAYER_LEVELS,
+          ...data.playerLevels,
+          friendships: {
+            ...DEFAULT_FRIENDSHIPS,
+            ...(data.playerLevels.friendships || {})
+          }
+        };
         this.savePlayerLevels();
       }
       if (data.inventoryCap && parseInt(data.inventoryCap, 10) > 0) {
@@ -436,7 +513,10 @@ class StateManager {
       q.status = "active";
       q.pinned = false;
     });
-    this.playerLevels = { ...DEFAULT_PLAYER_LEVELS };
+    this.playerLevels = {
+      ...DEFAULT_PLAYER_LEVELS,
+      friendships: { ...DEFAULT_FRIENDSHIPS }
+    };
     this.inventoryCap = 1000;
     this.saveQuests();
     this.savePlayerLevels();

@@ -18,32 +18,58 @@ export function getSkillIconHtml(skillKey, extraClass = "") {
   return `<span class="skill-icon-wrapper ${extraClass}"><img class="skill-badge-img" src="${encodeURI(skill.icon)}" alt="${skill.name}" loading="lazy" onerror="this.outerHTML='${skill.fallback}';" /></span>`;
 }
 
+// The 24 main Farm RPG NPCs with authentic Bobblehead icons and aliases
+export const MAIN_NPCS = [
+  { name: "Baba Gec", icon: "assets/Baba Bobblehead.png", aliases: ["baba gec", "baba gex"] },
+  { name: "Beatrix", icon: "assets/Beatrix Bobblehead.png", aliases: ["beatrix"] },
+  { name: "Borgen", icon: "assets/Borgen Bobblehead.png", aliases: ["borgen"] },
+  { name: "Buddy", icon: "assets/Buddy Bobblehead.png", aliases: ["buddy"] },
+  { name: "Captain Thomas", icon: "assets/CptThomas Bobblehead.png", aliases: ["captain thomas", "cpt thomas", "cptthomas"] },
+  { name: "Cecil", icon: "assets/Cecil Bobblehead.png", aliases: ["cecil"] },
+  { name: "Charles Horsington III", icon: "assets/Charles Bobblehead.png", aliases: ["charles horsington iii", "charles"] },
+  { name: "Cid", icon: "assets/Cid Bobblehead.png", aliases: ["cid"] },
+  { name: "frank", icon: "assets/frank Bobblehead.png", aliases: ["frank"] },
+  { name: "Gary Bearson V", icon: "assets/Gary Bobblehead.png", aliases: ["gary bearson v", "gary bearson", "gary"] },
+  { name: "Geist", icon: "assets/Geist Bobblehead.png", aliases: ["geist"] },
+  { name: "George", icon: "assets/George Bobblehead.png", aliases: ["george"] },
+  { name: "Goostav", icon: "assets/Goostav Bobblehead.png", aliases: ["goostav"] },
+  { name: "Holger", icon: "assets/Holger Bobblehead.png", aliases: ["holger"] },
+  { name: "Jill", icon: "assets/Jill Bobblehead.png", aliases: ["jill"] },
+  { name: "Lorn", icon: "assets/Lorn Bobblehead.png", aliases: ["lorn"] },
+  { name: "Mariya", icon: "assets/Mariya Bobblehead.png", aliases: ["mariya"] },
+  { name: "Mummy", icon: "assets/Mummy Bobblehead.png", aliases: ["mummy"] },
+  { name: "Ric Ryph", icon: "assets/Ric Ryph Bobblehead.png", aliases: ["ric ryph", "ric"] },
+  { name: "ROOMBA", icon: "assets/Roomba Bobblehead.png", aliases: ["roomba"] },
+  { name: "Rosalie", icon: "assets/Rosalie Bobblehead.png", aliases: ["rosalie"] },
+  { name: "Star Meerif", icon: "assets/Star Bobblehead.png", aliases: ["star meerif", "star"] },
+  { name: "Thomas", icon: "assets/Thomas Bobblehead.png", aliases: ["thomas"] },
+  { name: "Vincent", icon: "assets/Vincent Bobblehead.png", aliases: ["vincent"] }
+];
+
+export function normalizeNpcName(npcName) {
+  if (!npcName) return null;
+  const clean = String(npcName).trim().toLowerCase();
+  for (const npc of MAIN_NPCS) {
+    if (npc.name.toLowerCase() === clean) return npc.name;
+    if (npc.aliases && npc.aliases.some(a => a === clean)) return npc.name;
+  }
+  for (const npc of MAIN_NPCS) {
+    if (clean.startsWith(npc.name.toLowerCase()) || npc.name.toLowerCase().startsWith(clean)) {
+      return npc.name;
+    }
+  }
+  return npcName;
+}
+
+export function getNpcIcon(npcName) {
+  const norm = normalizeNpcName(npcName);
+  const found = MAIN_NPCS.find(n => n.name === norm);
+  return found ? found.icon : null;
+}
+
 // Suggested NPC list for quest giver dropdowns
 export const NPC_LIST = [
-  "Baba Gec",
-  "Beatrix",
-  "Borgen",
-  "Buddy",
-  "Captain Thomas",
-  "Cecil",
-  "Charles Horsington III",
-  "Cid",
-  "frank",
-  "Gary Bearson V",
-  "Geist",
-  "George",
-  "Goostav",
-  "Holger",
-  "Jill",
-  "Lorn",
-  "Mariya",
-  "Mummy",
-  "Ric Ryph",
-  "ROOMBA",
-  "Rosalie",
-  "Star Meerif",
-  "Thomas",
-  "Vincent",
+  ...MAIN_NPCS.map(n => n.name),
   "unknown"
 ];
 

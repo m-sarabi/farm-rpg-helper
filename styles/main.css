@@ -2662,4 +2662,121 @@ textarea.input-field {
   font-weight: 700;
 }
 
+/* Townsfolk NPC Friendships Grid */
+.settings-npcs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+.settings-npc-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.8rem 0.9rem;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.settings-npc-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.settings-npc-card.is-locked-npc {
+  background: var(--bg-secondary);
+  opacity: 0.78;
+}
+
+.npc-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.npc-bobblehead-img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.03);
+  padding: 2px;
+}
+
+[data-theme="dark"] .npc-bobblehead-img {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.npc-card-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.npc-card-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.npc-card-status {
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.npc-card-status.status-locked {
+  color: var(--text-muted);
+}
+
+.npc-card-status.status-active {
+  color: var(--primary);
+}
+
+.npc-card-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border-color);
+}
+
+.npc-card-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.settings-npc-input {
+  width: 60px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.25rem 0.35rem;
+}
+
+.btn-quick-settings {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+
 

@@ -119,18 +119,53 @@ async function runTests() {
   assert.strictEqual(state.isQuestAvailable(questHH2), false, "HH2 must dynamically re-lock when HH1 is reopened!");
   console.log("✓ Dynamic sequential questline unlocking & relocking verified!");
 
-  console.log("\n--- Test 6: Tower & Friendship Level Thresholds ---");
-  // Find a quest with Tower requirement
+  console.log("\n--- Test 6: Tower & Individual NPC Friendship Level Thresholds ---");
+  // 1. Tower requirement test
   const towerQuest = state.quests.find(q => q.towerLevel > 0);
   if (towerQuest) {
     state.setPlayerLevels({ tower: 0 });
     assert.strictEqual(state.isQuestAvailable(towerQuest), false, "Tower quest should be locked when tower is 0");
     state.setPlayerLevels({ tower: towerQuest.towerLevel });
-    // Check if other requirements are met
     if (state.getQuestLockReasons(towerQuest).length === 0) {
       assert.strictEqual(state.isQuestAvailable(towerQuest), true, "Tower quest unlocked when requirements met");
     }
   }
+
+  // 2. Individual NPC friendship test with "Friends With Charles I" (requires Charles Horsington III Friendship 15)
+  const charlesQuest = state.quests.find(q => q.title === "Friends With Charles I");
+  assert.ok(charlesQuest, "Friends With Charles I must exist");
+  assert.strictEqual(charlesQuest.requiredNpc, "Charles Horsington III");
+  assert.strictEqual(charlesQuest.requiredNpcLevel, 15);
+
+  // Set Charles friendship to 0 (locked)
+  state.setNpcFriendships({ "Charles Horsington III": 0 });
+  assert.strictEqual(state.isQuestAvailable(charlesQuest), false, "Charles quest must be locked when Charles friendship is 0");
+  const charlesReasons = state.getQuestLockReasons(charlesQuest);
+  assert.ok(charlesReasons.some(r => r.includes("Charles Horsington III Friendship 15 required")), "Reason must mention Charles friendship");
+
+  // Setting ANOTHER NPC's friendship to 99 must NOT unlock Charles's quest!
+  state.setNpcFriendships({ "Buddy": 99 });
+  assert.strictEqual(state.isQuestAvailable(charlesQuest), false, "Charles quest must remain locked when only Buddy's friendship is 99");
+
+  // Setting Charles to 14 (below 15) must NOT unlock
+  state.setNpcFriendships({ "Charles Horsington III": 14 });
+  assert.strictEqual(state.isQuestAvailable(charlesQuest), false, "Charles quest must remain locked at level 14 < 15");
+
+  // Setting Charles to 15 unlocks the quest!
+  state.setNpcFriendships({ "Charles Horsington III": 15 });
+  assert.strictEqual(state.isQuestAvailable(charlesQuest), true, "Charles quest unlocks at level 15 >= 15");
+
+  // 3. Test Baba Gec / Baba Gex alias support with "Cabbages of Friendship" (requires Baba Gec Friendship 99)
+  const babaQuest = state.quests.find(q => q.title === "Cabbages of Friendship");
+  assert.ok(babaQuest, "Cabbages of Friendship must exist");
+  state.setNpcFriendships({ "Baba Gec": 0 });
+  assert.strictEqual(state.isQuestAvailable(babaQuest), false, "Baba quest locked at 0");
+
+  // Unlocking via 'Baba Gex' alias
+  state.setNpcFriendships({ "Baba Gex": 99 });
+  assert.strictEqual(state.getNpcFriendship("Baba Gec"), 99, "getNpcFriendship('Baba Gec') matches 'Baba Gex' alias");
+  assert.strictEqual(state.isQuestAvailable(babaQuest), true, "Baba quest unlocked via alias friendship 99");
+  console.log("✓ Individual NPC friendship thresholds and alias matching verified!");
 
   console.log("\n--- Test 7: Preservation of Status During Re-Import ---");
   // Mark HH1 as completed and pinned
