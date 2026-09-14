@@ -1,13 +1,12 @@
 import { state } from "./state.js";
 import { NPC_LIST, KNOWN_ITEM_NAMES, getItemIcon } from "./quests-data.js";
 import { formatMaterialsAsText, aggregateMaterials } from "./calculator.js";
-import { attachItemAutocomplete } from "./autocomplete.js";
+import { fetchBuddyFarmAllQuests } from "./buddy-fetch.js";
 import {
   renderQuestCard,
   renderPlannerView,
   renderSettingsView,
-  openQuestModal,
-  closeModal,
+  renderPlayerLevelsBar,
   showToast
 } from "./components.js";
 
@@ -19,9 +18,6 @@ const statCompletedCount = document.getElementById("stat-completed-count");
 const badgeQuestCount = document.getElementById("badge-quest-count");
 const badgePlannerCount = document.getElementById("badge-planner-count");
 const themeToggleBtn = document.getElementById("theme-toggle-btn");
-const modalCloseX = document.getElementById("modal-close-x");
-const modalCancelBtn = document.getElementById("modal-cancel-btn");
-const questModal = document.getElementById("quest-modal");
 const brandHomeLink = document.getElementById("brand-home-link");
 
 // Application Initialization
@@ -45,18 +41,6 @@ function initApp() {
       const targetTab = tab.dataset.tab;
       switchTab(targetTab);
     });
-  });
-
-  // Bind Modal Close handlers
-  modalCloseX.addEventListener("click", closeModal);
-  modalCancelBtn.addEventListener("click", closeModal);
-  questModal.addEventListener("click", (e) => {
-    if (e.target === questModal) closeModal();
-  });
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && questModal.classList.contains("is-active")) {
-      closeModal();
-    }
   });
 
   // Subscribe to state changes to update header stats and re-render current view
@@ -87,14 +71,14 @@ function switchTab(tabName) {
 }
 
 function updateHeaderStats() {
-  const activeQuests = state.quests.filter(q => q.status === "active");
-  const completedQuests = state.quests.filter(q => q.status === "completed");
-  const pinnedActiveQuests = activeQuests.filter(q => q.pinned);
+  const availableQuests = state.quests.filter(q => state.isQuestAvailable(q));
+  const completedQuests = state.quests.filter(q => state.isQuestCompleted(q));
+  const pinnedActiveQuests = state.quests.filter(q => q.pinned && q.status === "active");
 
-  if (statActiveCount) statActiveCount.textContent = `${activeQuests.length} Active`;
+  if (statActiveCount) statActiveCount.textContent = `${availableQuests.length} Ready`;
   if (statCompletedCount) statCompletedCount.textContent = `${completedQuests.length} Completed`;
 
-  if (badgeQuestCount) badgeQuestCount.textContent = activeQuests.length;
+  if (badgeQuestCount) badgeQuestCount.textContent = availableQuests.length;
   if (badgePlannerCount) badgePlannerCount.textContent = pinnedActiveQuests.length;
 }
 
@@ -121,7 +105,6 @@ function renderCurrentTab() {
 
 /**
  * Extract unique reward items present across all quests.
- * Silver and Gold are listed at the top, followed by other items alphabetically.
  */
 function getAvailableRewardItems(quests) {
   const items = new Set();
@@ -150,9 +133,6 @@ function getAvailableRewardItems(quests) {
   });
 }
 
-/**
- * Calculate total quantity of a specific reward item granted by a quest.
- */
 function getQuestRewardAmount(quest, itemName) {
   if (!quest || !quest.rewards || !Array.isArray(quest.rewards)) return 0;
   const target = (itemName || "").trim().toLowerCase();
@@ -175,9 +155,6 @@ function getQuestRewardAmount(quest, itemName) {
   return total;
 }
 
-/**
- * Get maximum single reward quantity in a quest (used when sorting rewards with All Rewards selected).
- */
 function getMaxRewardAmount(quest) {
   if (!quest || !quest.rewards || !Array.isArray(quest.rewards)) return 0;
   let max = 0;
@@ -188,9 +165,6 @@ function getMaxRewardAmount(quest) {
   return max;
 }
 
-/**
- * Format reward item name with an emoji icon for select options.
- */
 function getRewardOptionText(item) {
   if (item === "Silver") return "🪙 Silver";
   if (item === "Gold") return "✨ Gold";
@@ -199,7 +173,7 @@ function getRewardOptionText(item) {
 }
 
 /**
- * Quests View (Catalog, Filter, Search, Cards)
+ * Quests View (Player Levels bar, Toolbar, Cards)
  */
 function renderQuestsView() {
   const existingView = document.getElementById("quests-view-container");
@@ -214,14 +188,15 @@ function renderQuestsView() {
   container.className = "quests-view";
   container.id = "quests-view-container";
 
-  // Build Toolbar
+  // 1. Player Levels Quick-Bar
+  container.appendChild(renderPlayerLevelsBar(state));
+
+  // 2. Toolbar
   const toolbar = document.createElement("div");
   toolbar.className = "quests-toolbar";
 
   // Unique list of NPCs present in quests + default list
   const activeNpcs = Array.from(new Set([...NPC_LIST, ...state.quests.map(q => q.npc)])).sort();
-
-  // Unique list of reward items present in quests
   const activeRewards = getAvailableRewardItems(state.quests);
   if (state.filters.rewardItem && state.filters.rewardItem !== "all" && !activeRewards.includes(state.filters.rewardItem)) {
     activeRewards.push(state.filters.rewardItem);
@@ -231,15 +206,7 @@ function renderQuestsView() {
     <div class="toolbar-top-row">
       <div class="search-box">
         <span class="search-icon">🔍</span>
-        <input type="text" id="quest-search-input" class="search-input" placeholder="Search quests by title, NPC, or required item..." value="${state.filters.search}" />
-      </div>
-      <div class="toolbar-actions">
-        <button class="btn btn-outline" id="btn-import-buddy" title="Import quest details from a buddy.farm link">
-          <span>🌐</span> Import from buddy.farm
-        </button>
-        <button class="btn btn-primary" id="btn-add-quest">
-          <span>➕</span> Add Quest
-        </button>
+        <input type="text" id="quest-search-input" class="search-input" placeholder="Search quests by title, questline, NPC, or item..." value="${state.filters.search}" />
       </div>
     </div>
 
@@ -279,6 +246,8 @@ function renderQuestsView() {
           <option value="cooking_desc" ${state.filters.skillSort === 'cooking_desc' ? 'selected' : ''}>🍳 Cooking (High to Low)</option>
           <option value="mining_asc" ${state.filters.skillSort === 'mining_asc' ? 'selected' : ''}>⛏️ Mining (Low to High)</option>
           <option value="mining_desc" ${state.filters.skillSort === 'mining_desc' ? 'selected' : ''}>⛏️ Mining (High to Low)</option>
+          <option value="tower_asc" ${state.filters.skillSort === 'tower_asc' ? 'selected' : ''}>🗼 Tower (Low to High)</option>
+          <option value="tower_desc" ${state.filters.skillSort === 'tower_desc' ? 'selected' : ''}>🗼 Tower (High to Low)</option>
         </select>
       </div>
     </div>
@@ -309,24 +278,6 @@ function renderQuestsView() {
     state.setFilters({ skillSort: e.target.value });
   });
 
-  const btnAddQuest = toolbar.querySelector("#btn-add-quest");
-  btnAddQuest.addEventListener("click", () => {
-    openQuestModal(null, (questData) => {
-      const created = state.addQuest(questData);
-      showToast(`Quest "${created.title}" added successfully!`, "success");
-    });
-  });
-
-  const btnImportBuddy = toolbar.querySelector("#btn-import-buddy");
-  if (btnImportBuddy) {
-    btnImportBuddy.addEventListener("click", () => {
-      openQuestModal(null, (questData) => {
-        const created = state.addQuest(questData);
-        showToast(`Quest "${created.title}" added successfully!`, "success");
-      }, true);
-    });
-  }
-
   container.appendChild(toolbar);
 
   // Render Grid container
@@ -343,19 +294,23 @@ function updateQuestsGridAndFilters(container) {
   // Update filter pills
   const pillsContainer = container.querySelector("#filter-pills-container");
   if (pillsContainer) {
-    const activeCount = state.quests.filter(q => q.status === 'active').length;
-    const completedCount = state.quests.filter(q => q.status === 'completed').length;
+    const availableCount = state.quests.filter(q => state.isQuestAvailable(q)).length;
+    const completedCount = state.quests.filter(q => state.isQuestCompleted(q)).length;
+    const lockedCount = state.quests.filter(q => !state.isQuestCompleted(q) && !state.isQuestAvailable(q)).length;
     const allCount = state.quests.length;
 
     pillsContainer.innerHTML = `
-      <button class="filter-pill ${state.filters.status === 'active' ? 'active' : ''}" data-status="active">
-        Active (${activeCount})
+      <button class="filter-pill ${state.filters.status === 'available' ? 'active' : ''}" data-status="available">
+        ✨ Ready / Available (${availableCount})
       </button>
       <button class="filter-pill ${state.filters.status === 'completed' ? 'active' : ''}" data-status="completed">
-        Completed (${completedCount})
+        ✓ Completed (${completedCount})
+      </button>
+      <button class="filter-pill ${state.filters.status === 'locked' ? 'active' : ''}" data-status="locked">
+        🔒 Locked (${lockedCount})
       </button>
       <button class="filter-pill ${state.filters.status === 'all' ? 'active' : ''}" data-status="all">
-        All Quests (${allCount})
+        All (${allCount})
       </button>
     `;
 
@@ -421,17 +376,39 @@ function updateQuestsGridAndFilters(container) {
     const filteredQuests = filterQuests(state.quests, state.filters);
     grid.innerHTML = "";
 
-    if (filteredQuests.length === 0) {
+    if (state.quests.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state-card">
+          <div class="empty-icon">
+            <img src="assets/Corn.png" alt="Empty" class="empty-state-img" />
+          </div>
+          <h3>No Quests Loaded Yet</h3>
+          <p>Sync all 2,487 official quests directly from buddy.farm to get started!</p>
+          <button class="btn btn-primary" id="btn-empty-import" style="margin-top: 1rem;">
+            🌐 Import Quests from buddy.farm
+          </button>
+        </div>
+      `;
+      const btnEmptyImport = grid.querySelector("#btn-empty-import");
+      if (btnEmptyImport) {
+        btnEmptyImport.addEventListener("click", () => {
+          switchTab("settings");
+          const syncBtn = document.getElementById("btn-sync-buddy-quests");
+          if (syncBtn) syncBtn.scrollIntoView({ behavior: "smooth" });
+        });
+      }
+    } else if (filteredQuests.length === 0) {
       grid.innerHTML = `
         <div class="empty-state-card">
           <div class="empty-icon">
             <img src="assets/Corn.png" alt="Empty" class="empty-state-img" />
           </div>
           <h3>No Quests Found</h3>
-          <p>No quests match your current filter or search criteria. Try adjusting filters or create a new quest!</p>
+          <p>No quests match your current filter or level requirements. Try adjusting your skill levels in the bar above or changing filters.</p>
         </div>
       `;
     } else {
+      // Render capped batch for performance (or all if under 150)
       filteredQuests.forEach(quest => {
         const card = renderQuestCard(quest, state);
         bindQuestCardEvents(card, quest);
@@ -441,16 +418,11 @@ function updateQuestsGridAndFilters(container) {
   }
 }
 
-/**
- * Helper to get a quest's required skill level for a given skill
- */
 function getQuestSkillLevel(quest, skillKey) {
+  if (skillKey === "tower") return quest.towerLevel || 0;
+  if (skillKey === "friendship") return quest.requiredNpcLevel || 0;
   if (quest.skills && quest.skills[skillKey] !== undefined) {
     return parseInt(quest.skills[skillKey], 10) || 0;
-  }
-  if (quest.levelReq) {
-    const match = quest.levelReq.match(new RegExp(`${skillKey}\\s*(\\d+)`, "i"));
-    if (match) return parseInt(match[1], 10) || 0;
   }
   return 0;
 }
@@ -460,9 +432,14 @@ function getQuestSkillLevel(quest, skillKey) {
  */
 function filterQuests(quests, filters) {
   const filtered = quests.filter(q => {
-    // Status Filter
-    if (filters.status === "active" && q.status !== "active") return false;
-    if (filters.status === "completed" && q.status !== "completed") return false;
+    // Status Filter (Available, Completed, Locked, All)
+    if (filters.status === "available") {
+      if (!state.isQuestAvailable(q)) return false;
+    } else if (filters.status === "completed") {
+      if (!state.isQuestCompleted(q)) return false;
+    } else if (filters.status === "locked") {
+      if (state.isQuestCompleted(q) || state.isQuestAvailable(q)) return false;
+    }
 
     // NPC Filter
     if (filters.npc !== "all" && q.npc.toLowerCase() !== filters.npc.toLowerCase()) {
@@ -481,10 +458,11 @@ function filterQuests(quests, filters) {
       const query = filters.search.toLowerCase().trim();
       const inTitle = q.title.toLowerCase().includes(query);
       const inNpc = q.npc.toLowerCase().includes(query);
+      const inQl = (q.questline || "").toLowerCase().includes(query);
       const inDesc = (q.description || "").toLowerCase().includes(query);
       const inReqs = (q.requirements || []).some(r => r.item.toLowerCase().includes(query));
       const inRewards = (q.rewards || []).some(r => (r.item || r.label || r.type || "").toLowerCase().includes(query));
-      if (!inTitle && !inNpc && !inDesc && !inReqs && !inRewards) {
+      if (!inTitle && !inNpc && !inQl && !inDesc && !inReqs && !inRewards) {
         return false;
       }
     }
@@ -503,7 +481,6 @@ function filterQuests(quests, filters) {
         ? getQuestRewardAmount(b, filters.rewardItem)
         : getMaxRewardAmount(b);
 
-      // Quests with rewards come first if sorting descending; 0 goes to bottom
       if (amtA === 0 && amtB > 0) return 1;
       if (amtB === 0 && amtA > 0) return -1;
       if (amtA === 0 && amtB === 0) return a.title.localeCompare(b.title);
@@ -520,7 +497,6 @@ function filterQuests(quests, filters) {
       const lvlA = getQuestSkillLevel(a, skillKey);
       const lvlB = getQuestSkillLevel(b, skillKey);
 
-      // Quests requiring this skill come first; 0 (not requiring) goes to the bottom
       if (lvlA === 0 && lvlB > 0) return 1;
       if (lvlB === 0 && lvlA > 0) return -1;
       if (lvlA === 0 && lvlB === 0) return 0;
@@ -531,13 +507,24 @@ function filterQuests(quests, filters) {
         return lvlB - lvlA;
       }
     });
+  } else {
+    // Default sort: Group by questline, then stepNumber, then title
+    filtered.sort((a, b) => {
+      if (a.questline && b.questline) {
+        if (a.questline !== b.questline) return a.questline.localeCompare(b.questline);
+        return (a.stepNumber || 1) - (b.stepNumber || 1);
+      }
+      if (a.questline && !b.questline) return -1;
+      if (!a.questline && b.questline) return 1;
+      return a.title.localeCompare(b.title);
+    });
   }
 
   return filtered;
 }
 
 /**
- * Bind card interactions
+ * Bind card interactions (Pin and Complete/Reopen)
  */
 function bindQuestCardEvents(card, quest) {
   // Pin toggle
@@ -555,31 +542,9 @@ function bindQuestCardEvents(card, quest) {
     statusBtn.addEventListener("click", () => {
       const newStatus = state.toggleQuestStatus(quest.id);
       if (newStatus === "completed") {
-        showToast(`🎉 Quest "${quest.title}" marked as completed!`, "success");
+        showToast(`🎉 "${quest.title}" marked as completed!`, "success");
       } else {
-        showToast(`Quest "${quest.title}" reopened.`, "info");
-      }
-    });
-  }
-
-  // Edit button
-  const editBtn = card.querySelector(".edit-quest-btn");
-  if (editBtn) {
-    editBtn.addEventListener("click", () => {
-      openQuestModal(quest, (updatedData) => {
-        state.updateQuest(quest.id, updatedData);
-        showToast(`Quest "${updatedData.title}" updated!`, "success");
-      });
-    });
-  }
-
-  // Delete button
-  const deleteBtn = card.querySelector(".delete-quest-btn");
-  if (deleteBtn) {
-    deleteBtn.addEventListener("click", () => {
-      if (confirm(`Are you sure you want to delete "${quest.title}"?`)) {
-        state.deleteQuest(quest.id);
-        showToast(`Deleted quest "${quest.title}"`, "info");
+        showToast(`"${quest.title}" reopened.`, "info");
       }
     });
   }
@@ -607,7 +572,6 @@ function renderPlannerTab() {
         await navigator.clipboard.writeText(text);
         showToast("📋 Shopping checklist copied to clipboard!", "success");
       } catch (err) {
-        // Fallback prompt if clipboard API blocked
         window.prompt("Copy your checklist below:", text);
       }
     });
@@ -636,7 +600,123 @@ function renderPlannerTab() {
 function renderSettingsTab() {
   const settingsEl = renderSettingsView(state);
 
-  // Bind Inventory Cap Save
+  // 1. Bind buddy.farm Quests Sync Button
+  const syncBtn = settingsEl.querySelector("#btn-sync-buddy-quests");
+  const syncSpinner = settingsEl.querySelector("#buddy-sync-spinner");
+  const syncBtnText = settingsEl.querySelector("#buddy-sync-btn-text");
+  const syncFeedback = settingsEl.querySelector("#buddy-sync-feedback");
+
+  function setSyncing(isSyncing, msg = "") {
+    if (syncBtn) syncBtn.disabled = isSyncing;
+    if (syncSpinner) {
+      if (isSyncing) syncSpinner.classList.remove("is-hidden");
+      else syncSpinner.classList.add("is-hidden");
+    }
+    if (syncBtnText) {
+      syncBtnText.textContent = isSyncing ? msg || "Syncing..." : "📥 Import All Quests from buddy.farm";
+    }
+  }
+
+  function showSyncFeedback(msg, type = "info") {
+    if (!syncFeedback) return;
+    syncFeedback.textContent = msg;
+    syncFeedback.className = `buddy-sync-feedback feedback-${type}`;
+    syncFeedback.classList.remove("is-hidden");
+  }
+
+  if (syncBtn) {
+    syncBtn.addEventListener("click", async () => {
+      setSyncing(true, "Connecting to buddy.farm...");
+      showSyncFeedback("Connecting to buddy.farm...", "info");
+
+      try {
+        const importedQuests = await fetchBuddyFarmAllQuests((progressMsg) => {
+          if (syncBtnText) syncBtnText.textContent = progressMsg;
+          showSyncFeedback(progressMsg, "info");
+        });
+
+        const res = state.importBuddyFarmQuests(importedQuests);
+        setSyncing(false);
+        showSyncFeedback(`✓ Successfully imported ${res.count} quests from buddy.farm!`, "success");
+        showToast(`🎉 Imported ${res.count} quests from buddy.farm!`, "success");
+
+        const statusLabel = settingsEl.querySelector("#sync-status-label");
+        if (statusLabel) {
+          statusLabel.textContent = `Last synced: ${new Date().toLocaleString()} (${res.count} quests loaded)`;
+        }
+      } catch (err) {
+        setSyncing(false);
+        showSyncFeedback(`⚠️ Failed to import from buddy.farm: ${err.message}`, "error");
+        showToast(`Sync failed: ${err.message}`, "warning");
+      }
+    });
+  }
+
+  // 2. Bind Player Level Form
+  const saveLevelsBtn = settingsEl.querySelector("#settings-save-levels-btn");
+  const maxLevelsBtn = settingsEl.querySelector("#settings-max-levels-btn");
+  const zeroLevelsBtn = settingsEl.querySelector("#settings-zero-levels-btn");
+
+  function readLevelsFromInputs() {
+    const updated = {};
+    settingsEl.querySelectorAll(".settings-level-input").forEach(input => {
+      const skill = input.dataset.skill;
+      const val = parseInt(input.value, 10);
+      updated[skill] = !isNaN(val) && val >= 0 ? val : 0;
+    });
+    return updated;
+  }
+
+  if (saveLevelsBtn) {
+    saveLevelsBtn.addEventListener("click", () => {
+      const levels = readLevelsFromInputs();
+      state.setPlayerLevels(levels);
+      showToast("Player levels saved successfully!", "success");
+    });
+  }
+
+  if (maxLevelsBtn) {
+    maxLevelsBtn.addEventListener("click", () => {
+      const maxLevels = {
+        farming: 99,
+        fishing: 99,
+        crafting: 99,
+        exploring: 99,
+        cooking: 99,
+        mining: 99,
+        tower: 320,
+        friendship: 99
+      };
+      state.setPlayerLevels(maxLevels);
+      settingsEl.querySelectorAll(".settings-level-input").forEach(input => {
+        const skill = input.dataset.skill;
+        if (maxLevels[skill] !== undefined) input.value = maxLevels[skill];
+      });
+      showToast("All player levels set to max!", "success");
+    });
+  }
+
+  if (zeroLevelsBtn) {
+    zeroLevelsBtn.addEventListener("click", () => {
+      const zeroLevels = {
+        farming: 0,
+        fishing: 0,
+        crafting: 0,
+        exploring: 0,
+        cooking: 0,
+        mining: 0,
+        tower: 0,
+        friendship: 0
+      };
+      state.setPlayerLevels(zeroLevels);
+      settingsEl.querySelectorAll(".settings-level-input").forEach(input => {
+        input.value = 0;
+      });
+      showToast("All skills locked (0)!", "info");
+    });
+  }
+
+  // 3. Bind Inventory Cap Save
   const capInput = settingsEl.querySelector("#settings-cap-input");
   const saveCapBtn = settingsEl.querySelector("#settings-save-cap-btn");
   const handleCapSave = () => {
@@ -657,7 +737,7 @@ function renderSettingsTab() {
     });
   }
 
-  // Export JSON
+  // 4. Export JSON
   const exportBtn = settingsEl.querySelector("#export-data-btn");
   if (exportBtn) {
     exportBtn.addEventListener("click", () => {
@@ -686,13 +766,13 @@ function renderSettingsTab() {
     });
   }
 
-  // Reset to Defaults
+  // 5. Reset to Defaults
   const resetBtn = settingsEl.querySelector("#reset-defaults-btn");
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
-      if (confirm("Reset and clear all quests and restore default settings? Your current changes will be overwritten unless exported.")) {
+      if (confirm("Reset completed quests and set all player levels to 0 (locked)?")) {
         state.resetToDefaults();
-        showToast("Cleared all quests and reset settings!", "info");
+        showToast("Progress reset and levels restored to 0!", "info");
       }
     });
   }

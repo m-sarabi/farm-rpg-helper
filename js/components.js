@@ -1,7 +1,5 @@
-import { getItemIcon, renderItemIconHtml, getSkillIconHtml, NPC_LIST, KNOWN_ITEM_NAMES } from "./quests-data.js";
+import { getItemIcon, renderItemIconHtml, getSkillIconHtml, NPC_LIST } from "./quests-data.js";
 import { getQuestRequirementsStatus, aggregateMaterials, aggregateRewards, formatMaterialsAsText } from "./calculator.js";
-import { attachItemAutocomplete } from "./autocomplete.js";
-import { fetchBuddyFarmQuest } from "./buddy-fetch.js";
 
 /**
  * Creates and displays a floating toast notification.
@@ -38,14 +36,17 @@ export function showToast(message, type = "info") {
  * Render single quest card HTML
  */
 export function renderQuestCard(quest, state) {
-  const reqStatus = getQuestRequirementsStatus(quest);
-  const isCompleted = quest.status === "completed";
+  const isCompleted = state.isQuestCompleted(quest);
+  const isAvailable = state.isQuestAvailable(quest);
+  const isLocked = !isCompleted && !isAvailable;
+  const lockReasons = isLocked ? state.getQuestLockReasons(quest) : [];
 
   const card = document.createElement("div");
-  card.className = `quest-card ${isCompleted ? "is-completed" : ""} ${quest.pinned ? "is-pinned" : ""}`;
+  card.className = `quest-card ${isCompleted ? "is-completed" : ""} ${isAvailable ? "is-available" : ""} ${isLocked ? "is-locked" : ""} ${quest.pinned ? "is-pinned" : ""}`;
   card.dataset.questId = quest.id;
 
   // Requirements HTML
+  const reqStatus = getQuestRequirementsStatus(quest);
   const reqsHtml = reqStatus.map(req => {
     return `
       <div class="req-item">
@@ -75,18 +76,45 @@ export function renderQuestCard(quest, state) {
     for (const [sKey, sVal] of Object.entries(quest.skills)) {
       const lvl = parseInt(sVal, 10) || 0;
       if (lvl > 0) {
+        const playerLvl = state.playerLevels[sKey] || 0;
+        const isMet = playerLvl >= lvl && playerLvl > 0;
         skillItems.push(`
-          <span class="prereq-chip" title="${skillNames[sKey] || sKey} requirement: Level ${lvl}">
+          <span class="prereq-chip ${isMet ? 'prereq-met' : 'prereq-unmet'}" title="${skillNames[sKey] || sKey} requirement: Level ${lvl} (Your Level: ${playerLvl})">
             ${getSkillIconHtml(sKey, "skill-icon-xs")}
             <span class="prereq-name">${skillNames[sKey] || sKey}</span>
             <span class="prereq-level">${lvl}</span>
+            <span class="prereq-status-icon">${isMet ? '✓' : '🔒'}</span>
           </span>
         `);
       }
     }
   }
-  if (skillItems.length === 0 && quest.levelReq) {
-    skillItems.push(`<span class="prereq-chip" title="Requirement">🎯 ${quest.levelReq}</span>`);
+
+  if (quest.towerLevel > 0) {
+    const playerTower = state.playerLevels.tower || 0;
+    const isMet = playerTower >= quest.towerLevel && playerTower > 0;
+    skillItems.push(`
+      <span class="prereq-chip ${isMet ? 'prereq-met' : 'prereq-unmet'}" title="Tower Level requirement: ${quest.towerLevel} (Your Level: ${playerTower})">
+        <span class="skill-icon-xs">🗼</span>
+        <span class="prereq-name">Tower</span>
+        <span class="prereq-level">${quest.towerLevel}</span>
+        <span class="prereq-status-icon">${isMet ? '✓' : '🔒'}</span>
+      </span>
+    `);
+  }
+
+  if (quest.requiredNpcLevel > 0) {
+    const npcName = quest.requiredNpc || "Townsfolk";
+    const playerFriendship = state.playerLevels.friendship || 0;
+    const isMet = playerFriendship >= quest.requiredNpcLevel && playerFriendship > 0;
+    skillItems.push(`
+      <span class="prereq-chip ${isMet ? 'prereq-met' : 'prereq-unmet'}" title="${npcName} Friendship requirement: Level ${quest.requiredNpcLevel} (Your Level: ${playerFriendship})">
+        <span class="skill-icon-xs">🤝</span>
+        <span class="prereq-name">${npcName}</span>
+        <span class="prereq-level">${quest.requiredNpcLevel}</span>
+        <span class="prereq-status-icon">${isMet ? '✓' : '🔒'}</span>
+      </span>
+    `);
   }
 
   // Rewards HTML
@@ -127,23 +155,43 @@ export function renderQuestCard(quest, state) {
   card.innerHTML = `
     <div class="quest-card-header">
       <div class="quest-meta-row">
-        <div class="npc-badge" title="Quest Giver">
-          <svg class="npc-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-          <span class="npc-name">${quest.npc}</span>
+        <div class="quest-meta-left">
+          <div class="npc-badge" title="Quest Giver">
+            <svg class="npc-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span class="npc-name">${quest.npc}</span>
+          </div>
+
+          ${quest.questline ? `
+            <span class="questline-badge" title="Part of questline: ${quest.questline}">
+              <span class="questline-icon">📜</span>
+              <span class="questline-name">${quest.questline}</span>
+              ${quest.totalSteps > 1 ? `<span class="questline-step">${quest.stepNumber}/${quest.totalSteps}</span>` : ''}
+            </span>
+          ` : ''}
         </div>
+
         <div class="quest-header-actions">
           ${isCompleted ? `
-            <span class="completed-badge">
+            <span class="status-badge badge-completed">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
               <span>Completed</span>
             </span>
-          ` : ''}
-          <button class="pin-btn ${quest.pinned ? 'pinned' : ''}" data-id="${quest.id}" title="${quest.pinned ? 'Unpin quest' : 'Pin quest'}" aria-label="${quest.pinned ? 'Unpin quest' : 'Pin quest'}">
+          ` : isAvailable ? `
+            <span class="status-badge badge-available">
+              <span>✨ Ready</span>
+            </span>
+          ` : `
+            <span class="status-badge badge-locked" title="Requirements or prerequisites not met">
+              <span>🔒 Locked</span>
+            </span>
+          `}
+
+          <button class="pin-btn ${quest.pinned ? 'pinned' : ''}" data-id="${quest.id}" title="${quest.pinned ? 'Unpin quest' : 'Pin quest for Material Planner'}" aria-label="${quest.pinned ? 'Unpin quest' : 'Pin quest'}">
             <svg class="pin-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
             </svg>
@@ -155,10 +203,22 @@ export function renderQuestCard(quest, state) {
 
       ${skillItems.length > 0 ? `
         <div class="quest-prereqs-bar">
-          <span class="prereqs-label">Prerequisites:</span>
+          <span class="prereqs-label">Required Levels:</span>
           <div class="prereqs-list">
             ${skillItems.join("")}
           </div>
+        </div>
+      ` : ''}
+
+      ${isLocked && lockReasons.length > 0 ? `
+        <div class="quest-lock-banner">
+          <div class="lock-banner-header">
+            <span class="lock-icon">🔒</span>
+            <strong>Prerequisites Needed:</strong>
+          </div>
+          <ul class="lock-reasons-list">
+            ${lockReasons.map(reason => `<li>${reason}</li>`).join("")}
+          </ul>
         </div>
       ` : ''}
     </div>
@@ -171,7 +231,7 @@ export function renderQuestCard(quest, state) {
         <span class="quest-section-count">${reqStatus.length}</span>
       </div>
       <div class="quest-requirements-list">
-        ${reqsHtml || '<p class="empty-text">No requirements specified.</p>'}
+        ${reqsHtml || '<p class="empty-text">No items required.</p>'}
       </div>
 
       ${rewardsHtml ? `
@@ -186,21 +246,14 @@ export function renderQuestCard(quest, state) {
 
     <div class="quest-card-footer">
       <div class="quest-actions-left">
-        <button class="btn btn-sm btn-secondary edit-quest-btn" data-id="${quest.id}" title="Edit quest">
-          <svg class="btn-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-          </svg>
-          <span>Edit</span>
-        </button>
-        <button class="btn btn-sm btn-icon-only btn-ghost delete-quest-btn" data-id="${quest.id}" title="Delete quest" aria-label="Delete quest">
-          <svg class="btn-icon delete-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-        </button>
+        ${quest.prevQuestTitle && !isCompleted ? `
+          <span class="prev-quest-hint" title="Requires completion of ${quest.prevQuestTitle}">
+            ⬅️ Step ${quest.stepNumber} (After ${quest.prevQuestTitle})
+          </span>
+        ` : ''}
       </div>
       <div class="quest-actions-right">
-        <button class="btn btn-sm ${isCompleted ? 'btn-secondary' : 'btn-primary btn-complete'} toggle-status-btn" data-id="${quest.id}">
+        <button class="btn btn-sm ${isCompleted ? 'btn-secondary' : isAvailable ? 'btn-primary btn-complete' : 'btn-outline'} toggle-status-btn" data-id="${quest.id}">
           ${isCompleted ? `
             <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="1 4 1 10 7 10"></polyline>
@@ -211,7 +264,7 @@ export function renderQuestCard(quest, state) {
             <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
-            <span>Complete</span>
+            <span>Mark Completed</span>
           `}
         </button>
       </div>
@@ -231,7 +284,7 @@ export function renderPlannerView(state) {
   // Filter quests based on plannerFilter mode (default: pinned)
   let filteredQuests = [];
   if (state.plannerFilter === "active") {
-    filteredQuests = state.quests.filter(q => q.status === "active");
+    filteredQuests = state.quests.filter(q => q.status === "active" && state.isQuestAvailable(q));
   } else {
     // "pinned" mode
     filteredQuests = state.quests.filter(q => q.pinned && q.status === "active");
@@ -244,14 +297,14 @@ export function renderPlannerView(state) {
   const overCapMaterials = materials.filter(m => m.exceedsCap);
 
   const pinnedActiveCount = state.quests.filter(q => q.pinned && q.status === "active").length;
-  const allActiveCount = state.quests.filter(q => q.status === "active").length;
+  const availableCount = state.quests.filter(q => q.status === "active" && state.isQuestAvailable(q)).length;
 
   container.innerHTML = `
     <div class="planner-header-card">
       <div class="planner-header-top">
         <div>
           <h2 class="view-heading">🧺 Total Material Planner</h2>
-          <p class="view-subheading">Aggregate materials needed across your pinned Farm RPG quests</p>
+          <p class="view-subheading">Aggregate materials needed across your pinned or available Farm RPG quests</p>
         </div>
         <div class="planner-header-actions">
           <div class="planner-cap-box">
@@ -271,7 +324,7 @@ export function renderPlannerView(state) {
             ⭐ Pinned Only (${pinnedActiveCount})
           </button>
           <button class="segment-btn ${state.plannerFilter === 'active' ? 'active' : ''}" data-planner-mode="active">
-            All Active (${allActiveCount})
+            ✨ All Ready / Available (${availableCount})
           </button>
         </div>
       </div>
@@ -329,7 +382,7 @@ export function renderPlannerView(state) {
             <img src="assets/Corn.png" alt="Empty" class="empty-state-img" />
           </div>
           <h3>No Quests in this Scope</h3>
-          <p>Select some quests or switch to "All Active" to see aggregate material requirements.</p>
+          <p>Pin some quests or switch to "All Ready / Available" to see aggregate material requirements.</p>
         </div>
       ` : `
         <div class="materials-grid">
@@ -367,7 +420,6 @@ function renderMaterialCardHtml(mat, inventoryCap) {
         `}
       </div>
 
-      <!-- Quantity Display -->
       <div class="mat-qty-display">
         <div class="mat-qty-main">
           <span class="mat-qty-num">${mat.totalRequired.toLocaleString()}</span>
@@ -380,7 +432,6 @@ function renderMaterialCardHtml(mat, inventoryCap) {
         ` : ''}
       </div>
 
-      <!-- Expandable Quests Breakdown -->
       <details class="mat-breakdown-accordion">
         <summary>View Quests Requiring This (${mat.questSources.length})</summary>
         <ul class="mat-sources-list">
@@ -397,29 +448,287 @@ function renderMaterialCardHtml(mat, inventoryCap) {
 }
 
 /**
- * Render Settings & Backup View
+ * Compact Player Levels Bar component for the Quests view
+ */
+export function renderPlayerLevelsBar(state) {
+  const bar = document.createElement("div");
+  bar.className = "player-levels-bar";
+  bar.id = "player-levels-bar";
+
+  const skills = [
+    { id: "farming", name: "Farming", icon: "assets/Corn.png", max: 99 },
+    { id: "fishing", name: "Fishing", icon: "assets/Fishing Hook.png", max: 99 },
+    { id: "crafting", name: "Crafting", icon: "assets/Hammer.png", max: 99 },
+    { id: "exploring", name: "Exploring", icon: "assets/Compass.png", max: 99 },
+    { id: "cooking", name: "Cooking", icon: "assets/Cooking Pot.png", max: 99 },
+    { id: "mining", name: "Mining", icon: "assets/Pickaxe.png", max: 99 }
+  ];
+
+  bar.innerHTML = `
+    <div class="levels-bar-header">
+      <div class="levels-bar-title">
+        <span class="levels-bar-icon">🎯</span>
+        <span><strong>My Skill Levels</strong> <span class="levels-hint">(0 = locked)</span></span>
+      </div>
+      <div class="levels-bar-actions">
+        <button type="button" class="btn btn-xs btn-outline" id="quick-max-levels" title="Set all to max level">Unlock All 99</button>
+        <button type="button" class="btn btn-xs btn-outline" id="quick-zero-levels" title="Reset all to 0">Lock All (0)</button>
+      </div>
+    </div>
+    <div class="levels-inputs-row">
+      ${skills.map(s => {
+        const val = state.playerLevels[s.id] || 0;
+        return `
+          <div class="level-input-pill ${val === 0 ? 'is-locked-level' : ''}">
+            <img src="${s.icon}" alt="${s.name}" class="level-skill-icon" title="${s.name}" />
+            <span class="level-skill-label">${s.name}</span>
+            <input
+              type="number"
+              class="level-num-input"
+              data-skill="${s.id}"
+              min="0"
+              max="${s.max}"
+              value="${val}"
+              title="${s.name} level (0 = locked)"
+            />
+          </div>
+        `;
+      }).join("")}
+
+      <div class="level-input-pill ${state.playerLevels.tower === 0 ? 'is-locked-level' : ''}">
+        <span class="level-skill-icon-emoji" title="Tower Level">🗼</span>
+        <span class="level-skill-label">Tower</span>
+        <input
+          type="number"
+          class="level-num-input"
+          data-skill="tower"
+          min="0"
+          max="350"
+          value="${state.playerLevels.tower || 0}"
+          title="Tower floor level (0 = locked)"
+        />
+      </div>
+
+      <div class="level-input-pill ${state.playerLevels.friendship === 0 ? 'is-locked-level' : ''}">
+        <span class="level-skill-icon-emoji" title="Townsfolk Friendship Level">🤝</span>
+        <span class="level-skill-label">Friends</span>
+        <input
+          type="number"
+          class="level-num-input"
+          data-skill="friendship"
+          min="0"
+          max="99"
+          value="${state.playerLevels.friendship || 0}"
+          title="General townsfolk friendship level (0 = locked)"
+        />
+      </div>
+    </div>
+  `;
+
+  // Bind input listeners
+  bar.querySelectorAll(".level-num-input").forEach(input => {
+    input.addEventListener("change", () => {
+      const skill = input.dataset.skill;
+      const val = parseInt(input.value, 10);
+      const updated = {};
+      updated[skill] = !isNaN(val) && val >= 0 ? val : 0;
+      state.setPlayerLevels(updated);
+      showToast(`${skill.charAt(0).toUpperCase() + skill.slice(1)} set to ${updated[skill]}!`, "info");
+    });
+  });
+
+  const btnMax = bar.querySelector("#quick-max-levels");
+  if (btnMax) {
+    btnMax.addEventListener("click", () => {
+      state.setPlayerLevels({
+        farming: 99,
+        fishing: 99,
+        crafting: 99,
+        exploring: 99,
+        cooking: 99,
+        mining: 99,
+        tower: 320,
+        friendship: 99
+      });
+      showToast("All player levels set to max!", "success");
+    });
+  }
+
+  const btnZero = bar.querySelector("#quick-zero-levels");
+  if (btnZero) {
+    btnZero.addEventListener("click", () => {
+      state.setPlayerLevels({
+        farming: 0,
+        fishing: 0,
+        crafting: 0,
+        exploring: 0,
+        cooking: 0,
+        mining: 0,
+        tower: 0,
+        friendship: 0
+      });
+      showToast("All player levels set to 0 (Locked)!", "info");
+    });
+  }
+
+  return bar;
+}
+
+/**
+ * Render Settings View
  */
 export function renderSettingsView(state) {
   const container = document.createElement("div");
   container.className = "settings-view";
 
+  const lastImportText = state.importedAt
+    ? `Last synced: ${new Date(state.importedAt).toLocaleString()} (${state.quests.length} quests loaded)`
+    : "No quests imported yet.";
+
   container.innerHTML = `
     <div class="settings-card">
-      <h2 class="view-heading">⚙️ App Settings & Backup</h2>
-      <p class="view-subheading">Your quest progress and settings are saved in your browser's local storage.</p>
+      <h2 class="view-heading">⚙️ App Settings</h2>
+      <p class="view-subheading">Manage your buddy.farm quest data, player levels, inventory cap, and backups.</p>
 
+      <!-- 1. buddy.farm Import & Sync Section -->
       <div class="settings-section">
-        <h3>🎒 Inventory Cap</h3>
-        <p>Set your maximum inventory capacity in Farm RPG. The Material Planner will display a subtle warning for any items that exceed this limit.</p>
+        <div class="settings-section-header">
+          <span class="settings-section-icon">🌐</span>
+          <div>
+            <h3>buddy.farm Quests Sync</h3>
+            <p>Import all 2,487 official quests, questlines, level requirements, and material requirements directly from buddy.farm.</p>
+          </div>
+        </div>
+
+        <div class="buddy-sync-status-box">
+          <div class="sync-status-info">
+            <span class="sync-status-indicator ${state.quests.length > 0 ? 'is-synced' : 'is-unsynced'}"></span>
+            <span id="sync-status-label">${lastImportText}</span>
+          </div>
+
+          <div class="sync-actions-row">
+            <button type="button" class="btn btn-primary" id="btn-sync-buddy-quests">
+              <span class="btn-spinner is-hidden" id="buddy-sync-spinner"></span>
+              <span id="buddy-sync-btn-text">📥 Import All Quests from buddy.farm</span>
+            </button>
+          </div>
+
+          <div class="buddy-sync-feedback is-hidden" id="buddy-sync-feedback"></div>
+        </div>
+      </div>
+
+      <!-- 2. Player Skills & Level Requirements Section -->
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <span class="settings-section-icon">🎯</span>
+          <div>
+            <h3>Player Levels & Skill Requirements</h3>
+            <p>Specify your current skill and tower levels. Available quests dynamically unlock as your levels satisfy requirements.</p>
+          </div>
+        </div>
+
+        <div class="settings-alert-box">
+          <span class="alert-icon">ℹ️</span>
+          <span><strong>Level 0 = Locked</strong>: Setting any skill to <code>0</code> marks that skill as locked. Quests requiring that skill will remain locked until your level reaches or exceeds the quest requirement.</span>
+        </div>
+
+        <div class="settings-skills-grid">
+          <div class="settings-skill-item">
+            <label class="settings-skill-label" for="settings-lvl-farming">
+              <img src="assets/Corn.png" alt="Farming" class="skill-badge-img" />
+              <span>Farming (0-99)</span>
+            </label>
+            <input type="number" id="settings-lvl-farming" class="input-field settings-level-input" data-skill="farming" min="0" max="99" value="${state.playerLevels.farming || 0}" />
+          </div>
+
+          <div class="settings-skill-item">
+            <label class="settings-skill-label" for="settings-lvl-fishing">
+              <img src="assets/Fishing Hook.png" alt="Fishing" class="skill-badge-img" />
+              <span>Fishing (0-99)</span>
+            </label>
+            <input type="number" id="settings-lvl-fishing" class="input-field settings-level-input" data-skill="fishing" min="0" max="99" value="${state.playerLevels.fishing || 0}" />
+          </div>
+
+          <div class="settings-skill-item">
+            <label class="settings-skill-label" for="settings-lvl-crafting">
+              <img src="assets/Hammer.png" alt="Crafting" class="skill-badge-img" />
+              <span>Crafting (0-99)</span>
+            </label>
+            <input type="number" id="settings-lvl-crafting" class="input-field settings-level-input" data-skill="crafting" min="0" max="99" value="${state.playerLevels.crafting || 0}" />
+          </div>
+
+          <div class="settings-skill-item">
+            <label class="settings-skill-label" for="settings-lvl-exploring">
+              <img src="assets/Compass.png" alt="Exploring" class="skill-badge-img" />
+              <span>Exploring (0-99)</span>
+            </label>
+            <input type="number" id="settings-lvl-exploring" class="input-field settings-level-input" data-skill="exploring" min="0" max="99" value="${state.playerLevels.exploring || 0}" />
+          </div>
+
+          <div class="settings-skill-item">
+            <label class="settings-skill-label" for="settings-lvl-cooking">
+              <img src="assets/Cooking Pot.png" alt="Cooking" class="skill-badge-img" />
+              <span>Cooking (0-99)</span>
+            </label>
+            <input type="number" id="settings-lvl-cooking" class="input-field settings-level-input" data-skill="cooking" min="0" max="99" value="${state.playerLevels.cooking || 0}" />
+          </div>
+
+          <div class="settings-skill-item">
+            <label class="settings-skill-label" for="settings-lvl-mining">
+              <img src="assets/Pickaxe.png" alt="Mining" class="skill-badge-img" />
+              <span>Mining (0-99)</span>
+            </label>
+            <input type="number" id="settings-lvl-mining" class="input-field settings-level-input" data-skill="mining" min="0" max="99" value="${state.playerLevels.mining || 0}" />
+          </div>
+
+          <div class="settings-skill-item">
+            <label class="settings-skill-label" for="settings-lvl-tower">
+              <span class="skill-badge-img emoji-badge">🗼</span>
+              <span>Tower Level (0-350)</span>
+            </label>
+            <input type="number" id="settings-lvl-tower" class="input-field settings-level-input" data-skill="tower" min="0" max="350" value="${state.playerLevels.tower || 0}" />
+          </div>
+
+          <div class="settings-skill-item">
+            <label class="settings-skill-label" for="settings-lvl-friendship">
+              <span class="skill-badge-img emoji-badge">🤝</span>
+              <span>Townsfolk Friendship (0-99)</span>
+            </label>
+            <input type="number" id="settings-lvl-friendship" class="input-field settings-level-input" data-skill="friendship" min="0" max="99" value="${state.playerLevels.friendship || 0}" />
+          </div>
+        </div>
+
+        <div class="settings-buttons-row" style="margin-top: 1rem;">
+          <button type="button" class="btn btn-primary" id="settings-save-levels-btn">💾 Save Levels</button>
+          <button type="button" class="btn btn-secondary" id="settings-max-levels-btn">⚡ Set All to Max (99 / Tower 320)</button>
+          <button type="button" class="btn btn-outline" id="settings-zero-levels-btn">🔒 Lock All Skills (All 0)</button>
+        </div>
+      </div>
+
+      <!-- 3. Inventory Cap Section -->
+      <div class="settings-section">
+        <div class="settings-section-header">
+          <span class="settings-section-icon">🎒</span>
+          <div>
+            <h3>Inventory Cap</h3>
+            <p>Set your maximum inventory capacity in Farm RPG. The Material Planner displays warnings for any items exceeding this limit.</p>
+          </div>
+        </div>
         <div class="settings-cap-form">
           <input type="number" id="settings-cap-input" class="input-field" min="1" value="${state.inventoryCap}" style="max-width: 160px;" />
           <button class="btn btn-primary" id="settings-save-cap-btn">Save Cap</button>
         </div>
       </div>
 
+      <!-- 4. Backup & Portability Section -->
       <div class="settings-section">
-        <h3>💾 Backup & Portability</h3>
-        <p>Save a copy of all your custom quests and settings to a JSON file, or restore on another device.</p>
+        <div class="settings-section-header">
+          <span class="settings-section-icon">💾</span>
+          <div>
+            <h3>Backup & Portability</h3>
+            <p>Export your quest completion states, pinned quests, and settings to a JSON file, or restore on another device.</p>
+          </div>
+        </div>
         <div class="settings-buttons-row">
           <button class="btn btn-primary" id="export-data-btn">
             📥 Export Backup (JSON)
@@ -431,444 +740,21 @@ export function renderSettingsView(state) {
         </div>
       </div>
 
+      <!-- 5. Reset Data Section -->
       <div class="settings-section">
-        <h3>🔄 Reset Data</h3>
-        <p>Want to clear all quests and reset settings to defaults?</p>
+        <div class="settings-section-header">
+          <span class="settings-section-icon">🔄</span>
+          <div>
+            <h3>Reset Progress</h3>
+            <p>Clear completed statuses and restore all player levels to default 0 (locked).</p>
+          </div>
+        </div>
         <button class="btn btn-danger" id="reset-defaults-btn">
-          ⚠️ Reset & Clear All Data
+          ⚠️ Reset All Progress
         </button>
       </div>
     </div>
   `;
 
   return container;
-}
-
-let activeModalAutocompletes = [];
-
-/**
- * Setup and populate the Add/Edit Quest Modal
- */
-export function openQuestModal(questToEdit = null, onSave, focusBuddyLink = false) {
-  let modal = document.getElementById("quest-modal");
-  if (!modal) return;
-
-  activeModalAutocompletes.forEach(ac => ac.destroy());
-  activeModalAutocompletes = [];
-
-  const titleEl = document.getElementById("modal-quest-title");
-  const form = document.getElementById("quest-form");
-  const reqContainer = document.getElementById("modal-requirements-list");
-  const rewContainer = document.getElementById("modal-rewards-list");
-  const npcSelect = document.getElementById("quest-npc-input");
-  const titleInput = document.getElementById("quest-name-input");
-  const descInput = document.getElementById("quest-desc-input");
-  const pinnedInput = document.getElementById("quest-pinned-input");
-
-  // Buddy.farm quick fetch elements
-  const buddyUrlInput = document.getElementById("buddy-url-input");
-  const buddyFetchBtn = document.getElementById("btn-fetch-buddy");
-  const buddyFetchSpinner = document.getElementById("buddy-fetch-spinner");
-  const buddyFetchBtnText = document.getElementById("buddy-fetch-btn-text");
-  const buddyFetchFeedback = document.getElementById("buddy-fetch-feedback");
-
-  function setFetchingState(isFetching) {
-    if (buddyFetchBtn) buddyFetchBtn.disabled = isFetching;
-    if (buddyFetchSpinner) {
-      if (isFetching) buddyFetchSpinner.classList.remove("is-hidden");
-      else buddyFetchSpinner.classList.add("is-hidden");
-    }
-    if (buddyFetchBtnText) {
-      buddyFetchBtnText.textContent = isFetching ? "Fetching..." : "Fetch";
-    }
-  }
-
-  function showFeedback(msg, type = "info") {
-    if (!buddyFetchFeedback) return;
-    buddyFetchFeedback.textContent = msg;
-    buddyFetchFeedback.className = `buddy-fetch-feedback feedback-${type}`;
-    buddyFetchFeedback.classList.remove("is-hidden");
-  }
-
-  // Reset buddy fetch controls
-  if (buddyUrlInput) buddyUrlInput.value = "";
-  if (buddyFetchFeedback) {
-    buddyFetchFeedback.textContent = "";
-    buddyFetchFeedback.className = "buddy-fetch-feedback is-hidden";
-  }
-  setFetchingState(false);
-
-  // Populate NPC options if not yet populated
-  if (npcSelect.options.length <= 1) {
-    npcSelect.innerHTML = NPC_LIST.map(npc => `<option value="${npc}">${npc}</option>`).join("");
-  }
-
-  // Clear previous rows
-  reqContainer.innerHTML = "";
-  rewContainer.innerHTML = "";
-
-  const isEdit = !!questToEdit;
-  titleEl.textContent = isEdit ? "Edit Quest" : "Add New Quest";
-
-  const SKILL_KEYS = ["farming", "fishing", "crafting", "exploring", "cooking", "mining"];
-  const SKILL_NAMES = { farming: "Farming", fishing: "Fishing", crafting: "Crafting", exploring: "Exploring", cooking: "Cooking", mining: "Mining" };
-
-  // Fill form fields
-  titleInput.value = questToEdit?.title || "";
-  npcSelect.value = questToEdit?.npc || "Buddy";
-  descInput.value = questToEdit?.description || "";
-  pinnedInput.checked = !!questToEdit?.pinned;
-
-  // Level Prerequisites Accordion setup
-  const skillsSummaryBadge = document.getElementById("skills-summary-badge");
-  const accordion = document.getElementById("modal-skills-accordion");
-  if (accordion) accordion.open = false;
-
-  function updateSkillsSummary() {
-    const activeSkills = [];
-    SKILL_KEYS.forEach(k => {
-      const input = document.getElementById(`skill-req-${k}`);
-      const val = parseInt(input?.value, 10) || 0;
-      if (val > 0) {
-        activeSkills.push(`${SKILL_NAMES[k]} ${val}`);
-      }
-    });
-
-    if (skillsSummaryBadge) {
-      if (activeSkills.length === 0) {
-        skillsSummaryBadge.textContent = "Not set (all 0)";
-        skillsSummaryBadge.classList.remove("is-active");
-      } else {
-        skillsSummaryBadge.textContent = activeSkills.join(" • ");
-        skillsSummaryBadge.classList.add("is-active");
-      }
-    }
-  }
-
-  SKILL_KEYS.forEach(k => {
-    const input = document.getElementById(`skill-req-${k}`);
-    if (input) {
-      let val = 0;
-      if (questToEdit?.skills && questToEdit.skills[k] !== undefined) {
-        val = parseInt(questToEdit.skills[k], 10) || 0;
-      } else if (questToEdit?.levelReq) {
-        const match = questToEdit.levelReq.match(new RegExp(`${k}\\s*(\\d+)`, "i"));
-        if (match) val = parseInt(match[1], 10) || 0;
-      }
-      input.value = val;
-      input.oninput = updateSkillsSummary;
-    }
-  });
-  updateSkillsSummary();
-
-  // Add requirement row helper
-  function addRequirementRow(item = "", amount = "") {
-    const row = document.createElement("div");
-    row.className = "modal-dynamic-row";
-    row.innerHTML = `
-      <input type="text" class="modal-req-item input-field" placeholder="Search item (e.g. Wood, Corn)" value="${item}" required />
-      <input type="number" class="modal-req-amount input-field" placeholder="Qty" value="${amount}" min="1" required />
-      <button type="button" class="btn btn-ghost btn-sm remove-row-btn" title="Remove requirement">✕</button>
-    `;
-    const itemInput = row.querySelector(".modal-req-item");
-    const amountInput = row.querySelector(".modal-req-amount");
-    const ac = attachItemAutocomplete(itemInput, {
-      onSelect: () => amountInput.focus()
-    });
-    if (ac) activeModalAutocompletes.push(ac);
-
-    row.querySelector(".remove-row-btn").addEventListener("click", () => {
-      if (ac) ac.destroy();
-      activeModalAutocompletes = activeModalAutocompletes.filter(x => x !== ac);
-      row.remove();
-    });
-    reqContainer.appendChild(row);
-
-    if (!item && !amount) {
-      itemInput.focus();
-      row.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  }
-
-  // Add reward row helper (Silver & Gold have no labels; Item has item name input; XP removed)
-  function addRewardRow(type = "silver", item = "", amount = "") {
-    const row = document.createElement("div");
-    row.className = "modal-dynamic-row";
-    const isItem = type === "item";
-    row.innerHTML = `
-      <select class="modal-rew-type input-field">
-        <option value="silver" ${type === 'silver' ? 'selected' : ''}>Silver</option>
-        <option value="gold" ${type === 'gold' ? 'selected' : ''}>Gold</option>
-        <option value="item" ${type === 'item' ? 'selected' : ''}>Item</option>
-      </select>
-      <input type="text" class="modal-rew-item input-field ${isItem ? '' : 'is-hidden'}" placeholder="Search item (e.g. Orange Juice)" value="${isItem ? item : ''}" ${isItem ? 'required' : ''} />
-      <input type="number" class="modal-rew-amount input-field" placeholder="Amount" value="${amount}" min="1" required />
-      <button type="button" class="btn btn-ghost btn-sm remove-row-btn" title="Remove reward">✕</button>
-    `;
-    const typeSelect = row.querySelector(".modal-rew-type");
-    const itemInput = row.querySelector(".modal-rew-item");
-    const amountInput = row.querySelector(".modal-rew-amount");
-    const ac = attachItemAutocomplete(itemInput, {
-      onSelect: () => amountInput.focus()
-    });
-    if (ac) activeModalAutocompletes.push(ac);
-
-    typeSelect.addEventListener("change", () => {
-      if (typeSelect.value === "item") {
-        itemInput.classList.remove("is-hidden");
-        itemInput.required = true;
-        itemInput.focus();
-      } else {
-        itemInput.classList.add("is-hidden");
-        itemInput.required = false;
-        itemInput.value = "";
-        if (ac) ac.close();
-      }
-    });
-    row.querySelector(".remove-row-btn").addEventListener("click", () => {
-      if (ac) ac.destroy();
-      activeModalAutocompletes = activeModalAutocompletes.filter(x => x !== ac);
-      row.remove();
-    });
-    rewContainer.appendChild(row);
-
-    if (!item && !amount) {
-      amountInput.focus();
-      row.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  }
-
-  // Populate existing requirements & rewards or clean defaults
-  if (isEdit && questToEdit.requirements?.length > 0) {
-    questToEdit.requirements.forEach(r => addRequirementRow(r.item, r.amount));
-  } else {
-    addRequirementRow("", "");
-  }
-
-  if (isEdit && questToEdit.rewards?.length > 0) {
-    questToEdit.rewards.forEach(r => {
-      const rewType = (r.type || "").toLowerCase();
-      const isItem = rewType === "item" || (!["silver", "gold", "xp"].includes(rewType));
-      const normalizedType = isItem ? "item" : rewType;
-      if (normalizedType !== "xp") {
-        addRewardRow(normalizedType, r.item || r.label || "", r.amount);
-      }
-    });
-  } else {
-    addRewardRow("silver", "", "");
-  }
-
-  // Handle buddy.farm fetch logic
-  async function handleBuddyFetch() {
-    const rawInput = buddyUrlInput ? buddyUrlInput.value.trim() : "";
-    if (!rawInput) {
-      showFeedback("Please paste a buddy.farm link or enter a quest slug (e.g. https://buddy.farm/q/not-from-around-here/).", "error");
-      if (buddyUrlInput) buddyUrlInput.focus();
-      return;
-    }
-
-    setFetchingState(true);
-    showFeedback("Connecting to buddy.farm...", "info");
-
-    try {
-      const questData = await fetchBuddyFarmQuest(rawInput);
-
-      // 1. Populate Title
-      if (questData.title && titleInput) {
-        titleInput.value = questData.title;
-      }
-
-      // 2. Populate NPC
-      if (questData.npc && npcSelect) {
-        const matchingOpt = Array.from(npcSelect.options).find(
-          o => o.value.toLowerCase() === questData.npc.toLowerCase()
-        );
-        if (matchingOpt) {
-          npcSelect.value = matchingOpt.value;
-        } else {
-          const opt = document.createElement("option");
-          opt.value = questData.npc;
-          opt.textContent = questData.npc;
-          npcSelect.appendChild(opt);
-          npcSelect.value = questData.npc;
-        }
-      }
-
-      // 3. Populate Description
-      if (descInput) {
-        descInput.value = questData.description || "";
-      }
-
-      // 4. Populate Skills
-      let hasSkills = false;
-      SKILL_KEYS.forEach(k => {
-        const input = document.getElementById(`skill-req-${k}`);
-        if (input) {
-          const lvl = questData.skills[k] || 0;
-          input.value = lvl;
-          if (lvl > 0) hasSkills = true;
-        }
-      });
-      updateSkillsSummary();
-      if (hasSkills && accordion) {
-        accordion.open = true;
-      }
-
-      // 5. Populate Requirements
-      activeModalAutocompletes.forEach(ac => ac.destroy());
-      activeModalAutocompletes = [];
-      reqContainer.innerHTML = "";
-      if (questData.requirements && questData.requirements.length > 0) {
-        questData.requirements.forEach(r => addRequirementRow(r.item, r.amount));
-      } else {
-        addRequirementRow("", "");
-      }
-
-      // 6. Populate Rewards
-      rewContainer.innerHTML = "";
-      if (questData.rewards && questData.rewards.length > 0) {
-        questData.rewards.forEach(r => {
-          const rewType = (r.type || "").toLowerCase();
-          const isItem = rewType === "item" || (!["silver", "gold", "xp"].includes(rewType));
-          const normalizedType = isItem ? "item" : rewType;
-          addRewardRow(normalizedType, r.item || r.label || "", r.amount);
-        });
-      } else {
-        addRewardRow("silver", "", "");
-      }
-
-      showFeedback(`✓ Loaded "${questData.title}" (${questData.requirements.length} requirements, ${questData.rewards.length} rewards)!`, "success");
-      showToast(`🎉 Imported "${questData.title}" from buddy.farm!`, "success");
-    } catch (err) {
-      showFeedback(`⚠️ ${err.message || "Failed to fetch quest details"}`, "error");
-    } finally {
-      setFetchingState(false);
-    }
-  }
-
-  if (buddyFetchBtn) {
-    buddyFetchBtn.onclick = (e) => {
-      e.preventDefault();
-      handleBuddyFetch();
-    };
-  }
-
-  if (buddyUrlInput) {
-    buddyUrlInput.onkeydown = (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleBuddyFetch();
-      }
-    };
-  }
-
-  // Auto-transfer if user pastes buddy.farm link into Title input
-  if (titleInput) {
-    titleInput.oninput = () => {
-      const val = titleInput.value.trim();
-      if (val.includes("buddy.farm/q/")) {
-        if (buddyUrlInput) buddyUrlInput.value = val;
-        titleInput.value = "";
-        handleBuddyFetch();
-      }
-    };
-  }
-
-  // Bind add row buttons
-  document.getElementById("modal-add-req-btn").onclick = () => addRequirementRow();
-  document.getElementById("modal-add-rew-btn").onclick = () => addRewardRow();
-
-  // Handle submit
-  form.onsubmit = (e) => {
-    e.preventDefault();
-
-    const title = document.getElementById("quest-name-input").value.trim();
-    const npc = document.getElementById("quest-npc-input").value.trim();
-    const description = document.getElementById("quest-desc-input").value.trim();
-    const pinned = document.getElementById("quest-pinned-input").checked;
-
-    // Extract skills
-    const skills = {};
-    const skillLevelsText = [];
-    SKILL_KEYS.forEach(k => {
-      const input = document.getElementById(`skill-req-${k}`);
-      const val = parseInt(input?.value, 10) || 0;
-      skills[k] = val;
-      if (val > 0) {
-        skillLevelsText.push(`${SKILL_NAMES[k]} ${val}`);
-      }
-    });
-    const levelReq = skillLevelsText.join(", ");
-
-    // Extract requirements
-    const reqRows = reqContainer.querySelectorAll(".modal-dynamic-row");
-    const requirements = [];
-    reqRows.forEach(row => {
-      const item = row.querySelector(".modal-req-item").value.trim();
-      const amount = parseInt(row.querySelector(".modal-req-amount").value, 10) || 0;
-      if (item && amount > 0) {
-        requirements.push({ item, amount });
-      }
-    });
-
-    // Extract rewards
-    const rewRows = rewContainer.querySelectorAll(".modal-dynamic-row");
-    const rewards = [];
-    rewRows.forEach(row => {
-      const type = row.querySelector(".modal-rew-type").value;
-      const amount = parseInt(row.querySelector(".modal-rew-amount").value, 10) || 0;
-      if (amount > 0) {
-        if (type === "silver") {
-          rewards.push({ type: "silver", amount, label: "Silver" });
-        } else if (type === "gold") {
-          rewards.push({ type: "gold", amount, label: "Gold" });
-        } else if (type === "item") {
-          const item = row.querySelector(".modal-rew-item").value.trim();
-          if (item) {
-            rewards.push({ type: "item", item, label: item, amount });
-          }
-        }
-      }
-    });
-
-    const questData = {
-      title,
-      npc,
-      levelReq,
-      skills,
-      description,
-      pinned,
-      requirements,
-      rewards
-    };
-
-    onSave(questData);
-    closeModal();
-  };
-
-  // Open modal
-  modal.classList.add("is-active");
-  document.body.style.overflow = "hidden";
-
-  if (focusBuddyLink && buddyUrlInput) {
-    setTimeout(() => {
-      buddyUrlInput.focus();
-      buddyUrlInput.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }, 50);
-  }
-}
-
-export function closeModal() {
-  const modal = document.getElementById("quest-modal");
-  if (modal) {
-    modal.classList.remove("is-active");
-    document.body.style.overflow = "";
-  }
-  const buddyFetchFeedback = document.getElementById("buddy-fetch-feedback");
-  if (buddyFetchFeedback) {
-    buddyFetchFeedback.textContent = "";
-    buddyFetchFeedback.className = "buddy-fetch-feedback is-hidden";
-  }
-  activeModalAutocompletes.forEach(ac => ac.destroy());
-  activeModalAutocompletes = [];
 }

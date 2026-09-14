@@ -2315,3 +2315,351 @@ textarea.input-field {
   margin-right: 4px;
 }
 
+/* =========================================================
+   Player Levels Bar (Quests View Header)
+   ========================================================= */
+.player-levels-bar {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.levels-bar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.levels-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.92rem;
+  color: var(--text-main);
+}
+
+.levels-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+.levels-bar-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.levels-inputs-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.level-input-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-pill);
+  padding: 0.2rem 0.55rem 0.2rem 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main);
+  transition: var(--transition);
+}
+
+.level-input-pill.is-locked-level {
+  opacity: 0.65;
+  border-color: var(--border-color);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="dark"] .level-input-pill.is-locked-level {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.level-skill-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.level-skill-icon-emoji {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.level-skill-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.level-num-input {
+  width: 44px;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.25rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-main);
+  outline: none;
+}
+
+.level-num-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+/* =========================================================
+   Quest Card Enhancements (Questline, Status, Locked states)
+   ========================================================= */
+.quest-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.questline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.questline-step {
+  background: var(--surface);
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-pill);
+  padding: 0 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+}
+
+.badge-available {
+  background: var(--success-light);
+  color: var(--success);
+  border: 1px solid var(--success-border);
+}
+
+.badge-completed {
+  background: var(--success-light);
+  color: var(--success);
+  border: 1px solid var(--success-border);
+}
+
+.badge-locked {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+
+.quest-card.is-locked {
+  opacity: 0.85;
+  border-style: dashed;
+}
+
+.quest-card.is-available {
+  border-color: var(--primary-border);
+  box-shadow: 0 2px 8px rgba(43, 97, 45, 0.08);
+}
+
+.prereq-chip.prereq-met {
+  border-color: var(--success-border);
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.prereq-chip.prereq-unmet {
+  border-color: var(--warning-border);
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+.prereq-status-icon {
+  font-size: 0.7rem;
+  margin-left: 2px;
+}
+
+.quest-lock-banner {
+  margin-top: 0.6rem;
+  background: var(--warning-light);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--warning);
+}
+
+.lock-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+  font-weight: 700;
+}
+
+.lock-reasons-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  line-height: 1.4;
+}
+
+.prev-quest-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* =========================================================
+   Settings View: Sync Card & Skills Grid
+   ========================================================= */
+.settings-section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.settings-section-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.buddy-sync-status-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.sync-status-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.sync-status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+
+.sync-status-indicator.is-synced {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+.sync-status-indicator.is-unsynced {
+  background: #f59e0b;
+}
+
+.buddy-sync-feedback {
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.buddy-sync-feedback.feedback-info {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+}
+
+.buddy-sync-feedback.feedback-success {
+  background: var(--success-light);
+  color: var(--success);
+  border: 1px solid var(--success-border);
+}
+
+.buddy-sync-feedback.feedback-error {
+  background: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+.settings-alert-box {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--gold-light);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.85rem;
+  color: var(--gold);
+  margin-bottom: 1rem;
+}
+
+.settings-skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.75rem;
+}
+
+.settings-skill-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.75rem;
+}
+
+.settings-skill-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.emoji-badge {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.settings-level-input {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+
