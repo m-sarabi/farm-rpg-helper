@@ -260,6 +260,89 @@ async function runTests() {
   assert.strictEqual(reloadedBoom.status, "active", "Active status must be preserved across re-import");
   console.log("✓ Missed status preserved across data re-imports!");
 
+  console.log("\n--- Test 13: Bowling for Goldie I requires Schoolhouse Rocks XI ---");
+  const bfg1 = state.quests.find(q => q.title === "Bowling for Goldie I");
+  const shr11 = state.quests.find(q => q.title === "Schoolhouse Rocks XI");
+  assert.ok(bfg1, "Bowling for Goldie I must exist in state");
+  assert.ok(shr11, "Schoolhouse Rocks XI must exist in state");
+  assert.strictEqual(bfg1.prevQuestTitle, "Schoolhouse Rocks XI", "BFG I prevQuestTitle must be Schoolhouse Rocks XI");
+  assert.strictEqual(bfg1.prevQuestId, shr11.id, "BFG I prevQuestId must match Schoolhouse Rocks XI ID");
+
+  // Ensure player has all required skill levels for BFG I (Farming 26, Fishing 25, Crafting 15, Exploring 25)
+  state.setPlayerLevels({
+    farming: 99,
+    fishing: 99,
+    crafting: 99,
+    exploring: 99,
+    cooking: 99,
+    mining: 99,
+    tower: 99
+  });
+
+  // SHR XI is not completed yet
+  state.setQuestStatus(shr11.id, "active");
+  state.setQuestStatus(bfg1.id, "active");
+  assert.strictEqual(state.isQuestAvailable(bfg1), false, "BFG I must be locked while Schoolhouse Rocks XI is not completed");
+  const bfgReasons = state.getQuestLockReasons(bfg1);
+  assert.ok(bfgReasons.some(r => r.includes('Complete "Schoolhouse Rocks XI" first')), "Lock reasons must require Schoolhouse Rocks XI");
+
+  // Mark SHR XI as completed
+  state.setQuestStatus(shr11.id, "completed");
+  assert.strictEqual(state.isQuestAvailable(bfg1), true, "BFG I must become available once Schoolhouse Rocks XI is completed");
+
+  // Reopen SHR XI
+  state.setQuestStatus(shr11.id, "active");
+  assert.strictEqual(state.isQuestAvailable(bfg1), false, "BFG I must re-lock if Schoolhouse Rocks XI is reopened");
+  console.log("✓ Bowling for Goldie I prerequisite requirement verified!");
+
+  console.log("\n--- Test 14: Dig In I requires Fun Underground Now IV ---");
+  const dig1 = state.quests.find(q => q.title === "Dig In I");
+  const fun4 = state.quests.find(q => q.title === "Fun Underground Now IV");
+  assert.ok(dig1, "Dig In I must exist in state");
+  assert.ok(fun4, "Fun Underground Now IV must exist in state");
+  assert.strictEqual(dig1.prevQuestTitle, "Fun Underground Now IV", "Dig In I prevQuestTitle must be Fun Underground Now IV");
+  assert.strictEqual(dig1.prevQuestId, fun4.id, "Dig In I prevQuestId must match Fun Underground Now IV ID");
+
+  // FUN IV is not completed
+  state.setQuestStatus(fun4.id, "active");
+  state.setQuestStatus(dig1.id, "active");
+  assert.strictEqual(state.isQuestAvailable(dig1), false, "Dig In I must be locked while Fun Underground Now IV is active");
+  const digReasons = state.getQuestLockReasons(dig1);
+  assert.ok(digReasons.some(r => r.includes('Complete "Fun Underground Now IV" first')), "Lock reasons must require Fun Underground Now IV");
+
+  // Mark FUN IV completed
+  state.setQuestStatus(fun4.id, "completed");
+  assert.strictEqual(state.isQuestAvailable(dig1), true, "Dig In I must become available once Fun Underground Now IV is completed");
+
+  // Reopen FUN IV
+  state.setQuestStatus(fun4.id, "active");
+  assert.strictEqual(state.isQuestAvailable(dig1), false, "Dig In I must re-lock if Fun Underground Now IV is reopened");
+  console.log("✓ Dig In I prerequisite requirement verified!");
+
+  console.log("\n--- Test 15: Automatic Predecessor Enrichment for Cached LocalStorage ---");
+  // Simulate cached quest with missing prevQuestId/prevQuestTitle
+  const cachedBFG = state.quests.find(q => q.title === "Bowling for Goldie I");
+  cachedBFG.prevQuestId = null;
+  cachedBFG.prevQuestTitle = null;
+  cachedBFG.pinned = true;
+
+  // Mock fetch for data/quests.json
+  global.fetch = async (url) => {
+    if (url.includes("quests.json")) {
+      return {
+        ok: true,
+        json: async () => rawData
+      };
+    }
+    return { ok: false, status: 404 };
+  };
+
+  await state.enrichQuestsFromCatalog();
+  assert.strictEqual(cachedBFG.prevQuestTitle, "Schoolhouse Rocks XI", "Enrichment must restore Schoolhouse Rocks XI title");
+  assert.strictEqual(cachedBFG.prevQuestId, shr11.id, "Enrichment must restore Schoolhouse Rocks XI id");
+  assert.strictEqual(cachedBFG.pinned, true, "Pinned state must be preserved during enrichment");
+  console.log("✓ Predecessor auto-enrichment for cached data verified!");
+
   console.log("\n==========================================");
   console.log("ALL AUTOMATED TESTS PASSED! 🎉");
   console.log("==========================================");

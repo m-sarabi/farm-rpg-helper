@@ -97,10 +97,12 @@ class StateManager {
       const savedQuests = localStorage.getItem(STORAGE_KEYS.QUESTS);
       if (savedQuests) {
         this.quests = JSON.parse(savedQuests);
-        // If stored quests lack date fields, merge from data/quests.json
+        // If stored quests lack date fields or predecessor fields, enrich from data/quests.json
         const hasDates = this.quests.some(q => q.startDate || q.endDate);
-        if (!hasDates && this.quests.length > 0) {
-          this.enrichQuestsWithDates();
+        const bfg = this.quests.find(q => q.title === "Bowling for Goldie I");
+        const hasPrereqs = bfg ? Boolean(bfg.prevQuestId) : true;
+        if ((!hasDates || !hasPrereqs) && this.quests.length > 0) {
+          this.enrichQuestsFromCatalog();
         }
       } else {
         this.quests = [];
@@ -156,26 +158,31 @@ class StateManager {
     }
   }
 
-  async enrichQuestsWithDates() {
+  async enrichQuestsFromCatalog() {
     try {
       const res = await fetch("./data/quests.json");
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          const dateMap = new Map();
+          const catalogMap = new Map();
           data.forEach(q => {
-            if (q.startDate || q.endDate) {
-              dateMap.set(q.id, { startDate: q.startDate, endDate: q.endDate });
-              dateMap.set(q.title.toLowerCase().trim(), { startDate: q.startDate, endDate: q.endDate });
-            }
+            catalogMap.set(q.id, q);
+            catalogMap.set(q.title.toLowerCase().trim(), q);
           });
           let enriched = false;
           for (const q of this.quests) {
-            const dates = dateMap.get(q.id) || dateMap.get(q.title.toLowerCase().trim());
-            if (dates && (!q.startDate || !q.endDate)) {
-              q.startDate = dates.startDate;
-              q.endDate = dates.endDate;
-              enriched = true;
+            const cat = catalogMap.get(q.id) || catalogMap.get(q.title.toLowerCase().trim());
+            if (cat) {
+              if ((!q.startDate || !q.endDate) && (cat.startDate || cat.endDate)) {
+                q.startDate = cat.startDate;
+                q.endDate = cat.endDate;
+                enriched = true;
+              }
+              if (cat.prevQuestId && q.prevQuestId !== cat.prevQuestId) {
+                q.prevQuestId = cat.prevQuestId;
+                q.prevQuestTitle = cat.prevQuestTitle;
+                enriched = true;
+              }
             }
           }
           if (enriched) {
@@ -377,17 +384,21 @@ class StateManager {
       }
     }
 
-    // 4. Sequential questline predecessor check
+    // 4. Predecessor quest check (canonical buddy.farm pred)
     if (quest.prevQuestId) {
-      const prev = this.quests.find(q => q.id === quest.prevQuestId);
+      const prev = this.quests.find(q => q.id === quest.prevQuestId)
+        || (quest.prevQuestTitle ? this.quests.find(q => q.title.toLowerCase().trim() === quest.prevQuestTitle.toLowerCase().trim()) : null);
       if (!prev || prev.status !== "completed") {
         return false;
       }
-    } else if (quest.questline && quest.stepNumber > 1) {
+    }
+
+    // 5. Sequential questline predecessor check (for steps > 1 if distinct from prevQuestId)
+    if (quest.questline && quest.stepNumber > 1) {
       const prevStepQuest = this.quests.find(
         q => q.questline === quest.questline && q.stepNumber === quest.stepNumber - 1
       );
-      if (!prevStepQuest || prevStepQuest.status !== "completed") {
+      if (prevStepQuest && prevStepQuest.id !== quest.prevQuestId && prevStepQuest.status !== "completed") {
         return false;
       }
     }
@@ -444,15 +455,18 @@ class StateManager {
     }
 
     if (quest.prevQuestId) {
-      const prev = this.quests.find(q => q.id === quest.prevQuestId);
+      const prev = this.quests.find(q => q.id === quest.prevQuestId)
+        || (quest.prevQuestTitle ? this.quests.find(q => q.title.toLowerCase().trim() === quest.prevQuestTitle.toLowerCase().trim()) : null);
       if (!prev || prev.status !== "completed") {
         reasons.push(`Complete "${quest.prevQuestTitle || prev?.title || "previous quest"}" first`);
       }
-    } else if (quest.questline && quest.stepNumber > 1) {
+    }
+
+    if (quest.questline && quest.stepNumber > 1) {
       const prevStepQuest = this.quests.find(
         q => q.questline === quest.questline && q.stepNumber === quest.stepNumber - 1
       );
-      if (!prevStepQuest || prevStepQuest.status !== "completed") {
+      if (prevStepQuest && prevStepQuest.id !== quest.prevQuestId && prevStepQuest.status !== "completed") {
         reasons.push(`Complete "${prevStepQuest?.title || `${quest.questline} Step ${quest.stepNumber - 1}`}" first`);
       }
     }

@@ -279,12 +279,13 @@ export async function fetchBuddyFarmAllQuests(onProgress = () => {}) {
     for (let i = 0; i < group.length; i++) {
       const current = group[i];
       const prev = i > 0 ? group[i - 1] : null;
+      const catalog = getQuestCatalogEntry(current.name);
       questStepMap.set(current.id, {
         questlineTitle: title,
-        stepNumber: i + 1,
-        totalSteps: group.length,
-        prevQuestId: prev ? prev.id : null,
-        prevQuestTitle: prev ? prev.name : null
+        stepNumber: catalog?.stepNumber !== undefined ? catalog.stepNumber : (i + 1),
+        totalSteps: catalog?.totalSteps !== undefined ? catalog.totalSteps : group.length,
+        prevQuestId: catalog?.prevQuestId ?? (prev ? prev.id : null),
+        prevQuestTitle: catalog?.prevQuestTitle ?? (prev ? prev.name : null)
       });
     }
   }
@@ -307,6 +308,9 @@ export async function fetchBuddyFarmAllQuests(onProgress = () => {}) {
       prevQuestId: catalogEntry?.prevQuestId || null,
       prevQuestTitle: catalogEntry?.prevQuestTitle || null
     };
+
+    const finalPrevId = catalogEntry?.prevQuestId ?? stepInfo.prevQuestId;
+    const finalPrevTitle = catalogEntry?.prevQuestTitle ?? stepInfo.prevQuestTitle;
 
     const skills = {
       farming: q.requiredFarmingLevel || 0,
@@ -343,8 +347,8 @@ export async function fetchBuddyFarmAllQuests(onProgress = () => {}) {
       questline: stepInfo.questlineTitle,
       stepNumber: stepInfo.stepNumber,
       totalSteps: stepInfo.totalSteps,
-      prevQuestId: stepInfo.prevQuestId,
-      prevQuestTitle: stepInfo.prevQuestTitle,
+      prevQuestId: finalPrevId,
+      prevQuestTitle: finalPrevTitle,
       requirements: catalogEntry?.requirements || [],
       rewards: catalogEntry?.rewards || [],
       startDate: q.startDate || null,

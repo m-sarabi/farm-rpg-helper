@@ -337,7 +337,9 @@ export function renderQuestCard(quest, state) {
       <div class="quest-actions-left">
         ${quest.prevQuestTitle && !isCompleted && !isMissed ? `
           <span class="prev-quest-hint" title="Requires completion of ${quest.prevQuestTitle}">
-            ⬅️ Step ${quest.stepNumber} (After ${quest.prevQuestTitle})
+            ${quest.questline && quest.stepNumber > 1 && quest.prevQuestTitle.toLowerCase().startsWith(quest.questline.toLowerCase())
+              ? `⬅️ Step ${quest.stepNumber} (After ${quest.prevQuestTitle})`
+              : `⬅️ Requires: ${quest.prevQuestTitle}`}
           </span>
         ` : ''}
       </div>

@@ -17,6 +17,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const DATA_DIR = path.join(ROOT_DIR, 'data');
 const JS_DIR = path.join(ROOT_DIR, 'js');
 
+const SEARCH_JSON_URL = 'https://buddy.farm/search.json';
 const QUESTS_JSON_URL = 'https://buddy.farm/page-data/quests/page-data.json';
 const BASE_QL_URL = 'https://buddy.farm/page-data/ql';
 const BASE_Q_URL = 'https://buddy.farm/page-data/q';
@@ -80,12 +81,12 @@ async function main() {
 
   console.log(`Found ${rawQuests.length} quests and ${rawQuestlines.length} questlines.`);
 
-  // Map to store item requirements and rewards keyed by quest name
+  // Map to store item requirements, rewards, and authentic predecessor keyed by quest name
   const questDetailsMap = new Map();
 
   // 2. Fetch all questlines in parallel batches to extract items, rewards, and official steps
   console.log(`2. Fetching ${rawQuestlines.length} questlines to collect item requirements & rewards...`);
-  const concurrency = 20;
+  const concurrency = 30;
   let fetchedCount = 0;
   let failedCount = 0;
 
@@ -138,7 +139,8 @@ async function main() {
               questDetailsMap.set(quest.name.toLowerCase().trim(), {
                 order: step.order,
                 requirements: reqItems,
-                rewards
+                rewards,
+                pred: null
               });
             }
           }
@@ -154,72 +156,102 @@ async function main() {
   console.log(`Finished questlines: ${fetchedCount} fetched, ${failedCount} failed.`);
   console.log(`Collected requirements for ${questDetailsMap.size} quests via questlines.`);
 
-  // 3. Identify standalone quests (not in any questline) that need detail fetch
-  const standaloneQuests = rawQuests.filter(q => {
-    const key = q.name.toLowerCase().trim();
-    return !questDetailsMap.has(key);
-  });
-  console.log(`3. Fetching ${standaloneQuests.length} standalone quests details...`);
+  // 3. Fetch search.json to get canonical paths for all quests, then fetch individual quest pages
+  // to extract authentic predecessors ('pred') and any standalone requirements/rewards.
+  console.log(`3. Fetching search catalog from ${SEARCH_JSON_URL} to map quest paths...`);
+  let questPathMap = new Map();
+  try {
+    const searchData = await fetchJson(SEARCH_JSON_URL);
+    if (Array.isArray(searchData)) {
+      for (const entry of searchData) {
+        if (entry.name && entry.href && entry.href.startsWith('/q/')) {
+          questPathMap.set(entry.name.toLowerCase().trim(), entry.href);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn(`Could not fetch search.json, will use slugify fallback:`, err.message);
+  }
 
-  let standaloneFetched = 0;
-  const standaloneQueue = [...standaloneQuests];
-  async function standaloneWorker() {
-    while (standaloneQueue.length > 0) {
-      const q = standaloneQueue.shift();
-      const slug = slugify(q.name);
+  console.log(`3b. Fetching authentic predecessor (pred) details for ${rawQuests.length} quests...`);
+  let detailFetched = 0;
+  let detailFailed = 0;
+  const questDetailQueue = [...rawQuests];
+
+  async function questDetailWorker() {
+    while (questDetailQueue.length > 0) {
+      const q = questDetailQueue.shift();
+      const key = q.name.toLowerCase().trim();
+      const href = questPathMap.get(key) || `/q/${slugify(q.name)}/`;
+      const pageDataUrl = `https://buddy.farm/page-data${href.startsWith('/') ? href : `/${href}`}page-data.json`;
+
       try {
-        const qData = await fetchJson(`${BASE_Q_URL}/${slug}/page-data.json`);
+        const qData = await fetchJson(pageDataUrl);
         const questObj = qData?.result?.data?.farmrpg?.quests?.[0];
         if (questObj) {
-          const reqItems = [];
-          if (Array.isArray(questObj.requiredItems)) {
-            for (const itemObj of questObj.requiredItems) {
-              const itemName = (itemObj.item?.name || itemObj.name || '').trim();
-              const quantity = parseInt(itemObj.quantity, 10) || 0;
-              if (itemName && quantity > 0) {
-                reqItems.push({ item: itemName, amount: quantity });
+          const existing = questDetailsMap.get(key) || { order: 0, requirements: [], rewards: [] };
+
+          let reqItems = existing.requirements;
+          if (!reqItems || reqItems.length === 0) {
+            reqItems = [];
+            if (Array.isArray(questObj.requiredItems)) {
+              for (const itemObj of questObj.requiredItems) {
+                const itemName = (itemObj.item?.name || itemObj.name || '').trim();
+                const quantity = parseInt(itemObj.quantity, 10) || 0;
+                if (itemName && quantity > 0) {
+                  reqItems.push({ item: itemName, amount: quantity });
+                }
               }
             }
-          }
-          const reqSilver = parseInt(questObj.requiredSilver, 10) || 0;
-          if (reqSilver > 0) {
-            reqItems.push({ item: 'Silver', amount: reqSilver });
-          }
-
-          const rewards = [];
-          const rewSilver = parseInt(questObj.rewardSilver, 10) || 0;
-          if (rewSilver > 0) {
-            rewards.push({ type: 'silver', amount: rewSilver, label: 'Silver' });
-          }
-          const rewGold = parseInt(questObj.rewardGold, 10) || 0;
-          if (rewGold > 0) {
-            rewards.push({ type: 'gold', amount: rewGold, label: 'Gold' });
-          }
-          if (Array.isArray(questObj.rewardItems)) {
-            for (const itemObj of questObj.rewardItems) {
-              const itemName = (itemObj.item?.name || itemObj.name || '').trim();
-              const quantity = parseInt(itemObj.quantity, 10) || 0;
-              if (itemName && quantity > 0) {
-                rewards.push({ type: 'item', item: itemName, label: itemName, amount: quantity });
-              }
+            const reqSilver = parseInt(questObj.requiredSilver, 10) || 0;
+            if (reqSilver > 0) {
+              reqItems.push({ item: 'Silver', amount: reqSilver });
             }
           }
 
-          questDetailsMap.set(q.name.toLowerCase().trim(), {
-            order: 0,
+          let rewards = existing.rewards;
+          if (!rewards || rewards.length === 0) {
+            rewards = [];
+            const rewSilver = parseInt(questObj.rewardSilver, 10) || 0;
+            if (rewSilver > 0) {
+              rewards.push({ type: 'silver', amount: rewSilver, label: 'Silver' });
+            }
+            const rewGold = parseInt(questObj.rewardGold, 10) || 0;
+            if (rewGold > 0) {
+              rewards.push({ type: 'gold', amount: rewGold, label: 'Gold' });
+            }
+            if (Array.isArray(questObj.rewardItems)) {
+              for (const itemObj of questObj.rewardItems) {
+                const itemName = (itemObj.item?.name || itemObj.name || '').trim();
+                const quantity = parseInt(itemObj.quantity, 10) || 0;
+                if (itemName && quantity > 0) {
+                  rewards.push({ type: 'item', item: itemName, label: itemName, amount: quantity });
+                }
+              }
+            }
+          }
+
+          const pred = questObj.pred ? {
+            id: questObj.pred.id,
+            title: questObj.pred.name ? questObj.pred.name.trim() : null
+          } : null;
+
+          questDetailsMap.set(key, {
+            ...existing,
             requirements: reqItems,
-            rewards
+            rewards,
+            pred
           });
-          standaloneFetched++;
+          detailFetched++;
         }
       } catch (err) {
-        // standalone quest detail not found or 404
+        detailFailed++;
       }
     }
   }
 
-  await Promise.all(Array.from({ length: concurrency }, () => standaloneWorker()));
-  console.log(`Fetched details for ${standaloneFetched} standalone quests.`);
+  await Promise.all(Array.from({ length: concurrency }, () => questDetailWorker()));
+  console.log(`Fetched details for ${detailFetched} quests (${detailFailed} failed or skipped).`);
 
   // 4. Group quests by questline to establish sequential step numbers and prevQuestId
   const qlGroups = new Map();
@@ -246,12 +278,16 @@ async function main() {
     for (let i = 0; i < group.length; i++) {
       const current = group[i];
       const prev = i > 0 ? group[i - 1] : null;
+      const key = current.name.toLowerCase().trim();
+      const details = questDetailsMap.get(key);
+      const pred = details?.pred;
+
       questStepMap.set(current.id, {
         questlineTitle: title,
         stepNumber: i + 1,
         totalSteps: group.length,
-        prevQuestId: prev ? prev.id : null,
-        prevQuestTitle: prev ? prev.name : null
+        prevQuestId: pred ? pred.id : (prev ? prev.id : null),
+        prevQuestTitle: pred ? pred.title : (prev ? prev.name : null)
       });
     }
   }
@@ -259,7 +295,7 @@ async function main() {
   // 5. Compile all quests into final standardized models
   const compiledQuests = rawQuests.map(q => {
     const key = q.name.toLowerCase().trim();
-    const details = questDetailsMap.get(key) || { requirements: [], rewards: [] };
+    const details = questDetailsMap.get(key) || { requirements: [], rewards: [], pred: null };
     const stepInfo = questStepMap.get(q.id) || {
       questlineTitle: q.questlines?.[0]?.questline?.title || null,
       stepNumber: 1,
@@ -267,6 +303,9 @@ async function main() {
       prevQuestId: null,
       prevQuestTitle: null
     };
+
+    const finalPrevId = details.pred ? details.pred.id : stepInfo.prevQuestId;
+    const finalPrevTitle = details.pred ? details.pred.title : stepInfo.prevQuestTitle;
 
     const skills = {
       farming: q.requiredFarmingLevel || 0,
@@ -304,8 +343,8 @@ async function main() {
       questline: stepInfo.questlineTitle,
       stepNumber: stepInfo.stepNumber,
       totalSteps: stepInfo.totalSteps,
-      prevQuestId: stepInfo.prevQuestId,
-      prevQuestTitle: stepInfo.prevQuestTitle,
+      prevQuestId: finalPrevId,
+      prevQuestTitle: finalPrevTitle,
       requirements: details.requirements || [],
       rewards: details.rewards || [],
       startDate: q.startDate || null,
