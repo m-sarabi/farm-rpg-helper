@@ -597,6 +597,13 @@ body {
   border-color: var(--primary-border);
 }
 
+.filter-dropdown-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .filter-select {
   padding: 0.4rem 0.75rem;
   border-radius: var(--radius-md);
@@ -607,10 +614,13 @@ body {
   font-weight: 500;
   outline: none;
   cursor: pointer;
+  max-width: 220px;
+  transition: var(--transition);
 }
 
 .filter-select:focus {
   border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px var(--primary-light);
 }
 
 .toolbar-actions {

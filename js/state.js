@@ -17,7 +17,8 @@ class StateManager {
       status: "active", // "all" | "active" | "completed"
       npc: "all",
       search: "",
-      skillSort: "default"
+      skillSort: "default",
+      rewardItem: "all"
     };
     this.theme = "light";
     this.subscribers = [];
