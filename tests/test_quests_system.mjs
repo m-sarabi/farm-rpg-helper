@@ -182,6 +182,84 @@ async function runTests() {
   assert.strictEqual(reloadedHH1.pinned, true, "Pinned status must be preserved across syncs");
   console.log("✓ User status preservation during re-import verified!");
 
+  console.log("\n--- Test 8: Separation of Event Quests from Normal Quests ---");
+  const normalQuests = state.quests.filter(q => !state.isEventQuest(q));
+  const eventQuests = state.quests.filter(q => state.isEventQuest(q));
+  assert.strictEqual(eventQuests.length, 1313, "Must have exactly 1,313 event quests");
+  assert.strictEqual(normalQuests.length, 1174, "Must have exactly 1,174 normal quests");
+  assert.ok(eventQuests.every(q => q.startDate && q.endDate), "All event quests must have startDate and endDate");
+  assert.ok(normalQuests.every(q => !q.startDate && !q.endDate), "Normal quests must not have dates");
+  console.log("✓ Separation of 1,313 event quests and 1,174 normal quests verified!");
+
+  console.log("\n--- Test 9: Event Timeline Status Calculation ---");
+  const { getEventTimeline } = await import("../js/components.js");
+  const refDate = new Date("2026-09-14T07:13:51+03:30");
+
+  const boom1 = state.quests.find(q => q.title === "A Safer Big Boom I");
+  assert.ok(boom1, "A Safer Big Boom I must exist");
+  const tlBoom = getEventTimeline(boom1, refDate);
+  assert.strictEqual(tlBoom.status, "active_now", "Boom 1 is active now in September 2026");
+  assert.strictEqual(tlBoom.statusLabel, "Active Now");
+  assert.ok(tlBoom.countdownText.includes("days left"), "Countdown text must indicate days left");
+
+  const dogDays = state.quests.find(q => q.title === "Dog Days of Summer");
+  assert.ok(dogDays, "Dog Days of Summer must exist");
+  const tlDog = getEventTimeline(dogDays, refDate);
+  assert.strictEqual(tlDog.status, "expired", "Dog Days of Summer expired in 2023");
+  assert.strictEqual(tlDog.statusLabel, "Expired");
+  assert.ok(tlDog.countdownText.includes("days ago") || tlDog.countdownText.includes("yesterday"));
+
+  // Future test
+  const futureTl = getEventTimeline(boom1, new Date("2026-08-15T00:00:00Z"));
+  assert.strictEqual(futureTl.status, "upcoming", "Boom 1 was upcoming before Sep 1, 2026");
+  assert.strictEqual(futureTl.statusLabel, "Upcoming");
+  console.log("✓ Event timeline calculation (active_now, upcoming, expired) verified!");
+
+  console.log("\n--- Test 10: Event Quest Missed Status Transitions ---");
+  assert.strictEqual(dogDays.status, "active", "Dog Days should initially be active");
+  assert.strictEqual(state.isQuestMissed(dogDays), false);
+
+  // Mark as missed
+  const missedResult = state.toggleQuestMissed(dogDays.id);
+  assert.strictEqual(missedResult, "missed");
+  assert.strictEqual(dogDays.status, "missed");
+  assert.strictEqual(state.isQuestMissed(dogDays), true);
+  assert.strictEqual(state.isQuestAvailable(dogDays), false, "Missed quest must not be available");
+  assert.strictEqual(state.getQuestLockReasons(dogDays).length, 0, "Missed quest has 0 lock reasons");
+
+  // Toggle back to active
+  const reopenedResult = state.toggleQuestMissed(dogDays.id);
+  assert.strictEqual(reopenedResult, "active");
+  assert.strictEqual(dogDays.status, "active");
+  assert.strictEqual(state.isQuestMissed(dogDays), false);
+
+  // Directly set status
+  state.setQuestStatus(dogDays.id, "missed");
+  assert.strictEqual(dogDays.status, "missed");
+
+  // Complete a missed quest
+  state.toggleQuestStatus(dogDays.id);
+  assert.strictEqual(dogDays.status, "completed");
+  assert.strictEqual(state.isQuestCompleted(dogDays), true);
+  console.log("✓ Missed status transitions and lifecycle verified!");
+
+  console.log("\n--- Test 11: Bulk Mark Expired Events as Missed ---");
+  // Reset dogDays to active
+  state.setQuestStatus(dogDays.id, "active");
+  const markedCount = state.markExpiredEventsAsMissed(refDate);
+  assert.ok(markedCount > 1000, `Should mark >1000 expired events as missed (got ${markedCount})`);
+  assert.strictEqual(dogDays.status, "missed", "Dog Days must be marked as missed");
+  assert.strictEqual(boom1.status, "active", "Active now event (Boom 1) must remain active");
+  console.log(`✓ Bulk mark expired events as missed verified (${markedCount} marked)!`);
+
+  console.log("\n--- Test 12: Missed Status Preservation Across Re-Imports ---");
+  state.importBuddyFarmQuests(rawData);
+  const reloadedDogDays = state.quests.find(q => q.title === "Dog Days of Summer");
+  assert.strictEqual(reloadedDogDays.status, "missed", "Missed status must be preserved across re-import");
+  const reloadedBoom = state.quests.find(q => q.title === "A Safer Big Boom I");
+  assert.strictEqual(reloadedBoom.status, "active", "Active status must be preserved across re-import");
+  console.log("✓ Missed status preserved across data re-imports!");
+
   console.log("\n==========================================");
   console.log("ALL AUTOMATED TESTS PASSED! 🎉");
   console.log("==========================================");

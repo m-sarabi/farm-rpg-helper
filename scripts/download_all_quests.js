@@ -308,6 +308,8 @@ async function main() {
       prevQuestTitle: stepInfo.prevQuestTitle,
       requirements: details.requirements || [],
       rewards: details.rewards || [],
+      startDate: q.startDate || null,
+      endDate: q.endDate || null,
       status: 'active',
       pinned: false
     };

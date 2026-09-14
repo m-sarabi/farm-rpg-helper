@@ -42,6 +42,14 @@ class StateManager {
       skillSort: "default",
       rewardItem: "all"
     };
+    this.eventFilters = {
+      timeline: "all", // "all" | "active_now" | "upcoming" | "expired" | "completed" | "missed"
+      npc: "all",
+      search: "",
+      year: "all",
+      skillSort: "default",
+      rewardItem: "all"
+    };
     this.theme = "light";
     this.importedAt = null;
     this.subscribers = [];
@@ -89,6 +97,11 @@ class StateManager {
       const savedQuests = localStorage.getItem(STORAGE_KEYS.QUESTS);
       if (savedQuests) {
         this.quests = JSON.parse(savedQuests);
+        // If stored quests lack date fields, merge from data/quests.json
+        const hasDates = this.quests.some(q => q.startDate || q.endDate);
+        if (!hasDates && this.quests.length > 0) {
+          this.enrichQuestsWithDates();
+        }
       } else {
         this.quests = [];
         // Attempt background preload from local data/quests.json if available
@@ -140,6 +153,39 @@ class StateManager {
       }
     } catch (e) {
       // Local file unavailable or running in context without static server
+    }
+  }
+
+  async enrichQuestsWithDates() {
+    try {
+      const res = await fetch("./data/quests.json");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const dateMap = new Map();
+          data.forEach(q => {
+            if (q.startDate || q.endDate) {
+              dateMap.set(q.id, { startDate: q.startDate, endDate: q.endDate });
+              dateMap.set(q.title.toLowerCase().trim(), { startDate: q.startDate, endDate: q.endDate });
+            }
+          });
+          let enriched = false;
+          for (const q of this.quests) {
+            const dates = dateMap.get(q.id) || dateMap.get(q.title.toLowerCase().trim());
+            if (dates && (!q.startDate || !q.endDate)) {
+              q.startDate = dates.startDate;
+              q.endDate = dates.endDate;
+              enriched = true;
+            }
+          }
+          if (enriched) {
+            this.saveQuests();
+            this.notify();
+          }
+        }
+      }
+    } catch (e) {
+      // ignore
     }
   }
 
@@ -255,10 +301,22 @@ class StateManager {
     this.notify();
   }
 
+  setEventFilters(newFilters) {
+    this.eventFilters = { ...this.eventFilters, ...newFilters };
+    this.notify();
+  }
+
   setPlannerFilter(mode) {
     this.plannerFilter = mode;
     this.savePlannerMode();
     this.notify();
+  }
+
+  /**
+   * Checks if a quest is a time-limited event quest.
+   */
+  isEventQuest(quest) {
+    return Boolean(quest && (quest.startDate || quest.endDate));
   }
 
   /**
@@ -269,9 +327,16 @@ class StateManager {
   }
 
   /**
+   * Evaluates whether an event quest has been marked as missed.
+   */
+  isQuestMissed(quest) {
+    return quest?.status === "missed";
+  }
+
+  /**
    * Evaluates dynamic quest availability.
    * A quest is available if:
-   * 1. It is not already completed.
+   * 1. It is not already completed and not marked as missed.
    * 2. Player meets all skill level requirements (farming, fishing, crafting, exploring, cooking, mining).
    *    (Note: a player level of 0 means locked/unavailable if the quest requires that skill).
    * 3. Player meets tower level requirement if > 0 (0 = locked).
@@ -280,7 +345,7 @@ class StateManager {
    */
   isQuestAvailable(quest) {
     if (!quest) return false;
-    if (quest.status === "completed") return false;
+    if (quest.status === "completed" || quest.status === "missed") return false;
 
     // 1. Skill requirements check
     const skills = ["farming", "fishing", "crafting", "exploring", "cooking", "mining"];
@@ -335,7 +400,7 @@ class StateManager {
    */
   getQuestLockReasons(quest) {
     if (!quest) return [];
-    if (quest.status === "completed") return [];
+    if (quest.status === "completed" || quest.status === "missed") return [];
 
     const reasons = [];
     const skills = [
@@ -414,6 +479,8 @@ class StateManager {
       const existing = existingStatusMap.get(q.id) || existingStatusMap.get(q.title.toLowerCase().trim());
       return {
         ...q,
+        startDate: q.startDate || null,
+        endDate: q.endDate || null,
         status: existing?.status || "active",
         pinned: !!existing?.pinned
       };
@@ -427,8 +494,23 @@ class StateManager {
   }
 
   /**
+   * Sets quest status directly ("active" | "completed" | "missed").
+   */
+  setQuestStatus(id, newStatus) {
+    const quest = this.quests.find(q => q.id === id);
+    if (quest) {
+      quest.status = newStatus;
+      this.saveQuests();
+      this.notify();
+      return newStatus;
+    }
+    return null;
+  }
+
+  /**
    * Toggles quest completion status.
-   * Dynamically unlocks downstream quests in questlines.
+   * If currently completed, reopens to active.
+   * If currently active or missed, marks as completed.
    */
   toggleQuestStatus(id) {
     const quest = this.quests.find(q => q.id === id);
@@ -440,6 +522,45 @@ class StateManager {
       return newStatus;
     }
     return null;
+  }
+
+  /**
+   * Toggles missed status for event quests.
+   * If currently missed, reopens to active.
+   * If active or completed, marks as missed.
+   */
+  toggleQuestMissed(id) {
+    const quest = this.quests.find(q => q.id === id);
+    if (quest) {
+      const newStatus = quest.status === "missed" ? "active" : "missed";
+      quest.status = newStatus;
+      this.saveQuests();
+      this.notify();
+      return newStatus;
+    }
+    return null;
+  }
+
+  /**
+   * Bulk marks all past/expired uncompleted event quests as missed.
+   */
+  markExpiredEventsAsMissed(referenceDate = new Date()) {
+    const nowMs = referenceDate instanceof Date ? referenceDate.getTime() : new Date(referenceDate).getTime();
+    let markedCount = 0;
+    for (const q of this.quests) {
+      if (this.isEventQuest(q) && q.status === "active" && q.endDate) {
+        const endMs = new Date(q.endDate).getTime();
+        if (!isNaN(endMs) && nowMs > endMs) {
+          q.status = "missed";
+          markedCount++;
+        }
+      }
+    }
+    if (markedCount > 0) {
+      this.saveQuests();
+      this.notify();
+    }
+    return markedCount;
   }
 
   /**

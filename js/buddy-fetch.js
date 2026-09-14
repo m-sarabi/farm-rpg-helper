@@ -181,7 +181,9 @@ export function parseBuddyQuestData(rawQuest) {
     requiredNpcLevel: parseInt(rawQuest.requiredNpcLevel, 10) || 0,
     levelReq,
     requirements,
-    rewards
+    rewards,
+    startDate: rawQuest.startDate || null,
+    endDate: rawQuest.endDate || null
   };
 }
 
@@ -345,6 +347,8 @@ export async function fetchBuddyFarmAllQuests(onProgress = () => {}) {
       prevQuestTitle: stepInfo.prevQuestTitle,
       requirements: catalogEntry?.requirements || [],
       rewards: catalogEntry?.rewards || [],
+      startDate: q.startDate || null,
+      endDate: q.endDate || null,
       status: "active",
       pinned: false
     };

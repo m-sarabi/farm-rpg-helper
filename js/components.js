@@ -33,16 +33,88 @@ export function showToast(message, type = "info") {
 }
 
 /**
+ * Calculates event timeline status (active_now, upcoming, expired)
+ * and formats human-readable dates and countdown strings.
+ */
+export function getEventTimeline(quest, now = new Date()) {
+  if (!quest || (!quest.startDate && !quest.endDate)) {
+    return null;
+  }
+
+  const nowMs = now instanceof Date ? now.getTime() : new Date(now).getTime();
+  const start = quest.startDate ? new Date(quest.startDate) : null;
+  const end = quest.endDate ? new Date(quest.endDate) : null;
+  const startMs = start && !isNaN(start.getTime()) ? start.getTime() : null;
+  const endMs = end && !isNaN(end.getTime()) ? end.getTime() : null;
+
+  const formatDate = (d) => {
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  };
+
+  let dateRangeStr = "";
+  if (start && end) {
+    dateRangeStr = `${formatDate(start)} – ${formatDate(end)}`;
+  } else if (start) {
+    dateRangeStr = `Starts ${formatDate(start)}`;
+  } else if (end) {
+    dateRangeStr = `Ends ${formatDate(end)}`;
+  }
+
+  let status = "active_now";
+  let statusLabel = "Active Now";
+  let countdownText = "";
+
+  if (endMs !== null && nowMs > endMs) {
+    status = "expired";
+    statusLabel = "Expired";
+    const daysAgo = Math.max(1, Math.floor((nowMs - endMs) / (1000 * 60 * 60 * 24)));
+    countdownText = daysAgo === 1 ? "Ended yesterday" : `Ended ${daysAgo} days ago`;
+  } else if (startMs !== null && nowMs < startMs) {
+    status = "upcoming";
+    statusLabel = "Upcoming";
+    const daysUntil = Math.max(1, Math.ceil((startMs - nowMs) / (1000 * 60 * 60 * 24)));
+    countdownText = daysUntil === 1 ? "Starts tomorrow" : `Starts in ${daysUntil} days`;
+  } else if (endMs !== null) {
+    status = "active_now";
+    statusLabel = "Active Now";
+    const msLeft = endMs - nowMs;
+    const daysLeft = Math.floor(msLeft / (1000 * 60 * 60 * 24));
+    const hoursLeft = Math.floor((msLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    if (daysLeft > 1) {
+      countdownText = `⏳ ${daysLeft} days left`;
+    } else if (daysLeft === 1) {
+      countdownText = `⏳ 1 day left`;
+    } else if (hoursLeft > 0) {
+      countdownText = `⏳ ${hoursLeft}h left`;
+    } else {
+      countdownText = `⏳ Ends soon!`;
+    }
+  }
+
+  return {
+    status,
+    statusLabel,
+    countdownText,
+    dateRangeStr,
+    startDate: start,
+    endDate: end
+  };
+}
+
+/**
  * Render single quest card HTML
  */
 export function renderQuestCard(quest, state) {
+  const isEvent = state.isEventQuest ? state.isEventQuest(quest) : Boolean(quest.startDate || quest.endDate);
+  const timeline = isEvent ? getEventTimeline(quest) : null;
   const isCompleted = state.isQuestCompleted(quest);
+  const isMissed = quest.status === "missed";
   const isAvailable = state.isQuestAvailable(quest);
-  const isLocked = !isCompleted && !isAvailable;
+  const isLocked = !isCompleted && !isMissed && !isAvailable;
   const lockReasons = isLocked ? state.getQuestLockReasons(quest) : [];
 
   const card = document.createElement("div");
-  card.className = `quest-card ${isCompleted ? "is-completed" : ""} ${isAvailable ? "is-available" : ""} ${isLocked ? "is-locked" : ""} ${quest.pinned ? "is-pinned" : ""}`;
+  card.className = `quest-card ${isCompleted ? "is-completed" : ""} ${isMissed ? "is-missed" : ""} ${isAvailable ? "is-available" : ""} ${isLocked ? "is-locked" : ""} ${quest.pinned ? "is-pinned" : ""} ${isEvent ? "is-event-quest" : ""}`;
   card.dataset.questId = quest.id;
 
   // Requirements HTML
@@ -182,6 +254,10 @@ export function renderQuestCard(quest, state) {
               </svg>
               <span>Completed</span>
             </span>
+          ` : isMissed ? `
+            <span class="status-badge badge-missed" title="Event missed">
+              <span>❌ Missed</span>
+            </span>
           ` : isAvailable ? `
             <span class="status-badge badge-available">
               <span>✨ Ready</span>
@@ -199,6 +275,18 @@ export function renderQuestCard(quest, state) {
           </button>
         </div>
       </div>
+
+      ${timeline ? `
+        <div class="event-timeline-strip timeline-${timeline.status}">
+          <div class="event-timeline-left">
+            <span class="event-status-tag badge-event-${timeline.status}">
+              ${timeline.status === 'active_now' ? '🟢 Active Now' : timeline.status === 'upcoming' ? '⏳ Upcoming' : '⌛ Expired'}
+            </span>
+            <span class="event-date-text">📅 ${timeline.dateRangeStr}</span>
+          </div>
+          ${timeline.countdownText ? `<span class="event-countdown-tag">${timeline.countdownText}</span>` : ''}
+        </div>
+      ` : ''}
 
       <h3 class="quest-title">${quest.title}</h3>
 
@@ -247,27 +335,63 @@ export function renderQuestCard(quest, state) {
 
     <div class="quest-card-footer">
       <div class="quest-actions-left">
-        ${quest.prevQuestTitle && !isCompleted ? `
+        ${quest.prevQuestTitle && !isCompleted && !isMissed ? `
           <span class="prev-quest-hint" title="Requires completion of ${quest.prevQuestTitle}">
             ⬅️ Step ${quest.stepNumber} (After ${quest.prevQuestTitle})
           </span>
         ` : ''}
       </div>
       <div class="quest-actions-right">
-        <button class="btn btn-sm ${isCompleted ? 'btn-secondary' : isAvailable ? 'btn-primary btn-complete' : 'btn-outline'} toggle-status-btn" data-id="${quest.id}">
+        ${isEvent ? `
           ${isCompleted ? `
-            <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="1 4 1 10 7 10"></polyline>
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-            </svg>
-            <span>Reopen</span>
+            <button class="btn btn-sm btn-secondary toggle-status-btn" data-id="${quest.id}">
+              <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              <span>Reopen</span>
+            </button>
+          ` : isMissed ? `
+            <button class="btn btn-sm btn-outline toggle-missed-btn" data-id="${quest.id}" title="Reopen quest">
+              <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              <span>Reopen</span>
+            </button>
+            <button class="btn btn-sm btn-outline toggle-status-btn" data-id="${quest.id}" title="Mark completed directly">
+              <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Mark Completed</span>
+            </button>
           ` : `
-            <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Mark Completed</span>
+            <button class="btn btn-sm btn-outline-danger toggle-missed-btn" data-id="${quest.id}" title="Mark this event quest as missed">
+              <span>❌ Mark Missed</span>
+            </button>
+            <button class="btn btn-sm ${isAvailable ? 'btn-primary btn-complete' : 'btn-outline'} toggle-status-btn" data-id="${quest.id}">
+              <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Mark Completed</span>
+            </button>
           `}
-        </button>
+        ` : `
+          <button class="btn btn-sm ${isCompleted ? 'btn-secondary' : isAvailable ? 'btn-primary btn-complete' : 'btn-outline'} toggle-status-btn" data-id="${quest.id}">
+            ${isCompleted ? `
+              <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              <span>Reopen</span>
+            ` : `
+              <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Mark Completed</span>
+            `}
+          </button>
+        `}
       </div>
     </div>
   `;

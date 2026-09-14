@@ -7,6 +7,7 @@ import {
   renderPlannerView,
   renderSettingsView,
   renderPlayerLevelsBar,
+  getEventTimeline,
   showToast
 } from "./components.js";
 
@@ -16,6 +17,7 @@ const navTabs = document.querySelectorAll(".nav-tab");
 const statActiveCount = document.getElementById("stat-active-count");
 const statCompletedCount = document.getElementById("stat-completed-count");
 const badgeQuestCount = document.getElementById("badge-quest-count");
+const badgeEventsCount = document.getElementById("badge-events-count");
 const badgePlannerCount = document.getElementById("badge-planner-count");
 const themeToggleBtn = document.getElementById("theme-toggle-btn");
 const brandHomeLink = document.getElementById("brand-home-link");
@@ -71,14 +73,23 @@ function switchTab(tabName) {
 }
 
 function updateHeaderStats() {
-  const availableQuests = state.quests.filter(q => state.isQuestAvailable(q));
-  const completedQuests = state.quests.filter(q => state.isQuestCompleted(q));
+  const normalQuests = state.quests.filter(q => !state.isEventQuest(q));
+  const availableQuests = normalQuests.filter(q => state.isQuestAvailable(q));
+  const completedQuests = normalQuests.filter(q => state.isQuestCompleted(q));
   const pinnedActiveQuests = state.quests.filter(q => q.pinned && q.status === "active");
+
+  const eventQuests = state.quests.filter(q => state.isEventQuest(q));
+  const now = new Date();
+  const activeEvents = eventQuests.filter(q => {
+    const tl = getEventTimeline(q, now);
+    return tl && tl.status === "active_now" && q.status === "active";
+  });
 
   if (statActiveCount) statActiveCount.textContent = `${availableQuests.length} Ready`;
   if (statCompletedCount) statCompletedCount.textContent = `${completedQuests.length} Completed`;
 
   if (badgeQuestCount) badgeQuestCount.textContent = availableQuests.length;
+  if (badgeEventsCount) badgeEventsCount.textContent = activeEvents.length;
   if (badgePlannerCount) badgePlannerCount.textContent = pinnedActiveQuests.length;
 }
 
@@ -91,6 +102,9 @@ function renderCurrentTab() {
   switch (state.activeTab) {
     case "quests":
       renderQuestsView();
+      break;
+    case "events":
+      renderEventsView();
       break;
     case "planner":
       renderPlannerTab();
@@ -192,9 +206,9 @@ function renderQuestsView() {
   const toolbar = document.createElement("div");
   toolbar.className = "quests-toolbar";
 
-  // Unique list of NPCs present in quests + default list
-  const activeNpcs = Array.from(new Set([...NPC_LIST, ...state.quests.map(q => q.npc)])).sort();
-  const activeRewards = getAvailableRewardItems(state.quests);
+  const normalQuests = state.quests.filter(q => !state.isEventQuest(q));
+  const activeNpcs = Array.from(new Set([...NPC_LIST, ...normalQuests.map(q => q.npc)])).sort();
+  const activeRewards = getAvailableRewardItems(normalQuests);
   if (state.filters.rewardItem && state.filters.rewardItem !== "all" && !activeRewards.includes(state.filters.rewardItem)) {
     activeRewards.push(state.filters.rewardItem);
   }
@@ -299,11 +313,12 @@ function renderQuestsView() {
 function updateQuestsGridAndFilters(container) {
   // Update filter pills
   const pillsContainer = container.querySelector("#filter-pills-container");
+  const normalQuests = state.quests.filter(q => !state.isEventQuest(q));
   if (pillsContainer) {
-    const availableCount = state.quests.filter(q => state.isQuestAvailable(q)).length;
-    const completedCount = state.quests.filter(q => state.isQuestCompleted(q)).length;
-    const lockedCount = state.quests.filter(q => !state.isQuestCompleted(q) && !state.isQuestAvailable(q)).length;
-    const allCount = state.quests.length;
+    const availableCount = normalQuests.filter(q => state.isQuestAvailable(q)).length;
+    const completedCount = normalQuests.filter(q => state.isQuestCompleted(q)).length;
+    const lockedCount = normalQuests.filter(q => !state.isQuestCompleted(q) && !state.isQuestAvailable(q)).length;
+    const allCount = normalQuests.length;
 
     pillsContainer.innerHTML = `
       <button class="filter-pill ${state.filters.status === 'available' ? 'active' : ''}" data-status="available">
@@ -335,7 +350,7 @@ function updateQuestsGridAndFilters(container) {
 
   const rewardSelect = container.querySelector("#reward-filter-select");
   if (rewardSelect) {
-    const activeRewards = getAvailableRewardItems(state.quests);
+    const activeRewards = getAvailableRewardItems(normalQuests);
     if (state.filters.rewardItem && state.filters.rewardItem !== "all" && !activeRewards.includes(state.filters.rewardItem)) {
       activeRewards.push(state.filters.rewardItem);
     }
@@ -379,10 +394,10 @@ function updateQuestsGridAndFilters(container) {
   // Update Grid cards
   const grid = container.querySelector("#quests-grid-container");
   if (grid) {
-    const filteredQuests = filterQuests(state.quests, state.filters);
+    const filteredQuests = filterQuests(normalQuests, state.filters);
     grid.innerHTML = "";
 
-    if (state.quests.length === 0) {
+    if (normalQuests.length === 0) {
       grid.innerHTML = `
         <div class="empty-state-card">
           <div class="empty-icon">
@@ -554,6 +569,408 @@ function bindQuestCardEvents(card, quest) {
       }
     });
   }
+
+  // Missed / Unmark Missed button
+  const missedBtn = card.querySelector(".toggle-missed-btn");
+  if (missedBtn) {
+    missedBtn.addEventListener("click", () => {
+      const newStatus = state.toggleQuestMissed(quest.id);
+      if (newStatus === "missed") {
+        showToast(`❌ "${quest.title}" marked as missed.`, "info");
+      } else {
+        showToast(`"${quest.title}" reopened.`, "info");
+      }
+    });
+  }
+}
+
+/**
+ * Events View (Event Toolbar, Timeline filters, Year selector, Cards)
+ */
+function renderEventsView() {
+  const existingView = document.getElementById("events-view-container");
+
+  // If already mounted, update grid and toolbar states in-place to preserve search input focus
+  if (existingView && mainContent.contains(existingView)) {
+    updateEventsGridAndFilters(existingView);
+    return;
+  }
+
+  const container = document.createElement("div");
+  container.className = "events-view";
+  container.id = "events-view-container";
+
+  const eventQuests = state.quests.filter(q => state.isEventQuest(q));
+  const activeNpcs = Array.from(new Set([...NPC_LIST, ...eventQuests.map(q => q.npc)])).sort();
+  const activeRewards = getAvailableRewardItems(eventQuests);
+  if (state.eventFilters.rewardItem && state.eventFilters.rewardItem !== "all" && !activeRewards.includes(state.eventFilters.rewardItem)) {
+    activeRewards.push(state.eventFilters.rewardItem);
+  }
+
+  // Collect all unique years from event dates
+  const yearsSet = new Set();
+  eventQuests.forEach(q => {
+    if (q.startDate) yearsSet.add(q.startDate.slice(0, 4));
+    if (q.endDate) yearsSet.add(q.endDate.slice(0, 4));
+  });
+  const availableYears = Array.from(yearsSet).sort((a, b) => b.localeCompare(a));
+
+  // 1. Toolbar
+  const toolbar = document.createElement("div");
+  toolbar.className = "quests-toolbar events-toolbar";
+
+  toolbar.innerHTML = `
+    <div class="toolbar-top-row">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="event-search-input" class="search-input" placeholder="Search event quests by title, NPC, item..." value="${state.eventFilters.search}" />
+      </div>
+      <button type="button" class="btn btn-outline-danger btn-sm btn-quick-missed" id="btn-mark-expired-missed" title="Mark all uncompleted expired events as missed">
+        <span>⚡</span>
+        <span>Mark Expired as Missed</span>
+      </button>
+    </div>
+
+    <div class="toolbar-filters">
+      <div class="filter-pills" id="event-filter-pills-container">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="filter-dropdown-group">
+        <select class="filter-select" id="event-year-filter-select" title="Filter by Year">
+          <option value="all" ${state.eventFilters.year === 'all' ? 'selected' : ''}>All Years</option>
+          ${availableYears.map(yr => `
+            <option value="${yr}" ${state.eventFilters.year === yr ? 'selected' : ''}>📅 Year ${yr}</option>
+          `).join('')}
+        </select>
+
+        <select class="filter-select" id="event-npc-filter-select" title="Filter by NPC">
+          <option value="all" ${state.eventFilters.npc === 'all' ? 'selected' : ''}>All NPCs</option>
+          ${activeNpcs.map(npc => `
+            <option value="${npc}" ${state.eventFilters.npc === npc ? 'selected' : ''}>${npc === 'Unknown' ? '❓' : '👤'} ${npc}</option>
+          `).join('')}
+        </select>
+
+        <select class="filter-select" id="event-reward-filter-select" title="Filter by Reward Item">
+          <option value="all" ${state.eventFilters.rewardItem === 'all' ? 'selected' : ''}>All Rewards</option>
+          ${activeRewards.map(item => `
+            <option value="${item}" ${state.eventFilters.rewardItem === item ? 'selected' : ''}>${getRewardOptionText(item)}</option>
+          `).join('')}
+        </select>
+
+        <select class="filter-select" id="event-sort-select" title="Sort event quests">
+          <option value="default" ${state.eventFilters.skillSort === 'default' ? 'selected' : ''}>Sort: Date (Newest first)</option>
+          <option value="date_asc" ${state.eventFilters.skillSort === 'date_asc' ? 'selected' : ''}>Sort: Date (Oldest first)</option>
+          <option value="reward_desc" ${state.eventFilters.skillSort === 'reward_desc' ? 'selected' : ''}>${state.eventFilters.rewardItem && state.eventFilters.rewardItem !== 'all' ? `🎁 ${state.eventFilters.rewardItem} (High to Low)` : '🎁 Reward Amount (High to Low)'}</option>
+          <option value="reward_asc" ${state.eventFilters.skillSort === 'reward_asc' ? 'selected' : ''}>${state.eventFilters.rewardItem && state.eventFilters.rewardItem !== 'all' ? `🎁 ${state.eventFilters.rewardItem} (Low to High)` : '🎁 Reward Amount (Low to High)'}</option>
+          <option value="farming_asc" ${state.eventFilters.skillSort === 'farming_asc' ? 'selected' : ''}>🌾 Farming Level</option>
+          <option value="fishing_asc" ${state.eventFilters.skillSort === 'fishing_asc' ? 'selected' : ''}>🎣 Fishing Level</option>
+          <option value="crafting_asc" ${state.eventFilters.skillSort === 'crafting_asc' ? 'selected' : ''}>🔨 Crafting Level</option>
+          <option value="exploring_asc" ${state.eventFilters.skillSort === 'exploring_asc' ? 'selected' : ''}>🧭 Exploring Level</option>
+        </select>
+      </div>
+    </div>
+  `;
+
+  // Bind Toolbar Events
+  const searchInput = toolbar.querySelector("#event-search-input");
+  let debounceTimeout;
+  searchInput.addEventListener("input", (e) => {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+      state.setEventFilters({ search: e.target.value });
+    }, 120);
+  });
+
+  const yearSelect = toolbar.querySelector("#event-year-filter-select");
+  yearSelect.addEventListener("change", (e) => {
+    state.setEventFilters({ year: e.target.value });
+  });
+
+  const npcSelect = toolbar.querySelector("#event-npc-filter-select");
+  npcSelect.addEventListener("change", (e) => {
+    state.setEventFilters({ npc: e.target.value });
+  });
+
+  const rewardSelect = toolbar.querySelector("#event-reward-filter-select");
+  rewardSelect.addEventListener("change", (e) => {
+    state.setEventFilters({ rewardItem: e.target.value });
+  });
+
+  const sortSelect = toolbar.querySelector("#event-sort-select");
+  sortSelect.addEventListener("change", (e) => {
+    state.setEventFilters({ skillSort: e.target.value });
+  });
+
+  const btnMarkExpiredMissed = toolbar.querySelector("#btn-mark-expired-missed");
+  if (btnMarkExpiredMissed) {
+    btnMarkExpiredMissed.addEventListener("click", () => {
+      const expiredActiveCount = state.quests.filter(q => {
+        if (!state.isEventQuest(q) || q.status !== "active" || !q.endDate) return false;
+        return new Date() > new Date(q.endDate);
+      }).length;
+
+      if (expiredActiveCount === 0) {
+        showToast("No active expired events to mark as missed!", "info");
+        return;
+      }
+
+      if (confirm(`Are you sure you want to mark all ${expiredActiveCount} expired event quests as missed?`)) {
+        const marked = state.markExpiredEventsAsMissed();
+        showToast(`Marked ${marked} expired event quests as missed!`, "info");
+      }
+    });
+  }
+
+  container.appendChild(toolbar);
+
+  // Render Grid container
+  const grid = document.createElement("div");
+  grid.className = "quests-grid";
+  grid.id = "events-grid-container";
+  container.appendChild(grid);
+
+  mainContent.appendChild(container);
+  updateEventsGridAndFilters(container);
+}
+
+function updateEventsGridAndFilters(container) {
+  const eventQuests = state.quests.filter(q => state.isEventQuest(q));
+  const now = new Date();
+
+  // Timeline pills counts
+  const activeNowCount = eventQuests.filter(q => {
+    const tl = getEventTimeline(q, now);
+    return tl && tl.status === "active_now" && q.status === "active";
+  }).length;
+  const upcomingCount = eventQuests.filter(q => {
+    const tl = getEventTimeline(q, now);
+    return tl && tl.status === "upcoming" && q.status === "active";
+  }).length;
+  const expiredCount = eventQuests.filter(q => {
+    const tl = getEventTimeline(q, now);
+    return tl && tl.status === "expired" && q.status === "active";
+  }).length;
+  const completedCount = eventQuests.filter(q => q.status === "completed").length;
+  const missedCount = eventQuests.filter(q => q.status === "missed").length;
+  const allCount = eventQuests.length;
+
+  const pillsContainer = container.querySelector("#event-filter-pills-container");
+  if (pillsContainer) {
+    pillsContainer.innerHTML = `
+      <button class="filter-pill ${state.eventFilters.timeline === 'active_now' ? 'active' : ''}" data-timeline="active_now">
+        🟢 Active Now (${activeNowCount})
+      </button>
+      <button class="filter-pill ${state.eventFilters.timeline === 'upcoming' ? 'active' : ''}" data-timeline="upcoming">
+        ⏳ Upcoming (${upcomingCount})
+      </button>
+      <button class="filter-pill ${state.eventFilters.timeline === 'expired' ? 'active' : ''}" data-timeline="expired">
+        ⌛ Expired (${expiredCount})
+      </button>
+      <button class="filter-pill ${state.eventFilters.timeline === 'completed' ? 'active' : ''}" data-timeline="completed">
+        ✓ Completed (${completedCount})
+      </button>
+      <button class="filter-pill ${state.eventFilters.timeline === 'missed' ? 'active' : ''}" data-timeline="missed">
+        ❌ Missed (${missedCount})
+      </button>
+      <button class="filter-pill ${state.eventFilters.timeline === 'all' ? 'active' : ''}" data-timeline="all">
+        All (${allCount})
+      </button>
+    `;
+
+    pillsContainer.querySelectorAll(".filter-pill").forEach(pill => {
+      pill.addEventListener("click", () => {
+        state.setEventFilters({ timeline: pill.dataset.timeline });
+      });
+    });
+  }
+
+  // Sync Year select
+  const yearSelect = container.querySelector("#event-year-filter-select");
+  if (yearSelect && yearSelect.value !== state.eventFilters.year) {
+    yearSelect.value = state.eventFilters.year;
+  }
+
+  // Sync NPC select
+  const npcSelect = container.querySelector("#event-npc-filter-select");
+  if (npcSelect && npcSelect.value !== state.eventFilters.npc) {
+    npcSelect.value = state.eventFilters.npc;
+  }
+
+  // Sync Reward select
+  const rewardSelect = container.querySelector("#event-reward-filter-select");
+  if (rewardSelect) {
+    const activeRewards = getAvailableRewardItems(eventQuests);
+    if (state.eventFilters.rewardItem && state.eventFilters.rewardItem !== "all" && !activeRewards.includes(state.eventFilters.rewardItem)) {
+      activeRewards.push(state.eventFilters.rewardItem);
+    }
+    const currentOptions = Array.from(rewardSelect.options).map(o => o.value);
+    const targetOptions = ["all", ...activeRewards];
+    const isMatch = currentOptions.length === targetOptions.length && currentOptions.every((v, i) => v === targetOptions[i]);
+
+    if (!isMatch) {
+      rewardSelect.innerHTML = `
+        <option value="all" ${state.eventFilters.rewardItem === 'all' ? 'selected' : ''}>All Rewards</option>
+        ${activeRewards.map(item => `
+          <option value="${item}" ${state.eventFilters.rewardItem === item ? 'selected' : ''}>${getRewardOptionText(item)}</option>
+        `).join('')}
+      `;
+    }
+    if (rewardSelect.value !== state.eventFilters.rewardItem) {
+      rewardSelect.value = state.eventFilters.rewardItem;
+    }
+  }
+
+  // Sync Sort select
+  const sortSelect = container.querySelector("#event-sort-select");
+  if (sortSelect && sortSelect.value !== state.eventFilters.skillSort) {
+    sortSelect.value = state.eventFilters.skillSort;
+  }
+
+  // Grid
+  const grid = container.querySelector("#events-grid-container");
+  if (grid) {
+    const filteredEvents = filterEventQuests(eventQuests, state.eventFilters);
+    grid.innerHTML = "";
+
+    if (eventQuests.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state-card">
+          <div class="empty-icon">
+            <img src="assets/Corn.png" alt="Empty" class="empty-state-img" />
+          </div>
+          <h3>No Event Quests Loaded</h3>
+          <p>Sync all official quests from buddy.farm in Settings to load event quests.</p>
+        </div>
+      `;
+    } else if (filteredEvents.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state-card">
+          <div class="empty-icon">
+            <img src="assets/Corn.png" alt="Empty" class="empty-state-img" />
+          </div>
+          <h3>No Event Quests Found</h3>
+          <p>No event quests match your current filter. Try selecting a different timeline status or year.</p>
+        </div>
+      `;
+    } else {
+      filteredEvents.forEach(quest => {
+        const card = renderQuestCard(quest, state);
+        bindQuestCardEvents(card, quest);
+        grid.appendChild(card);
+      });
+    }
+  }
+}
+
+/**
+ * Filter and sort logic for Event Quests
+ */
+function filterEventQuests(quests, filters) {
+  const now = new Date();
+  const filtered = quests.filter(q => {
+    const tl = getEventTimeline(q, now);
+
+    // Timeline / Status filter
+    if (filters.timeline === "active_now") {
+      if (!tl || tl.status !== "active_now" || q.status === "completed" || q.status === "missed") {
+        return false;
+      }
+    } else if (filters.timeline === "upcoming") {
+      if (!tl || tl.status !== "upcoming" || q.status === "completed" || q.status === "missed") {
+        return false;
+      }
+    } else if (filters.timeline === "expired") {
+      if (!tl || tl.status !== "expired" || q.status === "completed" || q.status === "missed") {
+        return false;
+      }
+    } else if (filters.timeline === "completed") {
+      if (q.status !== "completed") return false;
+    } else if (filters.timeline === "missed") {
+      if (q.status !== "missed") return false;
+    }
+
+    // Year Filter
+    if (filters.year && filters.year !== "all") {
+      const startYear = q.startDate ? q.startDate.slice(0, 4) : "";
+      const endYear = q.endDate ? q.endDate.slice(0, 4) : "";
+      if (startYear !== filters.year && endYear !== filters.year) {
+        return false;
+      }
+    }
+
+    // NPC Filter
+    if (filters.npc !== "all" && q.npc.toLowerCase() !== filters.npc.toLowerCase()) {
+      return false;
+    }
+
+    // Reward Item Filter
+    if (filters.rewardItem && filters.rewardItem !== "all") {
+      if (getQuestRewardAmount(q, filters.rewardItem) <= 0) {
+        return false;
+      }
+    }
+
+    // Search Filter
+    if (filters.search) {
+      const query = filters.search.toLowerCase().trim();
+      const inTitle = q.title.toLowerCase().includes(query);
+      const inNpc = q.npc.toLowerCase().includes(query);
+      const inQl = (q.questline || "").toLowerCase().includes(query);
+      const inDesc = (q.description || "").toLowerCase().includes(query);
+      const inReqs = (q.requirements || []).some(r => r.item.toLowerCase().includes(query));
+      const inRewards = (q.rewards || []).some(r => (r.item || r.label || r.type || "").toLowerCase().includes(query));
+      if (!inTitle && !inNpc && !inQl && !inDesc && !inReqs && !inRewards) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  // Sorting
+  if (filters.skillSort === "date_asc") {
+    filtered.sort((a, b) => (a.startDate || "").localeCompare(b.startDate || ""));
+  } else if (filters.skillSort === "date_desc" || filters.skillSort === "default") {
+    // Default for events: latest event first
+    filtered.sort((a, b) => {
+      const dateA = a.startDate || a.endDate || "";
+      const dateB = b.startDate || b.endDate || "";
+      if (dateA !== dateB) return dateB.localeCompare(dateA);
+      return a.title.localeCompare(b.title);
+    });
+  } else if (filters.skillSort === "reward_desc" || filters.skillSort === "reward_asc") {
+    const isDesc = filters.skillSort === "reward_desc";
+    filtered.sort((a, b) => {
+      const amtA = filters.rewardItem && filters.rewardItem !== "all"
+        ? getQuestRewardAmount(a, filters.rewardItem)
+        : getMaxRewardAmount(a);
+      const amtB = filters.rewardItem && filters.rewardItem !== "all"
+        ? getQuestRewardAmount(b, filters.rewardItem)
+        : getMaxRewardAmount(b);
+
+      if (amtA === 0 && amtB > 0) return 1;
+      if (amtB === 0 && amtA > 0) return -1;
+      if (amtA === 0 && amtB === 0) return a.title.localeCompare(b.title);
+
+      if (amtA !== amtB) {
+        return isDesc ? amtB - amtA : amtA - amtB;
+      }
+      return a.title.localeCompare(b.title);
+    });
+  } else if (filters.skillSort && filters.skillSort.includes("_")) {
+    const [skillKey, direction] = filters.skillSort.split("_");
+    filtered.sort((a, b) => {
+      const lvlA = getQuestSkillLevel(a, skillKey);
+      const lvlB = getQuestSkillLevel(b, skillKey);
+      if (lvlA === 0 && lvlB > 0) return 1;
+      if (lvlB === 0 && lvlA > 0) return -1;
+      if (lvlA === 0 && lvlB === 0) return 0;
+      return direction === "asc" ? lvlA - lvlB : lvlB - lvlA;
+    });
+  }
+
+  return filtered;
 }
 
 /**

@@ -470,6 +470,17 @@ body {
   filter: brightness(0.9);
 }
 
+.btn-outline-danger {
+  background: transparent;
+  color: var(--danger);
+  border-color: rgba(185, 28, 28, 0.45);
+}
+
+.btn-outline-danger:hover {
+  background: var(--danger-light);
+  border-color: var(--danger);
+}
+
 .btn-sm {
   padding: 0.35rem 0.7rem;
   font-size: 0.825rem;
@@ -2483,9 +2494,154 @@ textarea.input-field {
   border: 1px solid var(--border-color);
 }
 
+.badge-missed {
+  background: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid rgba(185, 28, 28, 0.4);
+}
+
+[data-theme="dark"] .badge-missed {
+  background: #3f1515;
+  color: #f87171;
+  border-color: #7f1d1d;
+}
+
 .quest-card.is-locked {
   opacity: 0.85;
   border-style: dashed;
+}
+
+.quest-card.is-missed {
+  opacity: 0.82;
+  border-style: dashed;
+  border-color: rgba(185, 28, 28, 0.35);
+  background: var(--bg-secondary);
+}
+
+.quest-card.is-missed:hover {
+  opacity: 1;
+  border-color: var(--danger);
+}
+
+/* Event Quest Card Accents */
+.quest-card.is-event-quest {
+  border-left: 4px solid var(--gold);
+}
+
+.quest-card.is-event-quest.is-available {
+  border-left: 4px solid var(--primary);
+}
+
+.quest-card.is-event-quest.is-missed {
+  border-left: 4px solid var(--danger);
+}
+
+.quest-card.is-event-quest.is-completed {
+  border-left: 4px solid var(--success);
+}
+
+/* Event Timeline Strip */
+.event-timeline-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  margin-top: 0.3rem;
+  margin-bottom: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.event-timeline-left {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.event-timeline-strip.timeline-active_now {
+  background: var(--success-light);
+  border: 1px solid var(--success-border);
+}
+
+.event-timeline-strip.timeline-upcoming {
+  background: var(--gold-light);
+  border: 1px solid var(--gold-border);
+}
+
+.event-timeline-strip.timeline-expired {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.event-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-weight: 700;
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+}
+
+.badge-event-active_now {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+}
+
+.badge-event-upcoming {
+  background: var(--gold-light);
+  color: var(--gold);
+  border: 1px solid var(--gold-border);
+}
+
+.badge-event-expired {
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+}
+
+.event-date-text {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 0.75rem;
+}
+
+.event-countdown-tag {
+  font-weight: 700;
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-main);
+}
+
+[data-theme="dark"] .event-countdown-tag {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+}
+
+.btn-quick-missed {
+  border-color: rgba(185, 28, 28, 0.45);
+  color: var(--danger);
+}
+
+.btn-quick-missed:hover {
+  background: var(--danger-light);
+  border-color: var(--danger);
+}
+
+[data-theme="dark"] .btn-quick-missed {
+  color: #f87171;
+  border-color: #7f1d1d;
+}
+
+[data-theme="dark"] .btn-quick-missed:hover {
+  background: #3f1515;
+  border-color: #ef4444;
 }
 
 .quest-card.is-available {
