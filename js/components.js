@@ -1,4 +1,4 @@
-import { getItemIcon, renderItemIconHtml, NPC_LIST, KNOWN_ITEM_NAMES } from "./quests-data.js";
+import { getItemIcon, renderItemIconHtml, getSkillIconHtml, NPC_LIST, KNOWN_ITEM_NAMES } from "./quests-data.js";
 import { getQuestRequirementsStatus, aggregateMaterials, aggregateRewards, formatMaterialsAsText } from "./calculator.js";
 import { attachItemAutocomplete } from "./autocomplete.js";
 
@@ -48,40 +48,44 @@ export function renderQuestCard(quest, state) {
   const reqsHtml = reqStatus.map(req => {
     return `
       <div class="req-item">
-        <div class="req-header">
-          <span class="req-name">
-            <span class="item-icon-slot">${renderItemIconHtml(req.item)}</span>
-            <strong>${req.item}</strong>
-          </span>
-          <span class="req-counts">
-            <span class="need-count">${req.amount.toLocaleString()}</span>
-          </span>
+        <div class="req-item-left">
+          <span class="req-item-slot">${renderItemIconHtml(req.item, "icon-md")}</span>
+          <span class="req-item-name" title="${req.item}">${req.item}</span>
+        </div>
+        <div class="req-item-right">
+          <span class="req-qty-badge">× ${req.amount.toLocaleString()}</span>
         </div>
       </div>
     `;
   }).join("");
 
   // Skills Level Badges
-  const skillBadges = [];
-  const skillIcons = {
-    farming: `<img src="assets/Corn.png" class="skill-badge-img" alt="Farming" />`,
-    fishing: "🎣",
-    crafting: "🔨",
-    exploring: "🧭",
-    cooking: "🍳",
-    mining: "⛏️"
+  const skillItems = [];
+  const skillNames = {
+    farming: "Farming",
+    fishing: "Fishing",
+    crafting: "Crafting",
+    exploring: "Exploring",
+    cooking: "Cooking",
+    mining: "Mining"
   };
-  const skillNames = { farming: "Farming", fishing: "Fishing", crafting: "Crafting", exploring: "Exploring", cooking: "Cooking", mining: "Mining" };
+
   if (quest.skills && typeof quest.skills === "object") {
     for (const [sKey, sVal] of Object.entries(quest.skills)) {
       const lvl = parseInt(sVal, 10) || 0;
       if (lvl > 0) {
-        skillBadges.push(`<span class="level-badge" title="${skillNames[sKey] || sKey} requirement">${skillIcons[sKey] || '🎯'} ${skillNames[sKey] || sKey} ${lvl}</span>`);
+        skillItems.push(`
+          <span class="prereq-chip" title="${skillNames[sKey] || sKey} requirement: Level ${lvl}">
+            ${getSkillIconHtml(sKey, "skill-icon-xs")}
+            <span class="prereq-name">${skillNames[sKey] || sKey}</span>
+            <span class="prereq-level">${lvl}</span>
+          </span>
+        `);
       }
     }
   }
-  if (skillBadges.length === 0 && quest.levelReq) {
-    skillBadges.push(`<span class="level-badge" title="Requirement">🎯 ${quest.levelReq}</span>`);
+  if (skillItems.length === 0 && quest.levelReq) {
+    skillItems.push(`<span class="prereq-chip" title="Requirement">🎯 ${quest.levelReq}</span>`);
   }
 
   // Rewards HTML
@@ -92,68 +96,122 @@ export function renderQuestCard(quest, state) {
 
     if (type === "silver" || itemName.toLowerCase() === "silver") {
       return `
-        <span class="reward-pill badge-reward-silver">
-          ${renderItemIconHtml("Silver", "icon-sm")} ${amountStr} Silver
+        <span class="reward-pill badge-reward-silver" title="${amountStr} Silver">
+          ${renderItemIconHtml("Silver", "icon-sm")}
+          <span class="reward-val">${amountStr}</span>
+          <span class="reward-label">Silver</span>
         </span>
       `;
     } else if (type === "gold" || itemName.toLowerCase() === "gold") {
       return `
-        <span class="reward-pill badge-reward-gold">
-          ${renderItemIconHtml("Gold", "icon-sm")} ${amountStr} Gold
+        <span class="reward-pill badge-reward-gold" title="${amountStr} Gold">
+          ${renderItemIconHtml("Gold", "icon-sm")}
+          <span class="reward-val">${amountStr}</span>
+          <span class="reward-label">Gold</span>
         </span>
       `;
     } else if (type === "xp") {
-      return ""; // XP removed as reward
+      return "";
     } else {
       return `
-        <span class="reward-pill badge-reward-item">
-          ${renderItemIconHtml(itemName, "icon-sm")} ${amountStr ? amountStr + ' ' : ''}${itemName}
+        <span class="reward-pill badge-reward-item" title="${amountStr ? amountStr + ' ' : ''}${itemName}">
+          ${renderItemIconHtml(itemName, "icon-sm")}
+          ${amountStr ? `<span class="reward-val">${amountStr}</span>` : ''}
+          <span class="reward-label">${itemName}</span>
         </span>
       `;
     }
   }).filter(Boolean).join("");
 
   card.innerHTML = `
-    <div class="quest-card-top">
-      <div class="quest-title-area">
-        <div class="quest-badges">
-          <span class="npc-badge" title="Quest Giver">${quest.npc === "Unknown" ? "❓" : "👤"} ${quest.npc}</span>
-          ${skillBadges.join("")}
-          ${isCompleted ? `<span class="completed-badge">✅ Completed</span>` : ''}
+    <div class="quest-card-header">
+      <div class="quest-meta-row">
+        <div class="npc-badge" title="Quest Giver">
+          <svg class="npc-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span class="npc-name">${quest.npc}</span>
         </div>
-        <h3 class="quest-title">${quest.title}</h3>
+        <div class="quest-header-actions">
+          ${isCompleted ? `
+            <span class="completed-badge">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Completed</span>
+            </span>
+          ` : ''}
+          <button class="pin-btn ${quest.pinned ? 'pinned' : ''}" data-id="${quest.id}" title="${quest.pinned ? 'Unpin quest' : 'Pin quest'}" aria-label="${quest.pinned ? 'Unpin quest' : 'Pin quest'}">
+            <svg class="pin-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </button>
+        </div>
       </div>
-      <button class="pin-btn ${quest.pinned ? 'pinned' : ''}" data-id="${quest.id}" title="${quest.pinned ? 'Unpin quest' : 'Pin quest'}">
-        ${quest.pinned ? '★' : '☆'}
-      </button>
+
+      <h3 class="quest-title">${quest.title}</h3>
+
+      ${skillItems.length > 0 ? `
+        <div class="quest-prereqs-bar">
+          <span class="prereqs-label">Prerequisites:</span>
+          <div class="prereqs-list">
+            ${skillItems.join("")}
+          </div>
+        </div>
+      ` : ''}
     </div>
 
     ${quest.description ? `<p class="quest-desc">${quest.description}</p>` : ''}
 
-    <div class="quest-section-title">Requirements</div>
-    <div class="quest-requirements-list">
-      ${reqsHtml || '<p class="empty-text">No requirements specified.</p>'}
-    </div>
-
-    ${rewardsHtml ? `
-      <div class="quest-section-title rewards-title">Rewards</div>
-      <div class="quest-rewards-list">
-        ${rewardsHtml}
+    <div class="quest-card-body">
+      <div class="quest-section-header">
+        <span class="quest-section-title">Requirements</span>
+        <span class="quest-section-count">${reqStatus.length}</span>
       </div>
-    ` : ''}
+      <div class="quest-requirements-list">
+        ${reqsHtml || '<p class="empty-text">No requirements specified.</p>'}
+      </div>
+
+      ${rewardsHtml ? `
+        <div class="quest-section-header rewards-header">
+          <span class="quest-section-title">Rewards</span>
+        </div>
+        <div class="quest-rewards-list">
+          ${rewardsHtml}
+        </div>
+      ` : ''}
+    </div>
 
     <div class="quest-card-footer">
       <div class="quest-actions-left">
-        <button class="btn btn-sm btn-outline edit-quest-btn" data-id="${quest.id}" title="Edit quest">
-          ✏️ Edit
+        <button class="btn btn-sm btn-secondary edit-quest-btn" data-id="${quest.id}" title="Edit quest">
+          <svg class="btn-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+          </svg>
+          <span>Edit</span>
         </button>
-        <button class="btn btn-sm btn-ghost delete-quest-btn" data-id="${quest.id}" title="Delete quest">
-          🗑️
+        <button class="btn btn-sm btn-icon-only btn-ghost delete-quest-btn" data-id="${quest.id}" title="Delete quest" aria-label="Delete quest">
+          <svg class="btn-icon delete-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
         </button>
       </div>
       <div class="quest-actions-right">
-        <button class="btn btn-sm ${isCompleted ? 'btn-secondary' : 'btn-primary'} toggle-status-btn" data-id="${quest.id}">
-          ${isCompleted ? '↺ Reopen' : '✓ Complete'}
+        <button class="btn btn-sm ${isCompleted ? 'btn-secondary' : 'btn-primary btn-complete'} toggle-status-btn" data-id="${quest.id}">
+          ${isCompleted ? `
+            <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+            <span>Reopen</span>
+          ` : `
+            <svg class="btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Complete</span>
+          `}
         </button>
       </div>
     </div>

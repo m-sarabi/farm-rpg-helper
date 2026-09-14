@@ -3,13 +3,20 @@ export const DEFAULT_QUESTS = [];
 
 // The 6 Farm RPG skills
 export const SKILLS_LIST = [
-  { id: "farming", name: "Farming", icon: "assets/Corn.png" },
-  { id: "fishing", name: "Fishing", icon: "🎣" },
-  { id: "crafting", name: "Crafting", icon: "🔨" },
-  { id: "exploring", name: "Exploring", icon: "🧭" },
-  { id: "cooking", name: "Cooking", icon: "🍳" },
-  { id: "mining", name: "Mining", icon: "⛏️" }
+  { id: "farming", name: "Farming", icon: "assets/Corn.png", fallback: "🌽" },
+  { id: "fishing", name: "Fishing", icon: "assets/Fishing Hook.png", fallback: "🎣" },
+  { id: "crafting", name: "Crafting", icon: "assets/Hammer.png", fallback: "🔨" },
+  { id: "exploring", name: "Exploring", icon: "assets/Compass.png", fallback: "🧭" },
+  { id: "cooking", name: "Cooking", icon: "assets/Cooking Pot.png", fallback: "🍳" },
+  { id: "mining", name: "Mining", icon: "assets/Pickaxe.png", fallback: "⛏️" }
 ];
+
+export function getSkillIconHtml(skillKey, extraClass = "") {
+  const key = (skillKey || "").toLowerCase().trim();
+  const skill = SKILLS_LIST.find(s => s.id === key);
+  if (!skill) return "🎯";
+  return `<span class="skill-icon-wrapper ${extraClass}"><img class="skill-badge-img" src="${encodeURI(skill.icon)}" alt="${skill.name}" loading="lazy" onerror="this.outerHTML='${skill.fallback}';" /></span>`;
+}
 
 // Suggested NPC list for quest giver dropdowns
 export const NPC_LIST = [
@@ -36,7 +43,8 @@ export const NPC_LIST = [
   "Rosalie",
   "Star Meerif",
   "Thomas",
-  "Vincent"
+  "Vincent",
+  "unknown"
 ];
 
 // Common items in Farm RPG with standard icons / emojis for friendly UI

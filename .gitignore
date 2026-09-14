@@ -50,3 +50,8 @@ env/
 *.log
 *.tmp
 *.bak
+
+# Future plans & design notes
+plans/*
+!plans/.gitkeep
+
